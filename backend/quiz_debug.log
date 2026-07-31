@@ -1584,3 +1584,32 @@
 2026-07-03 16:36:52,373 - INFO - Quiz Logger Initialized
 2026-07-03 16:36:52,373 - INFO - ==================================================
 2026-07-03 16:36:55,208 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-07-27 07:50:59,876 - INFO - [CREATE_SESSION] Session 1000205 created by user 685 with 7 themes for voting
+2026-07-27 07:50:59,877 - INFO - [CREATE_SESSION] Broadcasted session_created event for session 1000205
+2026-07-27 07:51:14,298 - INFO - start_generic_timer: Created and starting timer thread for session 1000205
+2026-07-27 07:51:14,299 - INFO - Timer thread started for session 1000205, phase: voting
+2026-07-27 07:51:17,201 - INFO - start_generic_timer: Timer already exists for session 1000205, returning False
+2026-07-27 07:51:19,516 - INFO - start_generic_timer: Timer already exists for session 1000205, returning False
+2026-07-27 07:51:28,931 - INFO - handle_theme_display_phase: starting quiz timer for session 1000205
+2026-07-27 07:51:28,931 - INFO - start_generic_timer: Timer already exists for session 1000205, returning False
+2026-07-27 07:51:28,932 - INFO - Timer thread ending, removing from active_timers for session 1000205
+2026-07-27 07:51:29,388 - INFO - Main loop check - quiz phase, no timer. Session 1000205
+2026-07-27 07:51:29,388 - INFO - Room check: quiz_session_1000205 has 1 participants
+2026-07-27 07:51:29,388 - INFO - Main loop: About to check available questions and start timer
+2026-07-27 07:51:29,390 - INFO - Main loop: Calling start_generic_timer for session 1000205
+2026-07-27 07:51:29,390 - INFO - start_generic_timer: Created and starting timer thread for session 1000205
+2026-07-27 07:51:29,390 - INFO - Timer thread started for session 1000205, phase: quiz
+2026-07-27 07:51:29,391 - INFO - Main loop: start_generic_timer returned True
+2026-07-27 07:51:29,391 - INFO - ========== HANDLE_QUIZ_PHASE CALLED for session 1000205 ==========
+2026-07-27 07:51:29,393 - INFO - Found 19 total questions for theme 24
+2026-07-27 07:51:29,395 - INFO - Already answered questions: []
+2026-07-27 07:51:29,396 - INFO - Available questions: 19
+2026-07-27 07:51:29,397 - INFO - Total players: 1
+2026-07-27 07:51:29,397 - INFO - Room check: quiz_session_1000205 has 1 participants
+2026-07-27 07:51:29,398 - INFO - Is quiz session active (Socket.IO room check): True
+2026-07-27 07:51:29,398 - INFO - About to send 'Preparing question 1' message
+2026-07-27 07:51:29,406 - INFO - ENTERING WHILE LOOP: available_questions=19, quiz_ended_early=False
+2026-07-27 07:51:29,407 - INFO - INSIDE WHILE LOOP - selecting question
+2026-07-27 07:51:44,015 - INFO - ENDING QUIZ: Normal completion for session 1000205
+2026-07-27 07:51:44,017 - INFO - handle_quiz_phase ENDING: session 1000205 played=[24], active_ids=[41, 1, 24, 43, 42, 21, 19], remaining_available_questions=18
+2026-07-27 07:51:44,025 - INFO - Timer thread ending, removing from active_timers for session 1000205

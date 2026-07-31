@@ -12,8 +12,8 @@
 </script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="description" content="Full-Stack Developer & Open-Source Builder — Python, TypeScript, AI/LLM, Next.js, Flutter, Apache. Real-time multiplayer quizzes, cross-platform apps, browser extensions, Figma plugins. Shipping to 95+ countries."/>
-<title>Lukas Bohez — Full-Stack Developer | Portfolio & Projects</title>
+<meta name="description" content="Quiz The Spire — Lukas Bohez's quiz platform, creator tools & open-source apps. Real-time multiplayer quizzes, YouTube downloader, MIDI composer, VTuber avatar studio, and more."/>
+<title>Quiz The Spire — Lukas Bohez's quiz platform, creator tools & open-source apps</title>
 
 <!-- GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
@@ -24,450 +24,491 @@
 <meta name="copyright" content="Copyright &copy; 2026 Lukas Bohez. All rights reserved."/>
 <meta property="og:site_name" content="Quiz The Spire by Lukas Bohez"/>
 
-<link rel="preconnect" href="https://cdn.socket.io" crossorigin/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="preload" href="images/spire-light.webp" as="image" type="image/webp" media="(prefers-color-scheme:light)" fetchpriority="high"/>
-<link rel="preload" href="images/spire-dark.webp" as="image" type="image/webp" media="(prefers-color-scheme:dark)" fetchpriority="high"/>
+<link rel="preload" href="images/spire-dark.webp" as="image" type="image/webp" fetchpriority="high"/>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
-<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/></noscript>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'"/>
 
+<meta property="og:title" content="Quiz The Spire — Lukas Bohez's quiz platform, creator tools & open-source apps"/>
+<meta property="og:description" content="Real-time multiplayer quizzes, YouTube downloader, MIDI composer, VTuber avatar studio, and more — all built by Lukas Bohez."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://quizthespire.com/"/>
+<meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg"/>
+<meta property="og:image:width" content="1920"/>
+<meta property="og:image:height" content="1080"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Quiz The Spire — Lukas Bohez's quiz platform, creator tools & open-source apps"/>
+<meta name="twitter:description" content="Real-time multiplayer quizzes, YouTube downloader, MIDI composer, VTuber avatar studio, and more."/>
+<meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg"/>
+<meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM"/>
+
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Quiz The Spire","applicationCategory":"MultimediaApplication","operatingSystem":"Windows, Linux, macOS, Android","softwareVersion":"10.8.2","downloadUrl":"https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest","url":"https://quizthespire.com/","description":"Quiz The Spire — Lukas Bohez's quiz platform, creator tools & open-source apps. Real-time multiplayer quizzes, YouTube downloader, MIDI composer, and more."}</script>
+<meta name="theme-color" content="#16161C" media="(prefers-color-scheme:dark)"/>
+<meta name="theme-color" content="#F8F9FC" media="(prefers-color-scheme:light)"/>
+
+<link rel="icon" href="/favicon.ico" type="image/x-icon"/>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"/>
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/favicon-192x192.png"/>
+<link rel="manifest" href="/site.webmanifest"/>
+<link rel="canonical" href="https://quizthespire.com/"/>
+
 <style>
-  /* ═══════════════════════════════════════════════
-     RESET & BASE
-     ═══════════════════════════════════════════════ */
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    background:#f4f8fc;color:#1e293b;min-height:100vh;display:flex;flex-direction:column;
-    line-height:1.6;
-  }
-  [data-theme='dark'] body,.theme-dark body{background:#0f1112;color:#e6eef8;}
+/* ═══════════════════════════════════════════════
+   QUIZ THE SPIRE — DESIGN SYSTEM v2
+   Palette: Violet + Ember on Ink/Paper
+   ═══════════════════════════════════════════════ */
+:root{
+  --spire-ink:#16161C;
+  --spire-paper:#F8F9FC;
+  --spire-accent:#5B4FE0;
+  --spire-ember:#E8A33D;
+  --spire-mist:#8B93A7;
+  --spire-signal:#3FB876;
 
-  /* ═══════════════════════════════════════════════
-     HEADER
-     ═══════════════════════════════════════════════ */
-  .c-header{
-    background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 35%,#2563eb 70%,#3b82f6 100%);
-    color:#fff;padding:3.5rem 1.5rem 3rem;text-align:center;flex-shrink:0;
-    box-shadow:0 4px 24px rgba(15,23,42,.3);
-  }
-  .c-header h1{
-    font-family:'Space Grotesk',sans-serif;font-size:clamp(2rem,5vw,3rem);
-    font-weight:700;color:#fff;letter-spacing:-.02em;line-height:1.1;
-  }
-  .c-header__subtitle{
-    max-width:700px;margin:.85rem auto 0;font-size:clamp(.88rem,2vw,1.02rem);
-    color:rgba(255,255,255,.85);line-height:1.6;
-  }
+  --bg:var(--spire-paper);
+  --bg-surface:#fff;
+  --bg-elevated:#f1f3f8;
+  --bg-card:#fff;
+  --text-primary:var(--spire-ink);
+  --text-secondary:#4a5068;
+  --text-muted:var(--spire-mist);
+  --border:#dde0e8;
+  --border-hover:#c5c9d6;
+  --border-focus:var(--spire-accent);
+  --shadow-sm:0 1px 3px rgba(22,22,28,.06);
+  --shadow-md:0 4px 12px rgba(22,22,28,.08);
+  --shadow-lg:0 12px 32px rgba(22,22,28,.1);
+  --shadow-glow:0 6px 20px rgba(91,79,224,.25);
 
-  /* Hero stats */
-  .hero-stats{
-    display:flex;flex-wrap:wrap;justify-content:center;gap:1rem !important;
-    margin:2rem auto 0;max-width:780px;
-    padding:0 !important;border:none !important;border-radius:0 !important;
-    background:transparent !important;box-shadow:none !important;
-    backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
-  }
-  .hero-stat{
-    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
-    border-radius:14px;padding:1rem 1.5rem !important;text-align:center;
-    flex:0 1 auto !important;min-width:110px;border-right:1px solid rgba(255,255,255,.12) !important;
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  }
-  .hero-stat-number{
-    display:block;font-family:'Space Grotesk',sans-serif;
-    font-size:clamp(1.5rem,3.5vw,2.1rem);font-weight:700;color:#fff;line-height:1.2;
-  }
-  .hero-stat-label{
-    display:block;margin-top:.2rem;font-size:.7rem;text-transform:uppercase;
-    letter-spacing:.07em;color:rgba(255,255,255,.75);font-weight:600;
-  }
+  --ff-display:'Space Grotesk',sans-serif;
+  --ff-body:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --ff-mono:'IBM Plex Mono','SF Mono','Cascadia Code',monospace;
 
-  /* Trust links */
-  .c-header__trust{
-    display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;margin-top:1.25rem;
-  }
-  .c-header__trust a{
-    color:#fff;text-decoration:none;font-size:.82rem;opacity:.82;transition:opacity .2s;
-    display:inline-flex;align-items:center;gap:.35rem;
-    background:rgba(255,255,255,.1);padding:.4rem .85rem;border-radius:999px;
-    border:1px solid rgba(255,255,255,.15);
-  }
-  .c-header__trust a:hover{opacity:1;}
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:18px;
+  --radius-xl:24px;
+  --radius-full:999px;
 
-  /* ═══════════════════════════════════════════════
-     BACKGROUND
-     ═══════════════════════════════════════════════ */
-  .spire-background{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:-1;overflow:hidden;}
-  .spire-background img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s;filter:brightness(.85);}
+  --ease-spring:cubic-bezier(0.22,1,0.36,1);
+  --transition-fast:150ms var(--ease-spring);
+  --transition-base:250ms var(--ease-spring);
+}
+[data-theme='dark']{
+  --bg:#0f1112;
+  --bg-surface:#16161C;
+  --bg-elevated:#1c1e23;
+  --bg-card:#1a1c21;
+  --text-primary:#e6eef8;
+  --text-secondary:#a0aab8;
+  --text-muted:#6b7280;
+  --border:#2a2d35;
+  --border-hover:#3d4150;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.2);
+  --shadow-md:0 4px 12px rgba(0,0,0,.25);
+  --shadow-lg:0 12px 32px rgba(0,0,0,.35);
+  --shadow-glow:0 6px 22px rgba(91,79,224,.35);
+}
 
-  /* ═══════════════════════════════════════════════
-     CONTAINER & NAV
-     ═══════════════════════════════════════════════ */
-  .o-container{max-width:1100px;padding:0 1rem;margin:1.5rem auto;flex:1 0 auto;}
-  .c-nav{
-    display:flex;flex-wrap:wrap;align-items:center;gap:.35rem;
-    margin-bottom:1.5rem;padding:.4rem;
-    background:#fff;border-radius:14px;border:1px solid #e2e8f0;
-    box-shadow:0 2px 8px rgba(15,23,42,.04);
-  }
-  [data-theme='dark'] .c-nav,.theme-dark .c-nav{background:#111827;border-color:#374151;}
-  .c-nav-btn{
-    flex:1 1 auto;padding:.6rem .9rem;border:none;border-radius:10px;
-    background:transparent;color:#475569;font-size:.85rem;font-weight:500;
-    cursor:pointer;transition:all .2s;display:flex;align-items:center;
-    gap:.4rem;justify-content:center;white-space:nowrap;font-family:inherit;
-  }
-  .c-nav-btn:hover{background:#f1f5f9;color:#1e293b;}
-  .c-nav-btn.active{background:#2563eb;color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(37,99,235,.25);}
-  [data-theme='dark'] .c-nav-btn{color:#94a3b8;}
-  [data-theme='dark'] .c-nav-btn:hover{background:#1e293b;color:#e2e8f0;}
-  [data-theme='dark'] .c-nav-btn.active{background:#2563eb;color:#fff;}
-  .c-nav-actions{display:flex;gap:.35rem;margin-left:auto;flex-shrink:0;}
-  .c-theme-nav-btn{
-    display:flex;align-items:center;gap:.35rem;padding:.5rem .85rem;
-    border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;
-    color:#475569;font-size:.82rem;cursor:pointer;transition:all .2s;font-family:inherit;
-  }
-  .c-theme-nav-btn:hover{background:#f1f5f9;border-color:#cbd5e1;}
-  [data-theme='dark'] .c-theme-nav-btn{background:#1f2326;border-color:#2a3034;color:#94a3b8;}
-  [data-theme='dark'] .c-theme-nav-btn:hover{background:#2a3034;border-color:#4b5563;color:#e2e8f0;}
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--ff-body);
+  background:var(--bg);
+  color:var(--text-primary);
+  min-height:100vh;display:flex;flex-direction:column;
+  line-height:1.6;-webkit-font-smoothing:antialiased;
+}
 
-  /* ═══════════════════════════════════════════════
-     SECTIONS
-     ═══════════════════════════════════════════════ */
-  .section{display:none;animation:fadeIn .35s ease;}
-  .section.active{display:block;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .section-divider{display:flex;align-items:center;gap:1rem;margin:2rem 0 1.5rem;}
-  .section-divider span{flex:1;height:1px;background:#e2e8f0;}
-  [data-theme='dark'] .section-divider span{background:#374151;}
-  .c-section-panel{
-    background:#fff;border:1px solid #e2e8f0;border-radius:18px;
-    padding:2rem;box-shadow:0 1px 4px rgba(15,23,42,.04);margin-bottom:1.5rem;
-    max-width:820px;margin-left:auto;margin-right:auto;
-  }
-  [data-theme='dark'] .c-section-panel{background:#111827;border-color:#374151;}
-  .c-section-title{
-    font-family:'Space Grotesk',sans-serif;font-size:1.35rem;font-weight:700;
-    color:#0f172a;letter-spacing:-.01em;text-align:center;margin:0 auto .6rem;
-  }
-  [data-theme='dark'] .c-section-title{color:#f1f5f9;}
-  .c-section-lead{
-    font-size:.93rem;line-height:1.55;color:#475569;
-    margin:0 auto 1.25rem;text-align:center;max-width:620px;
-  }
-  [data-theme='dark'] .c-section-lead{color:#94a3b8;}
+/* ═══════════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════════ */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  html{scroll-behavior:auto}
+}
 
-  /* ═══════════════════════════════════════════════
-     BUTTONS - UNIFIED SYSTEM
-     ═══════════════════════════════════════════════ */
-  .c-btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
-    padding:.85rem 1.35rem;border:1.5px solid #e2e8f0;border-radius:12px;
-    font-size:.93rem;font-weight:500;cursor:pointer;background:#fff;color:#1e293b;
-    min-height:44px;text-decoration:none;transition:all .22s cubic-bezier(.22,1,.36,1);
-    font-family:inherit;text-align:center;
-  }
-  .c-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(15,23,42,.08);}
-  .c-btn:active{transform:translateY(0);}
-  [data-theme='dark'] .c-btn{background:#1f2326;color:#e2e8f0;border-color:#2a3034;}
+/* ═══════════════════════════════════════════════
+   SKIP LINK
+   ═══════════════════════════════════════════════ */
+.qts-skip-link{position:absolute;top:-100%;left:1rem;z-index:9999;padding:.75rem 1.25rem;background:var(--spire-accent);color:#fff;font-weight:600;font-size:.9rem;border-radius:0 0 8px 8px;text-decoration:none;transition:top .2s}
+.qts-skip-link:focus{top:0}
 
-  /* Primary */
-  .c-btn--primary{
-    background:#2563eb !important;color:#fff !important;border-color:#2563eb !important;font-weight:600;
-    box-shadow:0 2px 8px rgba(37,99,235,.2);
-  }
-  .c-btn--primary:hover{
-    background:#1d4ed8 !important;border-color:#1d4ed8 !important;color:#fff !important;
-    box-shadow:0 6px 20px rgba(37,99,235,.3);transform:translateY(-2px);
-  }
-  .c-btn--primary i{color:#fff !important;}
-  [data-theme='dark'] .c-btn--primary{background:#2563eb !important;color:#fff !important;border-color:#2563eb !important;}
-  [data-theme='dark'] .c-btn--primary:hover{background:#3b82f6 !important;border-color:#3b82f6 !important;color:#fff !important;box-shadow:0 6px 22px rgba(59,130,246,.35);}
+/* ═══════════════════════════════════════════════
+   CONTAINER
+   ═══════════════════════════════════════════════ */
+.qts-container{max-width:1200px;margin:0 auto;padding:0 1.25rem}
 
-  /* Outline */
-  .c-btn--outline{background:transparent;border-color:#cbd5e1;color:#475569;}
-  .c-btn--outline:hover{
-    background:#f8fafc;border-color:#2563eb;color:#2563eb;
-    box-shadow:0 0 0 1px rgba(37,99,235,.15),0 4px 12px rgba(37,99,235,.08);
-  }
-  [data-theme='dark'] .c-btn--outline{background:transparent;border-color:#374151;color:#94a3b8;}
-  [data-theme='dark'] .c-btn--outline:hover{
-    background:rgba(37,99,235,.08);border-color:#3b82f6;color:#93c5fd;
-    box-shadow:0 0 0 1px rgba(59,130,246,.25),0 4px 14px rgba(59,130,246,.12);
-  }
+/* ═══════════════════════════════════════════════
+   BACKGROUND
+   ═══════════════════════════════════════════════ */
+.spire-background{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:-1;overflow:hidden}
+.spire-background img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s;filter:brightness(.85)}
+[data-theme='light'] .spire-bg-light,[data-theme='dark'] .spire-bg-dark{opacity:.35}
+[data-theme='light'] .spire-bg-dark,[data-theme='dark'] .spire-bg-light{opacity:0}
 
-  /* Accent (highlighted actions) */
-  .c-btn--accent{
-    background:#2563eb;color:#fff;border-color:#2563eb;font-weight:600;
-    box-shadow:0 2px 8px rgba(37,99,235,.2);
-  }
-  .c-btn--accent:hover{
-    background:#1d4ed8;border-color:#1d4ed8;color:#fff;
-    box-shadow:0 6px 20px rgba(37,99,235,.3);transform:translateY(-2px);
-  }
-  .c-btn--accent i{color:#fff !important;}
-  .c-btn--accent .c-btn__desc{color:rgba(255,255,255,.85) !important;}
-  [data-theme='dark'] .c-btn--accent{background:#2563eb;color:#fff;border-color:#2563eb;}
-  [data-theme='dark'] .c-btn--accent:hover{background:#3b82f6;border-color:#3b82f6;color:#fff;box-shadow:0 6px 22px rgba(59,130,246,.35);}
-  [data-theme='dark'] .c-btn--accent i{color:#fff !important;}
-  [data-theme='dark'] .c-btn--accent .c-btn__desc{color:rgba(255,255,255,.85) !important;}
+/* ═══════════════════════════════════════════════
+   NAV
+   ═══════════════════════════════════════════════ */
+.qts-nav{
+  position:sticky;top:0;z-index:200;
+  background:var(--bg-surface);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:0 1.25rem;
+}
+.qts-nav__inner{
+  max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;
+  min-height:56px;gap:1rem;
+}
+.qts-wordmark{
+  display:flex;align-items:center;gap:.5rem;text-decoration:none;
+  font-family:var(--ff-display);font-weight:700;font-size:1.05rem;
+  color:var(--text-primary);transition:opacity var(--transition-fast);
+}
+.qts-wordmark:hover{opacity:.8}
+.qts-wordmark__icon{color:var(--spire-accent)}
+.qts-nav__actions{display:flex;align-items:center;gap:.35rem}
+.qts-nav__search{
+  display:flex;align-items:center;gap:.35rem;padding:.45rem .75rem;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg-elevated);color:var(--text-muted);font-family:var(--ff-body);
+  font-size:.82rem;cursor:pointer;transition:all var(--transition-fast);
+}
+.qts-nav__search:hover{border-color:var(--spire-accent);color:var(--text-primary)}
+.qts-nav__search kbd{
+  font-family:var(--ff-mono);font-size:.7rem;background:var(--bg-surface);
+  border:1px solid var(--border);border-radius:4px;padding:1px 5px;
+  margin-left:.25rem;color:var(--text-muted);
+}
+.qts-nav__link{
+  display:flex;align-items:center;gap:.3rem;padding:.45rem .65rem;
+  border-radius:var(--radius-sm);color:var(--text-muted);
+  text-decoration:none;font-size:.82rem;transition:all var(--transition-fast);
+}
+.qts-nav__link:hover{color:var(--text-primary);background:var(--bg-elevated)}
+.qts-nav__link:focus-visible,.qts-nav__search:focus-visible{outline:2px solid var(--spire-accent);outline-offset:2px}
+.qts-theme-btn{
+  display:flex;align-items:center;gap:.3rem;padding:.45rem .65rem;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg-surface);color:var(--text-muted);font-family:var(--ff-body);
+  font-size:.82rem;cursor:pointer;transition:all var(--transition-fast);
+}
+.qts-theme-btn:hover{background:var(--bg-elevated);color:var(--text-primary);border-color:var(--spire-accent)}
+.qts-theme-btn i{font-size:.9rem}
 
-  /* BW */
-  .c-btn--bw{background:#fff;color:#1e293b;border:1.5px solid #e2e8f0;font-weight:500;box-shadow:0 1px 3px rgba(15,23,42,.04);}
-  .c-btn--bw:hover{background:#f8fafc;border-color:#2563eb;color:#2563eb;transform:translateY(-2px);box-shadow:0 4px 12px rgba(37,99,235,.1);}
-  .c-btn--bw i{color:#2563eb;}
-  [data-theme='dark'] .c-btn--bw{background:rgba(15,17,18,.9);color:#e2e8f0;border-color:rgba(96,165,250,.18);}
-  [data-theme='dark'] .c-btn--bw:hover{background:rgba(30,58,138,.12);border-color:#60a5fa;color:#93c5fd;box-shadow:0 4px 14px rgba(96,165,250,.12);}
-  [data-theme='dark'] .c-btn--bw i{color:#60a5fa;}
+/* ═══════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════ */
+.qts-hero{
+  text-align:center;padding:3.5rem 1.5rem 2.5rem;
+  background:linear-gradient(135deg,var(--spire-ink) 0%,#1e2454 35%,var(--spire-accent) 70%,#7c6ff7 100%);
+  color:#fff;margin:1.5rem auto 2rem;border-radius:var(--radius-xl);
+  max-width:1150px;position:relative;overflow:hidden;
+  box-shadow:var(--shadow-lg);
+}
+.qts-hero::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle at 30% 50%,rgba(232,163,61,.08) 0%,transparent 50%);
+  pointer-events:none;
+}
+.qts-hero h1{
+  font-family:var(--ff-display);font-size:clamp(2rem,5vw,3.25rem);font-weight:700;
+  color:#fff;letter-spacing:-.02em;line-height:1.1;position:relative;
+}
+.qts-hero__subtitle{
+  max-width:650px;margin:.75rem auto 0;font-size:clamp(.9rem,2vw,1.05rem);
+  color:rgba(255,255,255,.85);line-height:1.6;position:relative;
+}
+.qts-hero__stats{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;
+  margin:1.75rem auto 0;max-width:780px;position:relative;
+}
+.qts-hero-stat{
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);
+  border-radius:var(--radius-md);padding:.85rem 1.25rem;text-align:center;
+  min-width:100px;flex:0 1 auto;backdrop-filter:blur(6px);
+}
+.qts-hero-stat__number{
+  display:block;font-family:var(--ff-mono);font-size:clamp(1.35rem,3vw,1.9rem);
+  font-weight:600;color:#fff;line-height:1.2;font-feature-settings:"tnum";
+}
+.qts-hero-stat__label{
+  display:block;margin-top:.15rem;font-size:.68rem;text-transform:uppercase;
+  letter-spacing:.08em;color:rgba(255,255,255,.72);font-weight:600;
+}
+.qts-hero__ctas{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;
+  margin-top:1.75rem;position:relative;
+}
 
-  /* Sentle */
-  .c-btn--sentle{
-    background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-color:transparent;
-    font-weight:600;box-shadow:0 2px 8px rgba(124,58,237,.22);
-  }
-  .c-btn--sentle:hover{
-    background:linear-gradient(135deg,#6d28d9,#9333ea);color:#fff;
-    box-shadow:0 6px 20px rgba(124,58,237,.32);transform:translateY(-2px);
-  }
-  .c-btn--sentle i{color:#fff !important;}
-  .c-btn--sentle .c-btn__desc{color:rgba(255,255,255,.85) !important;}
-  [data-theme='dark'] .c-btn--sentle{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;}
-  [data-theme='dark'] .c-btn--sentle:hover{background:linear-gradient(135deg,#8b5cf6,#c084fc);color:#fff;}
-  [data-theme='dark'] .c-btn--sentle i{color:#fff !important;}
-  [data-theme='dark'] .c-btn--sentle .c-btn__desc{color:rgba(255,255,255,.85) !important;}
+/* ═══════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════ */
+.qts-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
+  padding:.75rem 1.35rem;border:1.5px solid var(--border);border-radius:var(--radius-md);
+  font-size:.9rem;font-weight:500;cursor:pointer;font-family:var(--ff-body);
+  text-decoration:none;text-align:center;transition:all var(--transition-fast);
+  min-height:44px;color:var(--text-primary);background:var(--bg-surface);
+  white-space:nowrap;
+}
+.qts-btn:hover{transform:translateY(-1px)}
+.qts-btn:active{transform:translateY(0)}
+.qts-btn:focus-visible{outline:2px solid var(--spire-accent);outline-offset:2px}
+.qts-btn--primary{
+  background:var(--spire-accent);color:#fff;border-color:var(--spire-accent);
+  font-weight:600;box-shadow:0 2px 8px rgba(91,79,224,.25);
+}
+.qts-btn--primary:hover{
+  background:#4a3fd4;border-color:#4a3fd4;box-shadow:var(--shadow-glow);transform:translateY(-2px);
+}
+.qts-btn--outline{background:transparent;border-color:var(--border);color:var(--text-secondary)}
+.qts-btn--outline:hover{background:var(--bg-elevated);border-color:var(--spire-accent);color:var(--spire-accent)}
+.qts-btn--hero-primary{
+  background:#fff !important;color:var(--spire-accent) !important;border-color:#fff !important;
+  font-weight:600;box-shadow:0 2px 12px rgba(0,0,0,.12);
+}
+.qts-btn--hero-primary:hover{
+  background:#f4f2ff !important;color:#4a3fd4 !important;border-color:#f4f2ff !important;
+  transform:translateY(-2px);box-shadow:0 6px 20px rgba(91,79,224,.3);
+}
+.qts-btn--hero-secondary{
+  background:rgba(255,255,255,.12) !important;color:#fff !important;border-color:rgba(255,255,255,.2) !important;
+  backdrop-filter:blur(8px);
+}
+.qts-btn--hero-secondary:hover{
+  background:rgba(255,255,255,.2) !important;border-color:rgba(255,255,255,.35) !important;
+  transform:translateY(-2px);
+}
 
-  /* Button with description */
-  .c-btn__content{display:flex;align-items:center;gap:.4rem;font-weight:600;font-size:.93rem;line-height:1.3;}
-  .c-btn__desc{display:block;font-size:.76rem;font-weight:400;line-height:1.35;opacity:.75;margin-top:.15rem;}
-  .c-btn:has(.c-btn__desc){flex-direction:column;align-items:flex-start;text-align:left;padding:1rem 1.25rem;}
-  [data-theme='dark'] .c-btn__desc{color:#94a3b8;}
+/* ═══════════════════════════════════════════════
+   QUICK LAUNCH — Category tabs + tile grid
+   ═══════════════════════════════════════════════ */
+.qts-quick-launch{margin-bottom:3rem}
+.qts-category-tabs{
+  display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:1.5rem;justify-content:center;
+}
+.qts-cat-tab{
+  font-family:var(--ff-body);font-size:.85rem;font-weight:500;
+  padding:.5rem 1.1rem;border:none;border-radius:var(--radius-full);
+  background:transparent;color:var(--text-secondary);cursor:pointer;
+  transition:all var(--transition-fast);
+}
+.qts-cat-tab:hover{background:var(--bg-elevated);color:var(--text-primary)}
+.qts-cat-tab--active{background:var(--spire-accent);color:#fff;font-weight:600}
+.qts-cat-tab:focus-visible{outline:2px solid var(--spire-accent);outline-offset:2px}
+.qts-cat-count{
+  font-family:var(--ff-mono);font-size:.7rem;background:rgba(0,0,0,.1);
+  border-radius:var(--radius-full);padding:1px 6px;margin-left:.35rem;
+}
+.qts-cat-tab--active .qts-cat-count{background:rgba(255,255,255,.2)}
 
-  /* Button groups */
-  .o-button-group{display:grid;gap:.75rem;margin-bottom:.75rem;}
-  .o-button-group--2col{grid-template-columns:repeat(2,1fr);}
-  @media(max-width:600px){.o-button-group--2col{grid-template-columns:1fr;}}
+/* Tile grid */
+.qts-tile-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.85rem;
+}
+.qts-tile{
+  display:flex;align-items:flex-start;gap:.85rem;padding:1.15rem;
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);
+  text-decoration:none;transition:border-color var(--transition-base),transform var(--transition-base),box-shadow var(--transition-base);
+  position:relative;cursor:pointer;
+}
+.qts-tile:hover{
+  border-color:var(--spire-accent);
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-md),0 4px 16px rgba(91,79,224,.08);
+}
+.qts-tile::after{
+  content:'';position:absolute;bottom:-3px;left:10%;width:80%;height:6px;
+  background:radial-gradient(ellipse at center,rgba(232,163,61,.25),transparent 70%);
+  opacity:0;transition:opacity var(--transition-base);
+  pointer-events:none;
+}
+.qts-tile:hover::after{opacity:1}
+@media(prefers-reduced-motion:reduce){
+  .qts-tile:hover{transform:none}
+  .qts-tile:hover::after{opacity:0}
+  .qts-tile{transition:border-color .15s,box-shadow .15s}
+}
+.qts-tile:focus-visible{outline:2px solid var(--spire-accent);outline-offset:2px}
+.qts-tile__icon{
+  flex-shrink:0;width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  border-radius:var(--radius-sm);font-size:1.15rem;transition:transform var(--transition-base);
+  background:rgba(91,79,224,.08);color:var(--spire-accent);
+}
+.qts-tile:hover .qts-tile__icon{transform:translateY(-1px)}
+.qts-tile__body{flex:1;min-width:0}
+.qts-tile__name{
+  font-family:var(--ff-display);font-size:.93rem;font-weight:600;
+  color:var(--text-primary);line-height:1.3;
+}
+.qts-tile__desc{
+  font-size:.8rem;color:var(--text-secondary);line-height:1.4;margin-top:.15rem;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.qts-tile__pill{
+  display:inline-flex;align-items:center;gap:.2rem;margin-top:.45rem;
+  font-family:var(--ff-mono);font-size:.68rem;font-weight:600;
+  padding:.15rem .55rem;border-radius:var(--radius-full);
+  white-space:nowrap;font-feature-settings:"tnum";
+}
+.qts-pill--live{background:rgba(63,184,118,.12);color:var(--spire-signal)}
+.qts-pill--beta{background:rgba(232,163,61,.12);color:var(--spire-ember)}
+.qts-pill--version{background:rgba(139,147,167,.12);color:var(--text-muted)}
+.qts-pill--new{background:rgba(91,79,224,.12);color:var(--spire-accent)}
+.qts-pill--integrated{background:rgba(63,184,118,.08);color:var(--spire-signal)}
 
-  /* ═══════════════════════════════════════════════
-     PRODUCT CARD
-     ═══════════════════════════════════════════════ */
-  .c-product-card{
-    background:#fff;border:1px solid #e2e8f0;border-radius:18px;
-    padding:2rem;box-shadow:0 1px 4px rgba(15,23,42,.04);margin-bottom:1.5rem;
-    max-width:820px;margin-left:auto;margin-right:auto;
-  }
-  [data-theme='dark'] .c-product-card{background:#111827;border-color:#374151;}
-  .c-product-card__title{
-    font-family:'Space Grotesk',sans-serif;font-size:1.35rem;font-weight:700;
-    color:#0f172a;margin:0 0 .35rem;text-align:center;
-  }
-  [data-theme='dark'] .c-product-card__title{color:#f1f5f9;}
-  .c-product-card__tagline{
-    font-size:.93rem;color:#475569;margin:0 0 .5rem;line-height:1.5;text-align:center;
-  }
-  [data-theme='dark'] .c-product-card__tagline{color:#94a3b8;}
-  .c-product-card__badge-row{
-    display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.75rem;justify-content:center;
-  }
-  .c-product-card__actions{
-    display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem;justify-content:center;
-  }
-  .c-product-card__reassurance{
-    font-size:.82rem;color:#64748b;margin-top:.85rem;text-align:center;
-  }
-  [data-theme='dark'] .c-product-card__reassurance{color:#94a3b8;}
+/* ═══════════════════════════════════════════════
+   FEATURED SPOTLIGHT
+   ═══════════════════════════════════════════════ */
+.qts-featured{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:2rem;margin-bottom:3rem;
+  box-shadow:var(--shadow-sm);
+}
+.qts-featured__label{
+  font-family:var(--ff-mono);font-size:.72rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--spire-ember);margin-bottom:.5rem;
+}
+.qts-featured__title{
+  font-family:var(--ff-display);font-size:1.5rem;font-weight:700;color:var(--text-primary);
+}
+.qts-featured__desc{
+  font-size:.95rem;color:var(--text-secondary);line-height:1.6;
+  margin:.5rem 0 1rem;max-width:620px;
+}
+.qts-featured__meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.qts-featured__actions{display:flex;flex-wrap:wrap;gap:.65rem}
 
-  /* ═══════════════════════════════════════════════
-     BADGES
-     ═══════════════════════════════════════════════ */
-  .c-badge{
-    display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;
-    border-radius:999px;font-size:.72rem;font-weight:600;white-space:nowrap;
-  }
-  .c-badge--green{background:#ecfdf5;color:#065f46;}
-  .c-badge--blue{background:#eff6ff;color:#1e40af;}
-  .c-badge--slate{background:#f1f5f9;color:#334155;}
-  .c-badge--purple{background:#f5f3ff;color:#5b21b6;}
-  [data-theme='dark'] .c-badge--green{background:#064e3b;color:#a7f3d0;}
-  [data-theme='dark'] .c-badge--blue{background:#1e3a5f;color:#93c5fd;}
-  [data-theme='dark'] .c-badge--slate{background:#1e293b;color:#cbd5e1;}
-  [data-theme='dark'] .c-badge--purple{background:#3b0764;color:#c4b5fd;}
+/* ═══════════════════════════════════════════════
+   DIVIDER
+   ═══════════════════════════════════════════════ */
+.qts-divider{display:flex;align-items:center;gap:1rem;margin:2.5rem 0}
+.qts-divider::before,.qts-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.qts-divider__text{font-family:var(--ff-mono);font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
 
-  /* ═══════════════════════════════════════════════
-     FEATURE LIST
-     ═══════════════════════════════════════════════ */
-  .c-feature-list{list-style:none;padding:0 0 0 .25rem;margin:.75rem 0;display:grid;gap:.5rem;}
-  .c-feature-list__item{
-    display:flex;align-items:flex-start;gap:.55rem;font-size:.88rem;
-    color:#334155;line-height:1.45;padding-left:.25rem;
-  }
-  .c-feature-list__item i{color:#2563eb;margin-top:.2rem;flex-shrink:0;}
-  [data-theme='dark'] .c-feature-list__item{color:#cbd5e1;}
-  [data-theme='dark'] .c-feature-list__item i{color:#60a5fa;}
+/* ═══════════════════════════════════════════════
+   NO RESULTS
+   ═══════════════════════════════════════════════ */
+.qts-no-results{
+  text-align:center;padding:3rem 1rem;color:var(--text-muted);
+}
+.qts-no-results i{font-size:2.5rem;display:block;margin-bottom:.75rem;opacity:.4}
+.qts-no-results p{font-size:.95rem}
+.qts-no-results strong{color:var(--text-primary)}
 
-  /* ═══════════════════════════════════════════════
-     PROOF GALLERY
-     ═══════════════════════════════════════════════ */
-  .c-proof-gallery{margin:1.25rem 0;}
-  .c-proof-gallery__header{margin-bottom:.85rem;text-align:center;}
-  .c-proof-gallery__title{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;margin:0 0 .25rem;}
-  .c-proof-gallery__subtitle{font-size:.84rem;color:#64748b;margin:0;}
-  [data-theme='dark'] .c-proof-gallery__subtitle{color:#94a3b8;}
-  .c-proof-gallery__highlights{margin-top:.6rem;justify-content:center;}
-  .c-proof-gallery__grid{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.75rem;
-  }
-  .c-proof-gallery__item{
-    position:relative;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;
-    background:#fff;transition:transform .2s,box-shadow .2s;margin:0;
-  }
-  [data-theme='dark'] .c-proof-gallery__item{background:#0f172a;border-color:#374151;}
-  .c-proof-gallery__item:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,23,42,.1);}
-  .c-proof-gallery__item img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;}
-  .c-proof-gallery__item figcaption{padding:.55rem .7rem;font-size:.78rem;line-height:1.35;color:#475569;}
-  [data-theme='dark'] .c-proof-gallery__item figcaption{color:#94a3b8;}
-  .c-proof-gallery__item figcaption strong{display:block;color:#0f172a;font-size:.84rem;margin-bottom:.15rem;}
-  [data-theme='dark'] .c-proof-gallery__item figcaption strong{color:#e2e8f0;}
-  .c-proof-gallery__expand{
-    position:absolute;top:.4rem;right:.4rem;width:30px;height:30px;border-radius:8px;
-    border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;
-    cursor:pointer;display:flex;align-items:center;justify-content:center;
-    font-size:.75rem;z-index:2;transition:all .2s;
-  }
-  .c-proof-gallery__expand:hover{background:rgba(0,0,0,.65);}
+/* ═══════════════════════════════════════════════
+   COMMAND PALETTE
+   ═══════════════════════════════════════════════ */
+.qts-palette-overlay{
+  position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;
+  padding-top:15vh;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);
+}
+.qts-palette-overlay--open{display:flex}
+.qts-palette{
+  background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  width:95%;max-width:560px;box-shadow:var(--shadow-lg);
+  overflow:hidden;
+}
+.qts-palette__input{
+  width:100%;padding:1rem 1.25rem;font-family:var(--ff-body);font-size:1rem;
+  border:none;border-bottom:1px solid var(--border);outline:none;
+  background:transparent;color:var(--text-primary);
+}
+.qts-palette__input::placeholder{color:var(--text-muted)}
+.qts-palette__results{max-height:340px;overflow-y:auto;padding:.35rem}
+.qts-palette__result{
+  display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem;
+  border-radius:var(--radius-sm);cursor:pointer;font-size:.88rem;
+  color:var(--text-secondary);transition:all var(--transition-fast);
+}
+.qts-palette__result:hover,.qts-palette__result--active{
+  background:rgba(91,79,224,.08);color:var(--spire-accent);
+}
+.qts-palette__result i{width:18px;text-align:center;flex-shrink:0}
+.qts-palette__result-name{font-weight:500;color:var(--text-primary)}
+.qts-palette__result-category{font-size:.7rem;color:var(--text-muted);margin-left:auto;font-family:var(--ff-mono)}
+.qts-palette__empty{padding:2rem;text-align:center;color:var(--text-muted);font-size:.9rem}
 
-  /* ═══════════════════════════════════════════════
-     UPDATE BANNER
-     ═══════════════════════════════════════════════ */
-  .c-update-banner{
-    display:flex;align-items:center;gap:.75rem;background:linear-gradient(135deg,#fef3c7,#fde68a);
-    border:2px solid #f59e0b;border-radius:10px;padding:.85rem 1.15rem;margin-bottom:1rem;
-    font-size:.88rem;color:#78350f;box-shadow:0 2px 12px rgba(245,158,11,.14);
-    max-width:620px;margin-left:auto;margin-right:auto;
-  }
-  .c-update-banner i{color:#d97706;font-size:1.1rem;}
-  .c-update-badge{display:inline-block;background:#dc2626;color:#fff;font-size:.68rem;font-weight:800;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px;margin-right:2px;}
-  .c-update-banner__link{color:#92400e;font-weight:600;text-decoration:none;white-space:nowrap;}
-  .c-update-banner__link:hover{text-decoration:underline;}
-  [data-theme='dark'] .c-update-banner{background:linear-gradient(135deg,rgba(120,53,15,.45),rgba(146,64,14,.3));border-color:rgba(245,158,11,.5);color:#fde68a;box-shadow:0 2px 12px rgba(245,158,11,.08);}
-  [data-theme='dark'] .c-update-banner i{color:#fbbf24;}
-  [data-theme='dark'] .c-update-banner__link{color:#fbbf24;}
+/* ═══════════════════════════════════════════════
+   AD UNITS — collapse when empty
+   ═══════════════════════════════════════════════ */
+.ad-unit-wrapper{margin:1.75rem auto;text-align:center;max-width:780px}
+.ad-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.3rem}
+.ad-unit-wrapper:has(ins.adsbygoogle[data-ad-status="unfilled"]),
+.ad-unit-wrapper:has(.js-adsbygoogle:empty){display:none}
+/* Always hide if no ad loaded (graceful collapse) */
+.ad-unit-wrapper ins.adsbygoogle:empty + .ad-label,
+.ad-unit-wrapper:has(> ins:only-child:empty){display:none}
+.ad-unit-wrapper:empty{display:none}
 
-  /* ═══════════════════════════════════════════════
-     PORTFOLIO PANEL
-     ═══════════════════════════════════════════════ */
-  .c-portfolio-panel{
-    background:#fff;border:1px solid #e2e8f0;border-radius:18px;
-    padding:2rem;box-shadow:0 1px 4px rgba(15,23,42,.04);margin-bottom:1.5rem;
-    max-width:820px;margin-left:auto;margin-right:auto;text-align:center;
-  }
-  .c-portfolio-panel__actions{
-    display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;margin-top:.5rem;
-  }
-  .c-portfolio-panel__actions .c-btn{flex:0 1 auto;min-width:200px;}
-  [data-theme='dark'] .c-portfolio-panel{background:#111827;border-color:#374151;}
+/* ═══════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════ */
+.qts-footer{
+  text-align:center;padding:2.5rem 1.5rem;border-top:1px solid var(--border);
+  background:var(--bg-surface);margin-top:auto;font-size:.84rem;
+  color:var(--text-secondary);line-height:1.7;flex-shrink:0;
+}
+.qts-footer__about{max-width:560px;margin:0 auto 1rem;text-align:center}
+.qts-footer__text{text-align:center;margin:.5rem auto}
+.qts-footer__links{display:flex;flex-wrap:wrap;justify-content:center;gap:.3rem;margin-top:.5rem}
+.qts-footer__link{color:var(--spire-accent);text-decoration:none;font-weight:500}
+.qts-footer__link:hover{text-decoration:underline}
+.qts-footer__sep{opacity:.4}
+.qts-footer__bmc{margin:1rem 0;display:flex;justify-content:center}
 
-  /* ═══════════════════════════════════════════════
-     FEATURED TOOLS GRID
-     ═══════════════════════════════════════════════ */
-  .c-featured-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;margin-top:.75rem;}
-  .c-featured-tool{
-    display:flex;flex-direction:column;gap:.4rem;align-items:flex-start;padding:1rem;
-    border-radius:12px;border:1px solid #dbe3ef;
-    background:linear-gradient(135deg,#fff 0%,#f8fbff 100%);
-    text-decoration:none;color:#1e293b;transition:transform .2s,box-shadow .2s,border-color .2s;
-  }
-  .c-featured-tool:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(30,58,138,.1);border-color:#93c5fd;}
-  .c-featured-tool__header{display:flex;align-items:center;gap:.5rem;min-width:0;}
-  .c-featured-tool i{font-size:1.05rem;color:#2563eb;flex:0 0 auto;}
-  .c-featured-tool__title{font-weight:700;font-size:.93rem;line-height:1.2;}
-  .c-featured-tool__desc{font-size:.82rem;line-height:1.4;color:#475569;}
-  [data-theme='dark'] .c-featured-tool{background:linear-gradient(135deg,#0f172a 0%,#111827 100%);border-color:#334155;color:#e5e7eb;}
-  [data-theme='dark'] .c-featured-tool__desc{color:#cbd5e1;}
-  [data-theme='dark'] .c-featured-tool i{color:#93c5fd;}
+/* ═══════════════════════════════════════════════
+   BACK TO TOP
+   ═══════════════════════════════════════════════ */
+#back-to-top{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:100;
+  width:44px;height:44px;border-radius:var(--radius-full);
+  border:1.5px solid var(--border);background:var(--bg-surface);
+  color:var(--text-secondary);cursor:pointer;display:flex;
+  align-items:center;justify-content:center;
+  box-shadow:var(--shadow-sm);transition:all var(--transition-fast);
+  opacity:0;transform:translateY(10px);pointer-events:none;
+}
+#back-to-top--visible{opacity:1;transform:translateY(0);pointer-events:auto}
+#back-to-top:hover{background:var(--bg-elevated);border-color:var(--spire-accent);color:var(--spire-accent);transform:translateY(-2px)}
+#back-to-top:focus-visible{outline:2px solid var(--spire-accent);outline-offset:2px}
+.back-to-top__ring{position:absolute;width:36px;height:36px}
+.back-to-top__ring-base{fill:none;stroke:var(--border);stroke-width:1.5}
+.back-to-top__ring-progress{fill:none;stroke:var(--spire-accent);stroke-width:1.5;stroke-linecap:round;transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset .2s}
+.back-to-top__arrow{font-size:.85rem;position:relative;z-index:1}
 
-  /* ═══════════════════════════════════════════════
-     MODAL
-     ═══════════════════════════════════════════════ */
-  .c-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:1000;padding:1rem;backdrop-filter:blur(4px);}
-  .c-modal.is-open{display:flex;}
-  .c-modal__content{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:0;box-shadow:0 24px 48px rgba(0,0,0,.18);border:1px solid #e5e7eb;max-height:90vh;max-height:90dvh;display:flex;flex-direction:column;overflow:visible;}
-  [data-theme='dark'] .c-modal__content{background:#111827;border-color:#374151;color:#e5e7eb;}
-  .c-modal__header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid #e5e7eb;flex-shrink:0;}
-  [data-theme='dark'] .c-modal__header{border-bottom-color:#374151;}
-  .c-modal__close{border:1px solid #e5e7eb;background:#f9fafb;border-radius:999px;width:36px;height:36px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
-  .c-modal__close:hover{background:#f1f5f9;border-color:#cbd5e1;}
-  [data-theme='dark'] .c-modal__close{border-color:#374151;background:#1f2937;color:#d1d5db;}
-  [data-theme='dark'] .c-modal__close:hover{background:#374151;border-color:#4b5563;}
-
-  /* ═══════════════════════════════════════════════
-     AD UNITS
-     ═══════════════════════════════════════════════ */
-  .ad-unit-wrapper{margin:1.75rem auto;text-align:center;max-width:780px;}
-  .ad-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:.3rem;}
-
-  /* ═══════════════════════════════════════════════
-     SMARTCREEN INFO
-     ═══════════════════════════════════════════════ */
-  .c-smartscreen-info{margin-top:.75rem;font-size:.82rem;color:#64748b;text-align:center;max-width:520px;margin-left:auto;margin-right:auto;}
-  .c-smartscreen-info summary{cursor:pointer;font-weight:500;color:#2563eb;}
-  .c-smartscreen-info__body{margin-top:.5rem;padding:.7rem;background:#f8fafc;border-radius:8px;text-align:left;}
-  [data-theme='dark'] .c-smartscreen-info__body{background:#1e293b;}
-
-  /* ═══════════════════════════════════════════════
-     PORTFOLIO TABS
-     ═══════════════════════════════════════════════ */
-  .c-portfolio-tabs{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:1.25rem;justify-content:center;}
-  .c-portfolio-tab-btn{border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:10px;padding:.5rem 1rem;}
-  [data-theme='dark'] .c-portfolio-tab-btn{background:#111827;border-color:#374151;color:#94a3b8;}
-  .c-portfolio-tab-panel{display:none;}
-  .c-portfolio-tab-panel.active{display:block;animation:fadeIn .3s ease;}
-
-  /* ═══════════════════════════════════════════════
-     VIDEO
-     ═══════════════════════════════════════════════ */
-  .c-video-wrapper{position:relative;width:100%;max-width:840px;margin:2rem auto;aspect-ratio:16/9;}
-  .c-video-wrapper iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
-
-  /* ═══════════════════════════════════════════════
-     FOOTER
-     ═══════════════════════════════════════════════ */
-  .c-footer{
-    text-align:center;padding:2.5rem 1.5rem;border-top:1px solid rgba(0,0,0,.06);
-    background:#fff;margin-top:2rem;font-size:.84rem;color:#64748b;line-height:1.7;flex-shrink:0;
-  }
-  [data-theme='dark'] .c-footer{background:#0f1112;border-color:#1e293b;color:#94a3b8;}
-  .c-footer__about{max-width:560px;margin:0 auto 1rem;text-align:center;}
-  .c-footer__text{text-align:center;margin:.5rem auto;}
-  .c-footer__links{display:flex;flex-wrap:wrap;justify-content:center;gap:.3rem;margin-top:.5rem;}
-  .c-footer__link{color:#2563eb;text-decoration:none;font-weight:500;}
-  .c-footer__link:hover{text-decoration:underline;}
-  [data-theme='dark'] .c-footer__link{color:#60a5fa;}
-  .c-footer__sep{opacity:.4;}
-  .c-footer__bmc{margin:1rem 0;display:flex;justify-content:center;}
-
-  /* ═══════════════════════════════════════════════
-     RESPONSIVE
-     ═══════════════════════════════════════════════ */
-  @media(max-width:768px){
-    .c-header{padding:2.5rem 1rem 2rem;}
-    .hero-stats{gap:.65rem;}
-    .hero-stat{padding:.7rem 1rem;min-width:80px;}
-    .c-product-card,.c-section-panel,.c-portfolio-panel{padding:1.25rem;}
-    .c-nav{gap:.2rem;padding:.25rem;}
-    .c-nav-btn{padding:.45rem .6rem;font-size:.78rem;}
-    .c-portfolio-tabs{gap:.2rem;}
-    .c-portfolio-tab-btn{padding:.4rem .7rem;font-size:.78rem;}
-    .c-proof-gallery__grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
-  }
-
-  .c-skip-link{position:absolute;top:-100%;left:1rem;z-index:9999;padding:.75rem 1.25rem;background:#2563eb;color:#fff;font-weight:600;font-size:.9rem;border-radius:0 0 8px 8px;text-decoration:none;transition:top .2s;}
-  .c-skip-link:focus{top:0;}
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
+@media(max-width:768px){
+  .qts-tile-grid{grid-template-columns:1fr}
+  .qts-hero{padding:2.5rem 1rem 2rem;margin:1rem .75rem 1.5rem;border-radius:var(--radius-lg)}
+  .qts-hero__stats{gap:.5rem}
+  .qts-hero-stat{padding:.65rem .85rem;min-width:75px}
+  .qts-nav__search kbd{display:none}
+  .qts-nav__search span{display:none}
+  .qts-featured{padding:1.25rem}
+  .qts-palette{max-width:100%;margin:0 .5rem;border-radius:var(--radius-md)}
+  .qts-palette-overlay{padding-top:2rem;align-items:flex-start}
+  .qts-cat-tab{padding:.4rem .8rem;font-size:.78rem}
+}
+@media(max-width:480px){
+  .qts-nav__inner{flex-wrap:wrap;min-height:auto;padding:.5rem 0}
+  .qts-nav__actions{width:100%;justify-content:space-between}
+  .qts-tile-grid{grid-template-columns:1fr}
+  .qts-hero__ctas{flex-direction:column;align-items:center}
+  .qts-hero__ctas .qts-btn{width:100%}
+  .qts-featured__actions{flex-direction:column}
+  .qts-featured__actions .qts-btn{width:100%}
+}
 </style>
 
 <link rel="stylesheet" href="css/styles.css"/>
@@ -475,32 +516,10 @@
 <link rel="stylesheet" href="css/image-lightbox.css"/>
 <link rel="preload" href="css/radar.css" as="style" onload="this.onload=null;this.rel='stylesheet'"/>
 <noscript><link rel="stylesheet" href="css/radar.css"/></noscript>
-<meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM"/>
-
-<link rel="icon" href="/favicon.ico" type="image/x-icon"/>
-<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"/>
-<link rel="apple-touch-icon" sizes="192x192" href="/icons/favicon-192x192.png"/>
-<link rel="manifest" href="/site.webmanifest"/>
-
-<meta property="og:title" content="Quiz The Spire — Live Multiplayer Quizzes"/>
-<meta property="og:description" content="Quiz The Spire v10.7.1 — Create and play real-time multiplayer quizzes with AI-powered themes."/>
-<meta property="og:type" content="website"/>
-<meta property="og:url" content="https://quizthespire.com/"/>
-<meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg"/>
-<meta property="og:image:width" content="1920"/>
-<meta property="og:image:height" content="1080"/>
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Quiz The Spire v10.7.1 — Live Multiplayer Quizzes"/>
-<meta name="twitter:description" content="Quiz The Spire v10.7.1 — Create and play real-time multiplayer quizzes with AI-powered themes."/>
-<meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg"/>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Quiz The Spire","applicationCategory":"MultimediaApplication","operatingSystem":"Windows, Linux, macOS, Android","softwareVersion":"10.7.0","downloadUrl":"https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest","url":"https://quizthespire.com/","description":"Quiz The Spire v10.7.1 — Live multiplayer quizzes with AI-powered themes, real-time leaderboards, and community content."}</script>
-<meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme:dark)"/>
-<meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme:light)"/>
-<link rel="canonical" href="https://quizthespire.com/"/>
 </head>
-<body class="theme-blue">
+<body>
 
-<a href="#main-content" class="c-skip-link">Skip to main content</a>
+<a href="#main-content" class="qts-skip-link">Skip to main content</a>
 
 <!-- Background -->
 <div class="spire-background">
@@ -514,501 +533,188 @@
   </picture>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     HEADER
-     ═══════════════════════════════════════════ -->
-<header class="c-header">
-  <h1>Lukas Bohez</h1>
-  <p class="c-header__subtitle">Full-Stack Developer & Open-Source Builder — Python, TypeScript, AI/LLM, Next.js, Flutter, Apache. Building real-time platforms, cross-platform apps, and AI-powered developer tooling.</p>
-
-  <div class="hero-stats">
-    <div class="hero-stat">
-      <span class="hero-stat-number" data-target="7" data-suffix="+">0</span>
-      <span class="hero-stat-label">Projects</span>
-    </div>
-    <div class="hero-stat">
-      <span class="hero-stat-number" data-target="5" data-suffix="+">0</span>
-      <span class="hero-stat-label">Languages</span>
-    </div>
-    <div class="hero-stat">
-      <span class="hero-stat-number" data-target="4" data-suffix="+">0</span>
-      <span class="hero-stat-label">Frameworks</span>
-    </div>
-    <div class="hero-stat">
-      <span class="hero-stat-number" data-start-year="2024">2+</span>
-      <span class="hero-stat-label">Years Exp</span>
-    </div>
-    <div class="hero-stat">
-      <span class="hero-stat-number">950+</span>
-      <span class="hero-stat-label">Downloads</span>
-    </div>
-    <div class="hero-stat">
-      <span class="hero-stat-number">95+</span>
-      <span class="hero-stat-label">Countries</span>
-    </div>
-  </div>
-
-  <div class="c-header__trust">
-    <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> GitHub</a>
-    <a href="https://www.linkedin.com/in/lukas-bohez-3ba566271/" target="_blank" rel="noopener"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>
-    <a href="mailto:lukasbohez@gmail.com"><i class="fa-solid fa-envelope"></i> Email</a>
-  </div>
-</header>
-
-<!-- ═══════════════════════════════════════════
-     MAIN
-     ═══════════════════════════════════════════ -->
-<main id="main-content" class="o-container">
-
-  <!-- NAV -->
-  <nav class="c-nav" aria-label="Site sections">
-    <button class="c-nav-btn active" data-section="portfolio"><i class="fa-solid fa-briefcase"></i> Portfolio</button>
-    <button class="c-nav-btn" data-section="games"><i class="fa-solid fa-gamepad"></i> Quiz & Games</button>
-    <button class="c-nav-btn" data-section="tools"><i class="fa-solid fa-toolbox"></i> Tools & Content</button>
-    <button class="c-nav-btn" data-section="support"><i class="fa-solid fa-life-ring"></i> Support</button>
-    <div class="c-nav-actions">
-      <button id="theme-toggle" class="c-theme-nav-btn" type="button" aria-label="Toggle dark mode">
+<!-- ═══════════════════════════════════ NAV ═══════════════════════════════════ -->
+<nav class="qts-nav" aria-label="Site navigation">
+  <div class="qts-nav__inner">
+    <a href="#hero" class="qts-wordmark" aria-label="Quiz The Spire — back to top">
+      <span class="qts-wordmark__icon"><i class="fa-solid fa-crown"></i></span>
+      <span>Quiz The Spire</span>
+    </a>
+    <div class="qts-nav__actions">
+      <button class="qts-nav__search" id="cmdPaletteTrigger" aria-label="Search tools and pages (⌘K)">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>Search</span>
+        <kbd>⌘K</kbd>
+      </button>
+      <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" class="qts-nav__link" aria-label="GitHub">
+        <i class="fa-brands fa-github"></i>
+      </a>
+      <a href="https://www.linkedin.com/in/lukas-bohez-3ba566271/" target="_blank" rel="noopener" class="qts-nav__link" aria-label="LinkedIn">
+        <i class="fa-brands fa-linkedin"></i>
+      </a>
+      <a href="mailto:lukasbohez@gmail.com" class="qts-nav__link" aria-label="Email">
+        <i class="fa-solid fa-envelope"></i>
+      </a>
+      <button id="theme-toggle" class="qts-theme-btn" type="button" aria-label="Toggle dark mode">
         <i class="fa-solid fa-circle-half-stroke"></i> <span>Theme</span>
       </button>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <!-- ═══════════════ PORTFOLIO ═══════════════ -->
-  <div id="portfolio-section" class="section active">
-
-    <div class="c-portfolio-tabs" role="tablist" aria-label="Portfolio subsections">
-      <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="convert"><i class="fa-solid fa-download"></i> Convert</button>
-      <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="releases"><i class="fa-solid fa-flag"></i> Releases</button>
-      <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="bitplayer"><i class="fa-solid fa-play"></i> BitPlayer</button>
-      <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="lofi"><i class="fa-solid fa-headphones"></i> Lofi</button>
-      <button type="button" class="c-nav-btn c-portfolio-tab-btn active" data-tab="nextjs"><i class="fa-brands fa-react"></i> Next.js Portfolio</button>
-      <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="midi"><i class="fa-solid fa-music"></i> MIDIComposer</button>
+<!-- ═══════════════════════════════════ HERO ═══════════════════════════════════ -->
+<main id="main-content">
+<section id="hero" class="qts-hero">
+  <h1>Lukas Bohez</h1>
+  <p class="qts-hero__subtitle">Full-stack developer building quiz platforms, creator tools, and open-source apps — shipped to 95+ countries.</p>
+  <div class="qts-hero__stats hero-stats">
+    <div class="qts-hero-stat hero-stat">
+      <span class="qts-hero-stat__number hero-stat-number" data-target="15" data-suffix="+">15+</span>
+      <span class="qts-hero-stat__label hero-stat-label">Projects</span>
     </div>
-
-    <!-- Convert -->
-    <div class="c-portfolio-tab-panel" data-tab-content="convert">
-      <section class="c-product-card">
-        <div class="c-product-card__badge-row">
-          <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
-          <span class="c-badge c-badge--blue"><i class="fa-solid fa-scale-balanced"></i> GPLv3</span>
-          <span class="c-badge c-badge--blue"><i class="fa-solid fa-puzzle-piece"></i> Flutter / Dart</span>
-          <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
-          <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
-          <span class="c-badge c-badge--slate"><i class="fa-brands fa-linux"></i> Linux</span>
-          <span class="c-badge c-badge--slate"><i class="fa-brands fa-apple"></i> macOS</span>
-        </div>
-        <h2 class="c-product-card__title">Convert The Spire Reborn</h2>
-        <p class="c-product-card__tagline">The Cleanest Way to Download YouTube Playlists.</p>
-        <p class="c-product-card__tagline">Free, open-source. Download individual videos or massive playlists in true 4K/8K. Built by <strong>Lukas Bohez</strong>. 950+ downloads across 95+ countries.</p>
-
-        <div class="c-update-banner">
-          <i class="fa-solid fa-rocket"></i>
-          <span><span class="c-update-badge" data-version>v10.8.2</span> Improved crash resilience keeps long-running sessions stable. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest" target="_blank" rel="noopener noreferrer" data-release-link class="c-update-banner__link">View changelog &rarr;</a></span>
-        </div>
-
-        <section class="c-proof-gallery">
-          <div class="c-proof-gallery__header">
-            <h3 class="c-proof-gallery__title">See it in action</h3>
-            <p class="c-proof-gallery__subtitle">Live UI captures across search, playlists, settings, and media playback.</p>
-            <div class="c-proof-gallery__highlights c-product-card__badge-row">
-              <span class="c-badge c-badge--blue">100+ playlists</span>
-              <span class="c-badge c-badge--green">4K / 8K</span>
-              <span class="c-badge c-badge--purple">Full customization</span>
-              <span class="c-badge c-badge--slate">Easy to use</span>
-            </div>
-          </div>
-          <div class="c-proof-gallery__grid">
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open proof screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <img src="imagesPortfolio/additionalProof100+videos.png" alt="100+ video downloads" loading="lazy" decoding="async" data-zoomable/>
-              <figcaption><strong>100+ video proof</strong><span>Real screenshot of the playlist download workflow.</span></figcaption>
-            </figure>
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open search screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <picture>
-                <source type="image/webp" srcset="images-app/fullSearchFunctionality-480.webp 480w, images-app/fullSearchFunctionality-800.webp 800w, images-app/fullSearchFunctionality-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"/>
-                <img src="images-app/fullSearchFunctionality-1200.webp" alt="Search view" loading="lazy" decoding="async" data-zoomable width="1200" height="675"/>
-              </picture>
-              <figcaption><strong>Search + queue</strong><span>Find content fast and add items in one click.</span></figcaption>
-            </figure>
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open playlist screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <picture>
-                <source type="image/webp" srcset="images-app/DownloadFullPlaylists-480.webp 480w, images-app/DownloadFullPlaylists-800.webp 800w, images-app/DownloadFullPlaylists-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"/>
-                <img src="images-app/DownloadFullPlaylists-1200.webp" alt="Playlist manager" loading="lazy" decoding="async" data-zoomable width="1200" height="675"/>
-              </picture>
-              <figcaption><strong>Full playlist downloads</strong><span>Queue and grab 100+ videos without babysitting.</span></figcaption>
-            </figure>
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open downloads screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <picture>
-                <source type="image/webp" srcset="images-app/downloadNewSongsEassily-480.webp 480w, images-app/downloadNewSongsEassily-800.webp 800w, images-app/downloadNewSongsEassily-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"/>
-                <img src="images-app/downloadNewSongsEassily-1200.webp" alt="Quick downloads" loading="lazy" decoding="async" data-zoomable width="1200" height="675"/>
-              </picture>
-              <figcaption><strong>Quick song downloads</strong><span>Add fresh tracks fast, keep progress organized.</span></figcaption>
-            </figure>
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open settings screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <picture>
-                <source type="image/webp" srcset="images-app/LotsOfSettingsForCustomization-480.webp 480w, images-app/LotsOfSettingsForCustomization-800.webp 800w, images-app/LotsOfSettingsForCustomization-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"/>
-                <img src="images-app/LotsOfSettingsForCustomization-1200.webp" alt="Settings page" loading="lazy" decoding="async" data-zoomable width="1200" height="675"/>
-              </picture>
-              <figcaption><strong>Full customization</strong><span>Fine-tune folders, formats, workers, and output.</span></figcaption>
-            </figure>
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open guide screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <picture>
-                <source type="image/webp" srcset="images-app/fullGuideWithInfo-480.webp 480w, images-app/fullGuideWithInfo-800.webp 800w, images-app/fullGuideWithInfo-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"/>
-                <img src="images-app/fullGuideWithInfo-1200.webp" alt="Built-in guide" data-zoomable decoding="async" loading="lazy" width="1200" height="675"/>
-              </picture>
-              <figcaption><strong>Built-in guide</strong><span>Learn every feature with clear in-app documentation.</span></figcaption>
-            </figure>
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open media player screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <picture>
-                <source type="image/webp" srcset="images-app/mediaPlayer-480.webp 480w, images-app/mediaPlayer-800.webp 800w, images-app/mediaPlayer-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"/>
-                <img src="images-app/mediaPlayer-1200.webp" alt="Built-in media player" data-zoomable decoding="async" loading="eager" fetchpriority="high" width="1200" height="675"/>
-              </picture>
-              <figcaption><strong>Integrated media player</strong><span>Preview and manage downloads without switching tools.</span></figcaption>
-            </figure>
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open stats screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <picture>
-                <source type="image/webp" srcset="images-app/stats-480.webp 480w, images-app/stats-800.webp 800w, images-app/stats-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"/>
-                <img src="images-app/stats-1200.webp" alt="Usage stats" loading="lazy" decoding="async" data-zoomable width="1200" height="675"/>
-              </picture>
-              <figcaption><strong>Usage stats</strong><span>Track converted playlists and total videos processed.</span></figcaption>
-            </figure>
-            <figure class="c-proof-gallery__item">
-              <button type="button" class="c-proof-gallery__expand" aria-label="Open Torrent screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
-              <picture>
-                <source type="image/webp" srcset="images-app/fullTorrentingFunctionality-480.webp 480w, images-app/fullTorrentingFunctionality-800.webp 800w, images-app/fullTorrentingFunctionality-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"/>
-                <img src="images-app/fullTorrentingFunctionality-1200.webp" alt="Torrent workflow" loading="lazy" decoding="async" data-zoomable width="1200" height="675"/>
-              </picture>
-              <figcaption><strong>Torrent workflow</strong><span>Manage torrent tasks with legal-use guidance.</span></figcaption>
-            </figure>
-          </div>
-        </section>
-
-        <ul class="c-feature-list">
-          <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> <span data-version>v10.8.2</span>: Improved crash resilience for long-running sessions</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> <span data-version>v10.8.2</span>: BitPlayer fully integrated across desktop and mobile</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> Unified Convert + BitPlayer workflow on desktop and mobile</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> Published SHA256 checksums for binary verification</li>
-        </ul>
-        <ul class="c-feature-list">
-          <li class="c-feature-list__item"><i class="fa-solid fa-globe"></i> Built-in browser with smart URL handling & ad blocking</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-download"></i> Download from 1,800+ sites via yt-dlp — 1080p, 320 kbps</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-shuffle"></i> Convert between 27+ formats — docs, images, archives & media</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-tv"></i> DLNA / UPnP casting to any TV, speaker, or receiver</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-play"></i> Built-in media player with playlists, queue & library</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-lock"></i> 100% open-source under GPLv3 — files never leave your machine</li>
-        </ul>
-        <div class="c-product-card__actions">
-          <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip" data-download-win target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-windows"></i> Windows</a>
-          <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk" data-download-android target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-android"></i> Android</a>
-          <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip" data-download-linux target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-linux"></i> Linux</a>
-          <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip" data-download-mac target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-apple"></i> macOS</a>
-        </div>
-        <details class="c-smartscreen-info">
-          <summary><i class="fa-solid fa-shield-halved"></i> Why does Windows show a warning?</summary>
-          <div class="c-smartscreen-info__body">
-            <p>Windows SmartScreen warns about unsigned software — normal for indie apps not code-signed (~$200/year). The app is <strong>100% open-source</strong> under GPLv3.</p>
-            <p><strong>To run:</strong> click <em>"More info"</em> → <em>"Run anyway."</em></p>
-          </div>
-        </details>
-        <div class="c-product-card__actions">
-          <a href="/pages/conversion/" class="c-btn c-btn--outline"><i class="fa-solid fa-arrow-right"></i> Learn more</a>
-          <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-github"></i> View source</a>
-          <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt" data-download-sha target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-solid fa-fingerprint"></i> Verify checksums</a>
-          <a href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-solid fa-hand-holding-heart"></i> Supporters</a>
-          <a href="/LukasBohez/projects/" class="c-btn c-btn--outline"><i class="fa-solid fa-star"></i> Project pictures</a>
-          <a href="/LukasBohez/" class="c-btn c-btn--outline"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
-          <a href="/pages/support/" class="c-btn c-btn--outline"><i class="fa-solid fa-headset"></i> Support chat</a>
-        </div>
-        <div id="conversionStatus" style="display:none;" aria-live="polite"><p id="statusText"></p></div>
-      </section>
+    <div class="qts-hero-stat hero-stat">
+      <span class="qts-hero-stat__number hero-stat-number" data-target="950" data-suffix="+">950+</span>
+      <span class="qts-hero-stat__label hero-stat-label">Downloads</span>
     </div>
-
-    <!-- Releases -->
-    <div class="c-portfolio-tab-panel" data-tab-content="releases">
-      <section class="c-product-card">
-        <div class="c-product-card__badge-row">
-          <span class="c-badge c-badge--blue"><i class="fa-solid fa-flag"></i> Release Notes</span>
-          <span class="c-badge c-badge--green"><i class="fa-solid fa-box"></i> Latest release</span>
-          <span class="c-badge c-badge--slate"><i class="fa-solid fa-calendar-days"></i> April 23, 2026</span>
-        </div>
-        <h2 class="c-product-card__title">Improved crash resilience — latest release</h2>
-        <p class="c-product-card__tagline">The app is more resilient in long-running sessions.</p>
-        <ul class="c-feature-list">
-          <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn-windows-x64.zip</a> <span style="color:#64748b;font-size:.8rem;">— 38.5 MB</span></li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn-linux-x64.zip</a> <span style="color:#64748b;font-size:.8rem;">— 25 MB</span></li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn-macOS.zip</a> <span style="color:#64748b;font-size:.8rem;">— 64 MB</span></li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn.apk</a> <span style="color:#64748b;font-size:.8rem;">— 287 MB</span></li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.aab" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn.aab</a> <span style="color:#64748b;font-size:.8rem;">— 157 MB</span></li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt" target="_blank" rel="noopener noreferrer">SHA256SUMS.txt</a> <span style="color:#64748b;font-size:.8rem;">— 543 Bytes</span></li>
-        </ul>
-        <div class="c-product-card__actions">
-          <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-github"></i> View on GitHub</a>
-          <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-solid fa-list"></i> All releases</a>
-        </div>
-      </section>
+    <div class="qts-hero-stat hero-stat">
+      <span class="qts-hero-stat__number hero-stat-number" data-target="95" data-suffix="+">95+</span>
+      <span class="qts-hero-stat__label hero-stat-label">Countries</span>
     </div>
-
-    <!-- BitPlayer -->
-    <div class="c-portfolio-tab-panel" data-tab-content="bitplayer">
-      <section class="c-product-card">
-        <div class="c-product-card__badge-row">
-          <span class="c-badge c-badge--green"><i class="fa-solid fa-circle-check"></i> Integrated</span>
-          <span class="c-badge c-badge--blue"><i class="fa-solid fa-box-open"></i> <span data-version>v10.8.2</span></span>
-          <span class="c-badge c-badge--slate"><i class="fa-brands fa-flutter"></i> Flutter / Dart</span>
-          <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
-          <span class="c-badge c-badge--slate"><i class="fa-brands fa-android"></i> Android</span>
-        </div>
-        <h2 class="c-product-card__title">BitPlayer: Torrent & Media</h2>
-        <p class="c-product-card__tagline">Now part of Convert The Spire Reborn <span data-version>v10.8.2</span>.</p>
-        <div class="c-update-banner">
-          <i class="fa-solid fa-circle-check"></i>
-          <span><span class="c-update-badge">Merged</span> BitPlayer is fully integrated into Convert The Spire Reborn <span data-version>v10.8.2</span> with improved crash resilience, background playback, and media library features. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest" target="_blank" rel="noopener noreferrer" data-release-link class="c-update-banner__link">View release &rarr;</a></span>
-        </div>
-        <ul class="c-feature-list">
-          <li class="c-feature-list__item"><i class="fa-solid fa-link"></i> Integrated into Convert as the torrent + media hub</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-headphones"></i> Advanced background playback for podcasts, lectures, and music</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-bluetooth-b"></i> Bluetooth media controls for headset and car playback</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-folder-open"></i> Fast local folder loading for large media collections</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-globe"></i> Built-in browser, bookmarks, history, incognito mode, torrent manager</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-people-group"></i> Testing group continues for BitPlayer feedback</li>
-        </ul>
-        <div class="c-product-card__actions">
-          <a href="https://play.google.com/store/apps/details?id=com.torrentspire.ai" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-google-play"></i> Get on Google Play</a>
-          <a href="/pages/conversion/" class="c-btn c-btn--primary"><i class="fa-solid fa-arrows-rotate"></i> Open Convert page</a>
-          <a href="https://groups.google.com/g/testersvaultthespire/" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-solid fa-users"></i> Join test group</a>
-          <a href="/pages/vault/" class="c-btn c-btn--outline"><i class="fa-solid fa-circle-info"></i> BitPlayer details</a>
-        </div>
-        <p class="c-product-card__reassurance"><i class="fa-solid fa-circle-check"></i> <strong>Status:</strong> BitPlayer is part of Convert The Spire Reborn <span data-version>v10.8.2</span>.</p>
-      </section>
+    <div class="qts-hero-stat hero-stat">
+      <span class="qts-hero-stat__number hero-stat-number" data-target="4" data-suffix="+">4+</span>
+      <span class="qts-hero-stat__label hero-stat-label">Frameworks</span>
     </div>
-
-    <!-- Lofi -->
-    <div class="c-portfolio-tab-panel" data-tab-content="lofi">
-      <section class="c-product-card">
-        <div class="c-product-card__badge-row">
-          <span class="c-badge c-badge--green"><i class="fa-solid fa-headphones-simple"></i> Background music</span>
-          <span class="c-badge c-badge--blue"><i class="fa-solid fa-download"></i> Direct download</span>
-          <span class="c-badge c-badge--slate"><i class="fa-brands fa-chrome"></i> Chrome</span>
-          <span class="c-badge c-badge--slate"><i class="fa-brands fa-firefox-browser"></i> Firefox</span>
-        </div>
-        <h2 class="c-product-card__title">Lofi Extension</h2>
-        <p class="c-product-card__tagline">Ambient music controls for your browser.</p>
-        <ul class="c-feature-list">
-          <li class="c-feature-list__item"><i class="fa-solid fa-music"></i> Play relaxing lo-fi while you work</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-download"></i> Download for Chromium or install Firefox add-on</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-user-shield"></i> Privacy-first with no tracking</li>
-        </ul>
-        <div class="c-product-card__actions">
-          <a href="/pages/lofi-download/" class="c-btn c-btn--primary"><i class="fa-solid fa-download"></i> Download Extension</a>
-          <a href="https://addons.mozilla.org/nl/firefox/addon/lofi-player/" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-firefox-browser"></i> Firefox Add-on</a>
-          <a href="/downloads/LofiExtension.zip" download class="c-btn c-btn--outline"><i class="fa-brands fa-chrome"></i> Chromium ZIP</a>
-        </div>
-      </section>
-    </div>
-
-    <!-- Next.js Portfolio -->
-    <div class="c-portfolio-tab-panel active" data-tab-content="nextjs">
-      <div class="c-portfolio-panel">
-        <h2 class="c-section-title">Next.js Portfolio</h2>
-        <p class="c-section-lead">A modern, recruiter-ready developer portfolio built with Next.js, React, and TypeScript. Showcasing open-source projects, cross-platform apps, AI tools, and full-stack engineering work — all deployed and live.</p>
-        <div class="c-portfolio-panel__actions">
-          <a href="/LukasBohez/" class="c-btn c-btn--primary"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
-          <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-github"></i> GitHub</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- MIDIComposer -->
-    <div class="c-portfolio-tab-panel" data-tab-content="midi">
-      <section class="c-product-card">
-        <div class="c-product-card__badge-row">
-          <span class="c-badge c-badge--blue"><i class="fa-solid fa-music"></i> AI Music Generator</span>
-          <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Browser-only</span>
-          <span class="c-badge c-badge--slate"><i class="fa-solid fa-download"></i> MIDI export</span>
-        </div>
-        <h2 class="c-product-card__title">MIDIComposer</h2>
-        <p class="c-product-card__tagline">AI-powered MIDI music generator.</p>
-        <p class="c-product-card__tagline">Pick a scene and intensity, generate a prompt for Claude, ChatGPT, or Gemini. Paste the JSON response back to preview and download as a full multi-track MIDI file.</p>
-        <ul class="c-feature-list">
-          <li class="c-feature-list__item"><i class="fa-solid fa-wand-magic-sparkles"></i> 8 scene presets — Anime, Lo-fi, Cinematic, J-Pop, RPG, Synthwave, Lounge, Action</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-sliders"></i> 3 intensity levels per scene — from calm to epic</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-file-audio"></i> Full multi-track MIDI with melody, chords, bass, arp, and drums</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-microchip"></i> Invisible watermark proves the file was made with this tool</li>
-          <li class="c-feature-list__item"><i class="fa-regular fa-copyright"></i> Copyright metadata written into every export</li>
-          <li class="c-feature-list__item"><i class="fa-solid fa-cloud"></i> Everything runs in your browser — no server uploads</li>
-        </ul>
-        <div class="c-product-card__actions">
-          <a href="/LukasBohez/midigenerator.html" class="c-btn c-btn--primary"><i class="fa-solid fa-wand-magic-sparkles"></i> Open MIDIComposer</a>
-        </div>
-        <p class="c-product-card__reassurance"><i class="fa-solid fa-fingerprint"></i> <strong>Built by Lukas Bohez</strong> · All generated music is yours to use</p>
-      </section>
-    </div>
-
-    <!-- Video -->
-    <div class="c-video-wrapper">
-      <iframe src="https://www.youtube-nocookie.com/embed/1Pvzw1hOprQ" title="Convert The Spire demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <div class="qts-hero-stat hero-stat">
+      <span class="qts-hero-stat__number hero-stat-number" data-start-year="2024">2+</span>
+      <span class="qts-hero-stat__label hero-stat-label">Years Exp</span>
     </div>
   </div>
-
-  <!-- ═══════════════ QUIZ & GAMES ═══════════════ -->
-  <div class="section-divider"><span></span></div>
-  <div id="games-section" class="section">
-    <div class="c-section-panel">
-      <h2 class="c-section-title">Quiz & Games</h2>
-      <p class="c-section-lead">Compete in real-time multiplayer quizzes with thousands of community-created themes. Or jump into word puzzles and idle games — all free.</p>
-      <div class="o-button-group o-button-group--2col">
-        <button id="startQuizBtn" class="c-btn c-btn--bw"><span class="c-btn__content"><i class="fa-solid fa-play"></i> Start or Join Quiz</span><span class="c-btn__desc">Live multiplayer with real-time leaderboards and community themes</span></button>
-        <button id="studyQuizBtn" class="c-btn c-btn--bw" onclick="window.location.href='/pages/study/'"><span class="c-btn__content"><i class="fa-solid fa-graduation-cap"></i> Study Quiz Questions</span><span class="c-btn__desc">Practice at your own pace with community-created content</span></button>
-      </div>
-      <div class="o-button-group o-button-group--2col">
-        <button id="sentleBtn" class="c-btn c-btn--sentle" onclick="window.location.href='/pages/sentle/'"><span class="c-btn__content"><i class="fa-solid fa-spell-check"></i> SENTLE</span><span class="c-btn__desc">Daily word puzzle — guess the sentence Wordle-style</span></button>
-        <button id="kingdomQuarryBtn" class="c-btn c-btn--accent" onclick="window.location.href='idleGame/idlegame.html'"><span class="c-btn__content"><i class="fa-solid fa-industry"></i> Industrial Empire</span><span class="c-btn__desc">Browser-based idle factory game</span></button>
-      </div>
-    </div>
-
-    <!-- SpireAI -->
-    <div class="c-section-panel">
-      <h2 class="c-section-title">SpireAI — AI-Powered Quiz Creator</h2>
-      <p class="c-section-lead">Create and play real-time multiplayer quizzes. Teachers build quizzes instantly from text. Students compete on live leaderboards.</p>
-      <div style="display:flex;flex-direction:column;gap:.75rem;max-width:420px;margin:0 auto;">
-        <a href="/pages/spire-ai/" class="c-btn c-btn--primary"><i class="fa-solid fa-bolt"></i> Launch SpireAI</a>
-        <a href="/LukasBohez/" class="c-btn c-btn--outline"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
-      </div>
-    </div>
-
-    <div class="ad-unit-wrapper">
-      <p class="ad-label">Sponsored</p>
-      <ins class="adsbygoogle js-adsbygoogle" data-ad-client="ca-pub-8418485814964449" data-ad-slot="7822007431" data-ad-format="auto" data-full-width-responsive="true"></ins>
-    </div>
+  <div class="qts-hero__ctas">
+    <a href="#quick-launch" class="qts-btn qts-btn--hero-primary">
+      <i class="fa-solid fa-compass"></i> Explore the tools
+    </a>
+    <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="qts-btn qts-btn--hero-secondary">
+      <i class="fa-brands fa-github"></i> GitHub
+    </a>
   </div>
+</section>
 
-  <!-- ═══════════════ TOOLS & CONTENT ═══════════════ -->
-  <div class="section-divider"><span></span></div>
-  <div id="tools-section" class="section">
-    <div class="c-section-panel">
-      <h2 class="c-section-title">Tools & Content</h2>
-      <p class="c-section-lead">One focused workspace for creation, publishing, analytics, and app distribution.</p>
-      <div class="c-featured-tools">
-        <a href="/pages/storyCreator/" class="c-featured-tool">
-          <span class="c-featured-tool__header"><i class="fa-solid fa-feather-pointed"></i><span class="c-featured-tool__title">Story Creator</span></span>
-          <span class="c-featured-tool__desc">Create interactive stories and structure branching flows.</span>
-        </a>
-        <a href="/pages/content/" class="c-featured-tool">
-          <span class="c-featured-tool__header"><i class="fa-solid fa-book-open"></i><span class="c-featured-tool__title">Stories Library</span></span>
-          <span class="c-featured-tool__desc">Read and manage serialized stories from your content hub.</span>
-        </a>
-        <a href="/articles/articlepagenew.html" class="c-featured-tool">
-          <span class="c-featured-tool__header"><i class="fa-solid fa-newspaper"></i><span class="c-featured-tool__title">Articles</span></span>
-          <span class="c-featured-tool__desc">Browse guides and long-form article content.</span>
-        </a>
-        <a href="/figma/" class="c-featured-tool">
-          <span class="c-featured-tool__header"><i class="fa-brands fa-figma"></i><span class="c-featured-tool__title">Figma Extract All</span></span>
-          <span class="c-featured-tool__desc">Export SVGs, PNGs, text, variables — AI-ready for LLMs.</span>
-        </a>
-        <a href="/rijexamen/" class="c-featured-tool">
-          <span class="c-featured-tool__header"><i class="fa-solid fa-car-side"></i><span class="c-featured-tool__title">Rijexamen Studiegids</span></span>
-          <span class="c-featured-tool__desc">Driving exam prep for Roeselare — 20 routes, 60+ checkpoints.</span>
-        </a>
-        <a href="/LukasBohez/midigenerator.html" class="c-featured-tool">
-          <span class="c-featured-tool__header"><i class="fa-solid fa-music"></i><span class="c-featured-tool__title">MIDI Composer</span></span>
-          <span class="c-featured-tool__desc">AI-powered MIDI music generator. Pick a scene, download MIDI.</span>
-        </a>
-      </div>
-    </div>
-
-    <div class="c-section-panel">
-      <div class="o-button-group o-button-group--2col">
-        <button id="viewGraphsBtn" class="c-btn c-btn--bw" onclick="window.location.href='/pages/graphs/'"><span class="c-btn__content"><i class="fa-solid fa-chart-line"></i> View Graphs</span><span class="c-btn__desc">Visualise quiz statistics and performance</span></button>
-        <button id="manageTheSpireBtn" class="c-btn c-btn--bw" onclick="window.location.href='/pages/manage/'"><span class="c-btn__content"><i class="fa-solid fa-sliders"></i> Manage the Spire</span><span class="c-btn__desc">Admin panel for quiz themes and content</span></button>
-      </div>
-      <div class="o-button-group o-button-group--2col">
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/pages/spire-ai/'"><span class="c-btn__content"><i class="fa-solid fa-bolt"></i> Open SpireAI</span><span class="c-btn__desc">Generate and launch live multiplayer quizzes</span></button>
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/pages/conversion/'"><span class="c-btn__content"><i class="fa-solid fa-download"></i> Convert Downloads</span><span class="c-btn__desc">Get the latest Convert + BitPlayer builds</span></button>
-      </div>
-      <div class="o-button-group o-button-group--2col">
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/LukasBohez/'"><span class="c-btn__content"><i class="fa-solid fa-briefcase"></i> Open Portfolio</span><span class="c-btn__desc">Showcase projects, downloads, and highlights</span></button>
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/LukasBohez/projects/'"><span class="c-btn__content"><i class="fa-solid fa-star"></i> Projects Showcase</span><span class="c-btn__desc">SpireAI, Convert, SENTLE, Industrial Empire</span></button>
-      </div>
-      <div class="o-button-group o-button-group--2col">
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/pages/support/'"><span class="c-btn__content"><i class="fa-solid fa-headset"></i> Creator Support</span><span class="c-btn__desc">Get fast help for content and tools</span></button>
-        <button class="c-btn c-btn--bw" onclick="window.location.href='https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/'"><span class="c-btn__content"><i class="fa-solid fa-code-commit"></i> Release Notes</span><span class="c-btn__desc">Full changelog and update cadence</span></button>
-      </div>
-      <div class="o-button-group o-button-group--2col">
-        <button class="c-btn c-btn--bw" onclick="window.location.href='https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt'"><span class="c-btn__content"><i class="fa-solid fa-fingerprint"></i> SHA256 Checksums</span><span class="c-btn__desc">Verify downloads with published release hashes</span></button>
-      </div>
-    </div>
-
-    <div class="ad-unit-wrapper">
-      <p class="ad-label">Sponsored</p>
-      <ins class="adsbygoogle js-adsbygoogle" style="display:block" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-8418485814964449" data-ad-slot="6382844046"></ins>
-    </div>
+<!-- ═══════════════════════════ QUICK LAUNCH ═══════════════════════════════ -->
+<section id="quick-launch" class="qts-quick-launch qts-container">
+  <div class="qts-category-tabs" id="categoryTabs" role="tablist" aria-label="Tool categories">
+    <button class="qts-cat-tab qts-cat-tab--active" data-cat="apps" role="tab" aria-selected="true">
+      <i class="fa-solid fa-download" aria-hidden="true"></i> Apps & Downloads
+    </button>
+    <button class="qts-cat-tab" data-cat="quiz" role="tab" aria-selected="false">
+      <i class="fa-solid fa-gamepad" aria-hidden="true"></i> Quiz & Games
+    </button>
+    <button class="qts-cat-tab" data-cat="creator" role="tab" aria-selected="false">
+      <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Creator Tools
+    </button>
+    <button class="qts-cat-tab" data-cat="about" role="tab" aria-selected="false">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i> About
+    </button>
   </div>
-
-  <!-- ═══════════════ SUPPORT ═══════════════ -->
-  <div class="section-divider"><span></span></div>
-  <div id="support-section" class="section">
-    <div class="c-section-panel">
-      <h2 class="c-section-title">Support</h2>
-      <p class="c-section-lead">Get help fast and review site policies.</p>
-      <div class="o-button-group o-button-group--2col">
-        <button id="supportBtn" class="c-btn c-btn--bw" onclick="window.location.href='/pages/support/'"><span class="c-btn__content"><i class="fa-solid fa-headset"></i> Contact Support</span><span class="c-btn__desc">Get help — we reply within 24 hours</span></button>
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/pages/about/'"><span class="c-btn__content"><i class="fa-solid fa-user"></i> About Me</span><span class="c-btn__desc">Meet the developer behind Quiz The Spire</span></button>
-      </div>
-      <div class="o-button-group o-button-group--2col">
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/pages/privacy/'"><span class="c-btn__content"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</span><span class="c-btn__desc">How we handle your data</span></button>
-        <button id="manageQuizBtn" class="c-btn c-btn--bw"><span class="c-btn__content"><i class="fa-solid fa-gears"></i> Manage Quiz</span><span class="c-btn__desc">Session settings and quiz controls</span></button>
-      </div>
-      <div class="o-button-group o-button-group--2col">
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/pages/terms/'"><span class="c-btn__content"><i class="fa-solid fa-file-contract"></i> Terms of Service</span><span class="c-btn__desc">Usage rules and legal information</span></button>
-        <button class="c-btn c-btn--bw" onclick="window.location.href='/pages/contact/'"><span class="c-btn__content"><i class="fa-solid fa-envelope"></i> Contact Us</span><span class="c-btn__desc">Questions, feedback, or business enquiries</span></button>
-      </div>
-    </div>
-    <div class="ad-unit-wrapper">
-      <p class="ad-label">Sponsored</p>
-      <ins class="adsbygoogle js-adsbygoogle" style="display:block" data-ad-client="ca-pub-8418485814964449" data-ad-slot="6531017850" data-ad-format="auto" data-full-width-responsive="true"></ins>
-    </div>
+  <div class="qts-tile-grid" id="tileGrid" aria-live="polite">
+    <!-- Tiles rendered by JS -->
   </div>
-
-  <div class="ad-unit-wrapper">
-    <p class="ad-label">Sponsored</p>
-    <ins class="adsbygoogle js-adsbygoogle" style="display:block" data-ad-client="ca-pub-8418485814964449" data-ad-slot="6947629232" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <div class="qts-no-results" id="noResults" style="display:none">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <p>No results found</p>
   </div>
+</section>
+
+<!-- ═══════════════════════════ QUICK START ═══════════════════════════ -->
+<section class="qts-container" id="quick-start">
+  <div class="qts-divider">
+    <span class="qts-divider__text">Quick Start</span>
+  </div>
+  <div class="qts-tile-grid" id="quickStartGrid">
+    <a href="/pages/conversion/" class="qts-tile">
+      <span class="qts-tile__icon"><i class="fa-solid fa-download"></i></span>
+      <span class="qts-tile__body">
+        <span class="qts-tile__name">Convert The Spire Reborn</span>
+        <span class="qts-tile__desc">Download YouTube playlists in 4K/8K. Integrated torrent + media player.</span>
+        <span class="qts-tile__pill qts-pill--version">v10.8.2</span>
+      </span>
+    </a>
+    <a href="/pages/spire-ai/" class="qts-tile">
+      <span class="qts-tile__icon"><i class="fa-solid fa-tower-broadcast"></i></span>
+      <span class="qts-tile__body">
+        <span class="qts-tile__name">QuizLive</span>
+        <span class="qts-tile__desc">Real-time multiplayer quizzes with live leaderboards and community themes.</span>
+        <span class="qts-tile__pill qts-pill--live">Live</span>
+      </span>
+    </a>
+    <a href="/LukasBohez/midigenerator.html" class="qts-tile">
+      <span class="qts-tile__icon"><i class="fa-solid fa-music"></i></span>
+      <span class="qts-tile__body">
+        <span class="qts-tile__name">MIDIComposer</span>
+        <span class="qts-tile__desc">AI-powered MIDI music generator. Pick a scene, intensity, download as MIDI.</span>
+      </span>
+    </a>
+    <a href="/pages/avatar-studio/" class="qts-tile">
+      <span class="qts-tile__icon"><i class="fa-solid fa-user-astronaut"></i></span>
+      <span class="qts-tile__body">
+        <span class="qts-tile__name">Avatar Studio</span>
+        <span class="qts-tile__desc">Live voice-to-avatar streaming and timeline dubbing for VTubers.</span>
+        <span class="qts-tile__pill qts-pill--new">New</span>
+      </span>
+    </a>
+    <a href="/pages/sentle/" class="qts-tile">
+      <span class="qts-tile__icon"><i class="fa-solid fa-spell-check"></i></span>
+      <span class="qts-tile__body">
+        <span class="qts-tile__name">SENTLE</span>
+        <span class="qts-tile__desc">Daily word puzzle — guess the sentence Wordle-style.</span>
+      </span>
+    </a>
+    <a href="/figma/" class="qts-tile">
+      <span class="qts-tile__icon"><i class="fa-brands fa-figma"></i></span>
+      <span class="qts-tile__body">
+        <span class="qts-tile__name">Figma Extract All</span>
+        <span class="qts-tile__desc">Export SVGs, PNGs, text, variables — AI-ready for LLMs.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
 </main>
 
-<!-- Back to top -->
+<!-- ═══════════════════════════════════ COMMAND PALETTE ═══════════════════════════ -->
+<div class="qts-palette-overlay" id="paletteOverlay" role="dialog" aria-modal="true" aria-label="Search tools and pages" aria-hidden="true">
+  <div class="qts-palette">
+    <input type="text" class="qts-palette__input" id="paletteInput" placeholder="Search tools, pages, and support..." aria-label="Type to search">
+    <div class="qts-palette__results" id="paletteResults"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+<footer class="qts-footer">
+  <p class="qts-footer__about">Built and maintained by <strong>Lukas Bohez</strong>. 950+ downloads across 95+ countries. <small>Last updated: July 2026</small></p>
+  <div class="qts-footer__bmc">
+    <a class="qts-btn qts-btn--outline" href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer">Support on GitHub Sponsors</a>
+  </div>
+  <p class="qts-footer__text"><strong>&copy; 2026 Quiz The Spire</strong><br/>Created, Owned & Operated by <strong>Lukas Bohez</strong><br/>All rights reserved.</p>
+  <p class="qts-footer__links">
+    <a href="/LukasBohez/projects/" class="qts-footer__link">Projects</a>
+    <span class="qts-footer__sep">&middot;</span>
+    <a href="https://play.google.com/store/apps/details?id=com.torrentspire.ai" target="_blank" rel="noopener noreferrer" class="qts-footer__link">BitPlayer on Play Store</a>
+    <span class="qts-footer__sep">&middot;</span>
+    <a href="/pages/privacy/" class="qts-footer__link">Privacy Policy</a>
+    <span class="qts-footer__sep">&middot;</span>
+    <a href="/pages/contact/" class="qts-footer__link">Contact Us</a>
+    <span class="qts-footer__sep">&middot;</span>
+    <a href="/pages/terms/" class="qts-footer__link">Terms of Service</a>
+    <span class="qts-footer__sep">&middot;</span>
+    <a href="/pages/about/" class="qts-footer__link">About</a>
+  </p>
+</footer>
+
+<!-- ═══════════════════════ BACK TO TOP ═══════════════════════ -->
 <button id="back-to-top" type="button" aria-label="Back to top">
   <svg class="back-to-top__ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="back-to-top__ring-base" cx="18" cy="18" r="16"></circle><circle id="scroll-ring" class="back-to-top__ring-progress" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100"></circle></svg>
   <i class="fa-solid fa-chevron-up back-to-top__arrow" aria-hidden="true"></i>
 </button>
-
-<!-- Footer -->
-<footer class="c-footer">
-  <p class="c-footer__about">Built and maintained by <strong>Lukas Bohez</strong>. 950+ downloads across 95+ countries. <small>Last updated: April 2026</small></p>
-  <div class="c-footer__bmc">
-    <a class="c-btn c-btn--outline" href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer">Support on GitHub Sponsors</a>
-  </div>
-  <p class="c-footer__text"><strong>&copy; 2026 Quiz The Spire</strong><br/>Created, Owned & Operated by <strong>Lukas Bohez</strong><br/>All rights reserved.</p>
-  <p class="c-footer__links">
-    <a href="/LukasBohez/projects/" class="c-footer__link">Projects</a>
-    <span class="c-footer__sep">&middot;</span>
-    <a href="https://play.google.com/store/apps/details?id=com.torrentspire.ai" target="_blank" rel="noopener noreferrer" class="c-footer__link">BitPlayer on Play Store</a>
-    <span class="c-footer__sep">&middot;</span>
-    <a href="/pages/privacy/" class="c-footer__link">Privacy Policy</a>
-    <span class="c-footer__sep">&middot;</span>
-    <a href="/pages/contact/" class="c-footer__link">Contact Us</a>
-    <span class="c-footer__sep">&middot;</span>
-    <a href="/pages/terms/" class="c-footer__link">Terms of Service</a>
-    <span class="c-footer__sep">&middot;</span>
-    <a href="/pages/about/" class="c-footer__link">About</a>
-  </p>
-</footer>
 
 <script src="js/themeManager.js" defer></script>
 <script src="articles/js/imageProvider.js" defer></script>
@@ -1018,20 +724,377 @@
 <script src="js/radar.js" defer></script>
 <script src="js/infomodal.js" defer></script>
 <script src="js/spire-adblock-detector.js" defer></script>
-<script>
-function getCurrentTheme(){var h=document.documentElement.getAttribute('data-theme');if(h)return h;if(document.body.classList.contains('theme-dark'))return'dark';if(document.body.classList.contains('theme-light'))return'light';return localStorage.getItem('spire-theme')||'dark';}
-function showAndroidInstructions(){var m=document.getElementById('conversionDownloadModal');document.querySelectorAll('.c-platform-tab').forEach(function(t){t.classList.toggle('active',t.dataset.platform==='android')});document.querySelectorAll('.c-platform-panel').forEach(function(p){p.classList.toggle('active',p.id==='platform-android')});m.classList.add('is-open');m.setAttribute('aria-hidden','false');}
-function showLinuxInstructions(){var m=document.getElementById('conversionDownloadModal');document.querySelectorAll('.c-platform-tab').forEach(function(t){t.classList.toggle('active',t.dataset.platform==='linux')});document.querySelectorAll('.c-platform-panel').forEach(function(p){p.classList.toggle('active',p.id==='platform-linux')});m.classList.add('is-open');m.setAttribute('aria-hidden','false');}
-function handleConversionDownload(e){e&&e.preventDefault&&e.preventDefault();window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip','_blank','noopener,noreferrer');}
-function handleAndroidDownload(e){e&&e.preventDefault&&e.preventDefault();window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk','_blank','noopener,noreferrer');}
-function handleLinuxDownload(e){e&&e.preventDefault&&e.preventDefault();window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip','_blank','noopener,noreferrer');}
-function handleMacDownload(e){e&&e.preventDefault&&e.preventDefault();window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip','_blank','noopener,noreferrer');}
-(function(){var m=document.getElementById('conversionDownloadModal');if(!m)return;var c=m.querySelector('.c-modal__close'),b=document.getElementById('conversionInstructionsBtn');var o=function(){m.classList.add('is-open');m.setAttribute('aria-hidden','false')},x=function(){m.classList.remove('is-open');m.setAttribute('aria-hidden','true')};if(c)c.addEventListener('click',x);if(b)b.addEventListener('click',function(e){e.preventDefault();o()});m.addEventListener('click',function(e){if(e.target===m)x()});document.addEventListener('keydown',function(e){if(e.key==='Escape')x()});m.querySelectorAll('.c-platform-tab').forEach(function(t){t.addEventListener('click',function(){var p=t.dataset.platform;m.querySelectorAll('.c-platform-tab').forEach(function(b){b.classList.toggle('active',b===t)});m.querySelectorAll('.c-platform-panel').forEach(function(b){b.classList.toggle('active',b.id==='platform-'+p)})})})})();
+
+<!-- ═══════════════════════ HOMEPAGE ENGINE ═══════════════════════ -->
+<script defer>
+(function(){
+  /* ── App State ── */
+  const STATE = {
+    theme: 'dark',
+    activeCategory: 'apps',
+    paletteOpen: false,
+    paletteIndex: -1,
+    paletteResults: []
+  };
+
+  /* ── Tool Registry — single source of truth for every tile ── */
+  const TOOLS = [
+    // Apps & Downloads
+    { id:'convert', name:'Convert The Spire Reborn', icon:'fa-solid fa-download', cat:'apps',
+      desc:'YouTube/playlist downloader with integrated BitPlayer for torrent & media playback.',
+      pills:[{text:'Free',cls:'qts-pill--version'},{text:'v10.8.2',cls:'qts-pill--version'}], pillClass:'qts-pill--version', href:'/pages/conversion/' },
+    { id:'lofi', name:'Lofi Extension', icon:'fa-solid fa-headphones', cat:'apps',
+      desc:'Ambient music controls for Chrome and Firefox. Privacy-first, no tracking.',
+      pill:'Free', pillClass:'qts-pill--version', href:'/pages/lofi-download/' },
+
+    // Quiz & Games
+    { id:'quizlive', name:'QuizLive', icon:'fa-solid fa-tower-broadcast', cat:'quiz',
+      desc:'Real-time multiplayer quizzes with leaderboards and community themes.',
+      pill:'Live', pillClass:'qts-pill--live', href:'/pages/spire-ai/' },
+    { id:'study', name:'Study Quiz Questions', icon:'fa-solid fa-graduation-cap', cat:'quiz',
+      desc:'Practice at your own pace with community-created quiz content.',
+      pill:'', pillClass:'', href:'/pages/study/' },
+    { id:'sentle', name:'SENTLE', icon:'fa-solid fa-spell-check', cat:'quiz',
+      desc:'Daily word puzzle — guess the sentence Wordle-style.',
+      pill:'', pillClass:'', href:'/pages/sentle/' },
+    { id:'industrial', name:'Industrial Empire', icon:'fa-solid fa-industry', cat:'quiz',
+      desc:'Browser-based idle factory game. Build your industrial empire.',
+      pill:'', pillClass:'', href:'idleGame/idlegame.html' },
+    { id:'spireai', name:'SpireAI', icon:'fa-solid fa-bolt', cat:'quiz',
+      desc:'AI-powered quiz creator. Generate quizzes from text, compete on live leaderboards.',
+      pill:'Beta', pillClass:'qts-pill--beta', href:'/pages/spire-ai/' },
+
+    // Creator Tools
+    { id:'midicomposer', name:'MIDIComposer', icon:'fa-solid fa-music', cat:'creator',
+      desc:'AI-powered MIDI music generator. Pick a scene, intensity, download as MIDI.',
+      pill:'', pillClass:'', href:'/LukasBohez/midigenerator.html' },
+    { id:'storycreator', name:'Story Creator', icon:'fa-solid fa-feather-pointed', cat:'creator',
+      desc:'Create interactive stories with branching flows.',
+      pill:'', pillClass:'', href:'/pages/storyCreator/' },
+    { id:'stories', name:'Stories Library', icon:'fa-solid fa-book-open', cat:'creator',
+      desc:'Read and manage serialized stories from your content hub.',
+      pill:'', pillClass:'', href:'/pages/content/' },
+    { id:'articles', name:'Articles', icon:'fa-solid fa-newspaper', cat:'creator',
+      desc:'Browse guides and long-form article content.',
+      pill:'', pillClass:'', href:'/articles/articlepagenew.html' },
+    { id:'figma', name:'Figma Extract All', icon:'fa-brands fa-figma', cat:'creator',
+      desc:'Export SVGs, PNGs, text, variables — AI-ready for LLMs.',
+      pill:'', pillClass:'', href:'/figma/' },
+    { id:'rijexamen', name:'Rijexamen Studiegids', icon:'fa-solid fa-car-side', cat:'creator',
+      desc:'Driving exam prep for Roeselare — 20 routes, 60+ checkpoints.',
+      pill:'', pillClass:'', href:'/rijexamen/' },
+    { id:'avatarstudio', name:'Avatar Studio', icon:'fa-solid fa-user-astronaut', cat:'creator',
+      desc:'Live voice-to-avatar streaming and timeline dubbing for VTubers.',
+      pill:'New', pillClass:'qts-pill--new', href:'/pages/avatar-studio/' },
+
+    // About
+    { id:'portfolio', name:'Portfolio', icon:'fa-solid fa-briefcase', cat:'about',
+      desc:'Lukas Bohez — full-stack developer portfolio and project showcase.',
+      pill:'', pillClass:'', href:'/LukasBohez/' },
+    { id:'about', name:'About Me', icon:'fa-solid fa-user', cat:'about',
+      desc:'Meet the developer behind Quiz The Spire.',
+      pill:'', pillClass:'', href:'/pages/about/' },
+    { id:'support', name:'Support', icon:'fa-solid fa-headset', cat:'about',
+      desc:'Get help fast — we reply within 24 hours.',
+      pill:'', pillClass:'', href:'/pages/support/' },
+    { id:'privacy', name:'Privacy Policy', icon:'fa-solid fa-shield-halved', cat:'about',
+      desc:'How we handle your data.',
+      pill:'', pillClass:'', href:'/pages/privacy/' },
+    { id:'terms', name:'Terms of Service', icon:'fa-solid fa-file-contract', cat:'about',
+      desc:'Usage rules and legal information.',
+      pill:'', pillClass:'', href:'/pages/terms/' },
+    { id:'contact', name:'Contact', icon:'fa-solid fa-envelope', cat:'about',
+      desc:'Questions, feedback, or business enquiries.',
+      pill:'', pillClass:'', href:'/pages/contact/' }
+  ];
+
+  const CATEGORY_LABELS = {
+    apps: 'Apps & Downloads',
+    quiz: 'Quiz & Games',
+    creator: 'Creator Tools',
+    about: 'About'
+  };
+
+  /* ── Render tiles ── */
+  function renderTiles(category) {
+    const grid = document.getElementById('tileGrid');
+    const noResults = document.getElementById('noResults');
+    if (!grid) return;
+
+    const tools = category === 'all' ? TOOLS : TOOLS.filter(t => t.cat === category);
+
+    if (tools.length === 0) {
+      grid.innerHTML = '';
+      if (noResults) noResults.style.display = '';
+      return;
+    }
+    if (noResults) noResults.style.display = 'none';
+
+    grid.innerHTML = tools.map(t => {
+      let pillsHtml = '';
+      if (t.pills && Array.isArray(t.pills)) {
+        pillsHtml = t.pills.map(p => `<span class="qts-tile__pill ${p.cls || ''}">${p.text}</span>`).join('');
+      } else if (t.pill) {
+        pillsHtml = `<span class="qts-tile__pill ${t.pillClass || ''}">${t.pill}</span>`;
+      }
+      return `
+      <a href="${t.href}" class="qts-tile" data-tool-id="${t.id}">
+        <span class="qts-tile__icon"><i class="${t.icon}"></i></span>
+        <span class="qts-tile__body">
+          <span class="qts-tile__name">${t.name}</span>
+          <span class="qts-tile__desc">${t.desc}</span>
+          ${pillsHtml}
+        </span>
+      </a>
+    `}).join('');
+  }
+
+  /* ── Category tabs ── */
+  function setupCategoryTabs() {
+    const tabs = document.querySelectorAll('.qts-cat-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        STATE.activeCategory = tab.dataset.cat;
+        tabs.forEach(t => t.classList.remove('qts-cat-tab--active'));
+        tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+        tab.classList.add('qts-cat-tab--active');
+        tab.setAttribute('aria-selected', 'true');
+        renderTiles(STATE.activeCategory);
+      });
+    });
+    renderTiles('apps');
+  }
+
+  /* ── Fuzzy match ── */
+  function fuzzyMatch(query, text) {
+    const q = query.toLowerCase();
+    const t = text.toLowerCase();
+    let qi = 0;
+    for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+      if (t[ti] === q[qi]) qi++;
+    }
+    return qi === q.length;
+  }
+
+  /* ── Command Palette ── */
+  function setupCommandPalette() {
+    const overlay = document.getElementById('paletteOverlay');
+    const input = document.getElementById('paletteInput');
+    const resultsEl = document.getElementById('paletteResults');
+    const trigger = document.getElementById('cmdPaletteTrigger');
+
+    function open() {
+      STATE.paletteOpen = true;
+      STATE.paletteIndex = -1;
+      STATE.paletteResults = [...TOOLS];
+      overlay.classList.add('qts-palette-overlay--open');
+      overlay.setAttribute('aria-hidden', 'false');
+      input.value = '';
+      renderPaletteResults(STATE.paletteResults);
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function close() {
+      STATE.paletteOpen = false;
+      overlay.classList.remove('qts-palette-overlay--open');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function renderPaletteResults(items) {
+      if (items.length === 0) {
+        resultsEl.innerHTML = `<div class="qts-palette__empty">No results for '<strong>${escapeHtml(input.value)}</strong>' — try a different tool name.</div>`;
+        return;
+      }
+      resultsEl.innerHTML = items.map((t, i) => {
+        const catLabel = CATEGORY_LABELS[t.cat] || t.cat;
+        return `<div class="qts-palette__result${i === STATE.paletteIndex ? ' qts-palette__result--active' : ''}" data-index="${i}" data-href="${t.href}">
+          <i class="${t.icon}"></i>
+          <span class="qts-palette__result-name">${t.name}</span>
+          <span class="qts-palette__result-category">${catLabel}</span>
+        </div>`;
+      }).join('');
+
+      // Click handlers
+      resultsEl.querySelectorAll('.qts-palette__result').forEach(el => {
+        el.addEventListener('click', () => {
+          const href = el.dataset.href;
+          close();
+          if (href) window.location.href = href;
+        });
+      });
+    }
+
+    function updateSelection() {
+      resultsEl.querySelectorAll('.qts-palette__result').forEach((el, i) => {
+        el.classList.toggle('qts-palette__result--active', i === STATE.paletteIndex);
+      });
+      // Scroll into view
+      const active = resultsEl.querySelector('.qts-palette__result--active');
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Trigger
+    if (trigger) trigger.addEventListener('click', open);
+
+    // Keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === 'k') {
+        e.preventDefault();
+        if (STATE.paletteOpen) close(); else open();
+        return;
+      }
+      if (!STATE.paletteOpen) return;
+
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        STATE.paletteIndex = Math.min(STATE.paletteIndex + 1, STATE.paletteResults.length - 1);
+        updateSelection();
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        STATE.paletteIndex = Math.max(STATE.paletteIndex - 1, 0);
+        updateSelection();
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (STATE.paletteIndex >= 0 && STATE.paletteIndex < STATE.paletteResults.length) {
+          const item = STATE.paletteResults[STATE.paletteIndex];
+          close();
+          if (item.href) window.location.href = item.href;
+        }
+        return;
+      }
+    });
+
+    // Search input
+    input.addEventListener('input', () => {
+      const query = input.value.trim();
+      STATE.paletteIndex = -1;
+      if (!query) {
+        STATE.paletteResults = [...TOOLS];
+      } else {
+        STATE.paletteResults = TOOLS.filter(t =>
+          fuzzyMatch(query, t.name) || fuzzyMatch(query, t.desc) || fuzzyMatch(query, CATEGORY_LABELS[t.cat] || t.cat)
+        );
+      }
+      renderPaletteResults(STATE.paletteResults);
+    });
+
+    // Close on backdrop click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close();
+    });
+  }
+
+  /* ── Theme Toggle ── */
+  function setupThemeToggle() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+
+    function getTheme() {
+      const h = document.documentElement.getAttribute('data-theme');
+      if (h) return h;
+      if (document.body.classList.contains('theme-dark')) return 'dark';
+      return localStorage.getItem('spire-theme') || 'dark';
+    }
+
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      document.documentElement.classList.toggle('dark', t === 'dark');
+      localStorage.setItem('spire-theme', t);
+      STATE.theme = t;
+    }
+
+    btn.addEventListener('click', () => {
+      const current = getTheme();
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem('spire-theme')) {
+        setTheme(e.matches ? 'dark' : 'dark'); // Default dark
+      }
+    });
+  }
+
+  /* ── Back to Top ── */
+  function setupBackToTop() {
+    const btn = document.getElementById('back-to-top');
+    if (!btn) return;
+
+    let scrollTicking = false;
+    window.addEventListener('scroll', () => {
+      if (!scrollTicking) {
+        requestAnimationFrame(() => {
+          const scrolled = window.scrollY > 400;
+          btn.classList.toggle('back-to-top--visible', scrolled); // We'll use our class
+          if (scrolled) {
+            btn.style.opacity = '1';
+            btn.style.transform = 'translateY(0)';
+            btn.style.pointerEvents = 'auto';
+          } else {
+            btn.style.opacity = '0';
+            btn.style.transform = 'translateY(10px)';
+            btn.style.pointerEvents = 'none';
+          }
+          scrollTicking = false;
+        });
+        scrollTicking = true;
+      }
+    });
+
+    btn.addEventListener('click', () => {
+      document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  /* ── Init ── */
+  function init() {
+    setupThemeToggle();
+    setupCategoryTabs();
+    setupCommandPalette();
+    setupBackToTop();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 </script>
-<script>(function(){}())</script>
+
 <script>
-(function(){if(!window.adsbygoogle)return;document.querySelectorAll('.js-adsbygoogle').forEach(function(){try{(adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}})})();
+/* ── Legacy compatibility shims for external scripts ── */
+window.showSection = function(name) {
+  // Legacy no-op — new site doesn't use section-based nav
+  console.log('Legacy showSection called for:', name, '— ignored in hub redesign');
+};
+window.showPortfolioTab = function(name) {
+  // Legacy no-op
+  console.log('Legacy showPortfolioTab called for:', name, '— ignored in hub redesign');
+};
+
+/* ── AdSense lazy load ── */
+(function(){
+  if(!window.adsbygoogle) return;
+  document.querySelectorAll('.js-adsbygoogle').forEach(function(el){
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+  });
+})();
 </script>
+
 <script>
 (function(){var l=function(o){var s=document.createElement('script');if(typeof o==='string')o={src:o};s.src=o.src;if(o.defer)s.defer=true;if(o.async)s.async=true;if(o.crossorigin)s.crossOrigin=o.crossorigin;if(o.nonce)s.nonce=o.nonce;document.body.appendChild(s);return s};var n=[{src:'js/stat-counter-animation.js',defer:true},{src:'js/branded-ad-fallback.js',defer:true},{src:'js/ad-fallback.js',defer:true},{src:'js/homepage-enhancements.js',defer:true},{src:'js/platform-download-order.js',defer:true},{src:'js/version-sync.js',defer:true},{src:'js/image-lightbox.js',defer:true}];var a=function(){if(window.__adsenseLoaded)return;window.__adsenseLoaded=true;l({src:'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449',async:true,crossorigin:'anonymous'})};var r=function(){n.forEach(function(s){l(s)});try{a()}catch(e){}};var sc=function(){if('requestIdleCallback' in window)requestIdleCallback(r,{timeout:3000});else setTimeout(r,3000)};var fi=function(){sc();['click','keydown','touchstart','pointerdown'].forEach(function(ev){window.removeEventListener(ev,fi,{passive:true})})};['click','keydown','touchstart','pointerdown'].forEach(function(ev){window.addEventListener(ev,fi,{passive:true})});sc()})();
 </script>

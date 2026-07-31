@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-SSEBSTQM21');</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Avatar Studio — Voice-to-avatar live streaming and timeline dubbing. VTuber voice passthrough, ElevenLabs TTS, and offline export. Built by Lukas Bohez.">
+  <meta name="author" content="Lukas Bohez">
+  <meta name="copyright" content="Copyright &copy; 2026 Lukas Bohez. All rights reserved.">
+  <meta name="robots" content="index, follow">
+  <title>Avatar Studio — VTuber Voice & Timeline Dubbing | Quiz The Spire</title>
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Avatar Studio — VTuber Voice & Timeline Dubbing | Quiz The Spire">
+  <meta property="og:description" content="Live voice-to-avatar streaming and timeline dubbing for streamers. Free path works with zero keys — BYOK upgrades for ElevenLabs, OpenAI, and Anthropic.">
+  <meta property="og:url" content="https://quizthespire.com/pages/avatar-studio/">
+  <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1080">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Avatar Studio — VTuber Voice & Timeline Dubbing">
+  <meta name="twitter:description" content="Live voice-to-avatar streaming and timeline dubbing. Free with browser speech APIs — BYOK for premium TTS and LLM.">
+  <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
+  <meta name="theme-color" content="#16161C" media="(prefers-color-scheme:dark)">
+  <meta name="theme-color" content="#F8F9FC" media="(prefers-color-scheme:light)">
+  <link rel="canonical" href="https://quizthespire.com/pages/avatar-studio/">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/favicon-192x192.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous"></noscript>
+  <link rel="stylesheet" href="avatar-studio.css">
+</head>
+<body class="theme-dark">
+
+<a href="#main-content" class="av-skip-link">Skip to main content</a>
+
+<header class="av-header">
+  <div class="av-header__inner">
+    <a href="/" class="av-logo" aria-label="Back to Quiz The Spire">
+      <span class="av-logo__icon"><i class="fa-solid fa-crown"></i></span>
+      <span class="av-logo__text">Quiz The Spire</span>
+    </a>
+    <nav class="av-header__nav" aria-label="Page sections">
+      <button class="av-header__tab" data-panel="live" aria-current="true">Live Mode</button>
+      <button class="av-header__tab" data-panel="studio">Studio Mode</button>
+      <button class="av-header__btn av-header__btn--settings" id="openSettingsBtn" aria-label="Open settings">
+        <i class="fa-solid fa-gear"></i> Settings
+      </button>
+      <button class="av-header__btn av-header__btn--theme" id="themeToggleBtn" aria-label="Toggle dark mode">
+        <i class="fa-solid fa-circle-half-stroke"></i>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="main-content">
+
+  <!-- ==================== LIVE MODE ==================== -->
+  <section id="live-panel" class="av-panel av-panel--active" aria-labelledby="live-title">
+    <div class="av-live-layout">
+      <div class="av-live__viewport">
+        <div class="av-avatar-stage" id="avatarStage">
+          <div class="av-avatar-placeholder" id="avatarPlaceholder">
+            <div class="av-avatar-face" id="avatarFace">
+              <div class="av-avatar-mouth" id="avatarMouth"></div>
+            </div>
+            <p class="av-avatar-label">Avatar preview</p>
+          </div>
+          <canvas id="avatarCanvas" class="av-avatar-canvas" style="display:none" width="640" height="480"></canvas>
+          <div class="av-live-status" id="liveStatus">
+            <span class="av-status-dot" id="statusDot"></span>
+            <span class="av-status-text" id="statusText">Ready — click Start to begin</span>
+          </div>
+        </div>
+        <div class="av-live__controls">
+          <button id="startLiveBtn" class="av-btn av-btn--primary av-btn--lg">
+            <i class="fa-solid fa-microphone"></i> Start Speaking
+          </button>
+          <button id="stopLiveBtn" class="av-btn av-btn--outline av-btn--lg" disabled>
+            <i class="fa-solid fa-stop"></i> Stop
+          </button>
+        </div>
+      </div>
+      <div class="av-live__sidebar">
+        <div class="av-transcript-panel">
+          <h3 class="av-panel-title">Live Transcript</h3>
+          <div class="av-transcript-box" id="liveTranscript" aria-live="polite">
+            <p class="av-transcript-placeholder">Your spoken words will appear here in real time...</p>
+          </div>
+        </div>
+        <div class="av-tts-panel">
+          <h3 class="av-panel-title">Voice Engine</h3>
+          <div class="av-tts-selector" id="ttsSelector">
+            <label class="av-radio-card">
+              <input type="radio" name="ttsEngine" value="browser" checked>
+              <span class="av-radio-card__content">
+                <strong><i class="fa-solid fa-microchip"></i> Browser Speech</strong>
+                <small>Free — no key needed</small>
+              </span>
+            </label>
+            <label class="av-radio-card">
+              <input type="radio" name="ttsEngine" value="elevenlabs">
+              <span class="av-radio-card__content">
+                <strong><i class="fa-solid fa-star"></i> ElevenLabs</strong>
+                <small>Natural voices — requires API key</small>
+              </span>
+            </label>
+          </div>
+          <div class="av-tts-info" id="ttsInfo">
+            <p class="av-muted">Using browser speech synthesis. <button type="button" class="av-link" id="openSettingsForTTS">Set up ElevenLabs key</button> for higher quality.</p>
+          </div>
+        </div>
+        <div class="av-browser-check" id="browserCheck">
+          <h4 class="av-check-title">Browser Capabilities</h4>
+          <ul class="av-check-list">
+            <li id="check-speech-recognition"><i class="fa-solid fa-spinner fa-spin"></i> Checking speech recognition...</li>
+            <li id="check-speech-synthesis"><i class="fa-solid fa-spinner fa-spin"></i> Checking speech synthesis...</li>
+            <li id="check-webgpu"><i class="fa-solid fa-spinner fa-spin"></i> Checking WebGPU...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== STUDIO MODE ==================== -->
+  <section id="studio-panel" class="av-panel" aria-labelledby="studio-title">
+    <div class="av-studio-layout">
+      <div class="av-studio-timeline" id="studioTimeline">
+        <h2 class="av-section-title" id="studio-title">Timeline Dubbing</h2>
+        <p class="av-section-desc">Create voiceover blocks on a timeline. Export audio and subtitles.</p>
+        <div class="av-timeline-toolbar">
+          <button id="addBlockBtn" class="av-btn av-btn--primary">
+            <i class="fa-solid fa-plus"></i> Add Block
+          </button>
+          <span class="av-timeline-stats" id="timelineStats">
+            <span class="av-stat"><span id="blockCount">0</span> blocks</span>
+            <span class="av-stat"><span id="totalDuration">0.0</span>s total</span>
+          </span>
+        </div>
+        <div class="av-timeline-canvas-wrap" id="timelineCanvasWrap">
+          <canvas id="timelineCanvas" class="av-timeline-canvas"></canvas>
+          <div class="av-timeline-empty" id="timelineEmpty">
+            <i class="fa-solid fa-timeline"></i>
+            <p>No blocks yet. Add a text + time block to start building your dub.</p>
+          </div>
+        </div>
+      </div>
+      <div class="av-studio-blocks" id="studioBlocks">
+        <!-- Blocks are rendered here by JS -->
+      </div>
+      <div class="av-studio-actions">
+        <button id="playSequenceBtn" class="av-btn av-btn--primary av-btn--lg">
+          <i class="fa-solid fa-play"></i> Play Sequence
+        </button>
+        <button id="exportAudioBtn" class="av-btn av-btn--outline" disabled>
+          <i class="fa-solid fa-file-audio"></i> Export Audio
+        </button>
+        <button id="exportSrtBtn" class="av-btn av-btn--outline" disabled>
+          <i class="fa-solid fa-closed-captioning"></i> Export .SRT
+        </button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==================== SETTINGS MODAL ==================== -->
+<div id="settingsModal" class="av-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+  <div class="av-modal__backdrop"></div>
+  <div class="av-modal__content">
+    <div class="av-modal__header">
+      <h2 id="settingsTitle">API Keys & Settings</h2>
+      <button class="av-modal__close" id="closeSettingsBtn" aria-label="Close settings">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="av-modal__body">
+      <p class="av-muted">Keys stay in your browser — never sent to our server. Each key is optional and enables premium features for that provider.</p>
+
+      <div class="av-key-field">
+        <label class="av-key-field__label" for="elevenlabsKey">
+          <i class="fa-solid fa-star"></i> ElevenLabs API Key
+        </label>
+        <div class="av-key-field__input-row">
+          <input type="password" id="elevenlabsKey" class="av-input" placeholder="Paste your ElevenLabs API key" autocomplete="off">
+          <button class="av-btn av-btn--outline av-btn--sm" id="clearElevenlabsBtn">Clear</button>
+        </div>
+        <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener noreferrer" class="av-link av-key-field__help">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Get an ElevenLabs API key
+        </a>
+      </div>
+
+      <div class="av-key-field">
+        <label class="av-key-field__label" for="openaiKey">
+          <i class="fa-solid fa-robot"></i> OpenAI API Key
+        </label>
+        <div class="av-key-field__input-row">
+          <input type="password" id="openaiKey" class="av-input" placeholder="sk-..." autocomplete="off">
+          <button class="av-btn av-btn--outline av-btn--sm" id="clearOpenaiBtn">Clear</button>
+        </div>
+        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" class="av-link av-key-field__help">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Get an OpenAI API key
+        </a>
+      </div>
+
+      <div class="av-key-field">
+        <label class="av-key-field__label" for="anthropicKey">
+          <i class="fa-solid fa-brain"></i> Anthropic API Key
+        </label>
+        <div class="av-key-field__input-row">
+          <input type="password" id="anthropicKey" class="av-input" placeholder="sk-ant-..." autocomplete="off">
+          <button class="av-btn av-btn--outline av-btn--sm" id="clearAnthropicBtn">Clear</button>
+        </div>
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" class="av-link av-key-field__help">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Get an Anthropic API key
+        </a>
+      </div>
+
+      <div class="av-settings-note">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Keys are stored in <code>localStorage</code> in your browser only. No data leaves your machine except direct calls to the provider's API from your browser.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BLOCK TEMPLATE ==================== -->
+<template id="studioBlockTemplate">
+  <div class="av-studio-block">
+    <div class="av-studio-block__header">
+      <span class="av-studio-block__number"></span>
+      <input type="text" class="av-studio-block__text av-input" placeholder="Enter text to speak..." aria-label="Block text">
+      <label class="av-studio-block__time-label">
+        Start at
+        <input type="number" class="av-studio-block__time av-input av-input--sm" value="0.0" step="0.1" min="0" aria-label="Start time in seconds">
+        s
+      </label>
+      <span class="av-studio-block__duration" aria-label="Duration">—</span>
+      <button class="av-studio-block__preview av-btn av-btn--outline av-btn--sm" aria-label="Preview this block">
+        <i class="fa-solid fa-play"></i>
+      </button>
+      <button class="av-studio-block__delete av-btn av-btn--ghost av-btn--sm" aria-label="Remove this block">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script src="avatar-studio.js"></script>
+</body>
+</html>
