@@ -127,6 +127,9 @@ body{
   line-height:1.6;-webkit-font-smoothing:antialiased;
 }
 
+/* Hide legacy info button (replaced by command palette) */
+#infoBtn,#infoModal{display:none !important}
+
 /* ═══════════════════════════════════════════════
    REDUCED MOTION
    ═══════════════════════════════════════════════ */
@@ -657,7 +660,7 @@ body{
       <span class="qts-tile__icon"><i class="fa-solid fa-user-astronaut"></i></span>
       <span class="qts-tile__body">
         <span class="qts-tile__name">Avatar Studio</span>
-        <span class="qts-tile__desc">Live voice-to-avatar streaming and timeline dubbing for VTubers.</span>
+        <span class="qts-tile__desc">Type monologue lines on a timeline, preview with browser speech, export as WAV.</span>
         <span class="qts-tile__pill qts-pill--new">New</span>
       </span>
     </a>
@@ -784,7 +787,7 @@ body{
       desc:'Driving exam prep for Roeselare — 20 routes, 60+ checkpoints.',
       pill:'', pillClass:'', href:'/rijexamen/' },
     { id:'avatarstudio', name:'Avatar Studio', icon:'fa-solid fa-user-astronaut', cat:'creator',
-      desc:'Live voice-to-avatar streaming and timeline dubbing for VTubers.',
+      desc:'Type monologue lines on a timeline, preview with browser speech, and export as a WAV audio file.',
       pill:'New', pillClass:'qts-pill--new', href:'/pages/avatar-studio/' },
 
     // About
@@ -996,38 +999,6 @@ body{
     });
   }
 
-  /* ── Theme Toggle ── */
-  function setupThemeToggle() {
-    const btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-
-    function getTheme() {
-      const h = document.documentElement.getAttribute('data-theme');
-      if (h) return h;
-      if (document.body.classList.contains('theme-dark')) return 'dark';
-      return localStorage.getItem('spire-theme') || 'dark';
-    }
-
-    function setTheme(t) {
-      document.documentElement.setAttribute('data-theme', t);
-      document.documentElement.classList.toggle('dark', t === 'dark');
-      localStorage.setItem('spire-theme', t);
-      STATE.theme = t;
-    }
-
-    btn.addEventListener('click', () => {
-      const current = getTheme();
-      setTheme(current === 'dark' ? 'light' : 'dark');
-    });
-
-    // Listen for system theme changes
-    window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', (e) => {
-      if (!localStorage.getItem('spire-theme')) {
-        setTheme(e.matches ? 'dark' : 'dark'); // Default dark
-      }
-    });
-  }
-
   /* ── Back to Top ── */
   function setupBackToTop() {
     const btn = document.getElementById('back-to-top');
@@ -1061,7 +1032,6 @@ body{
 
   /* ── Init ── */
   function init() {
-    setupThemeToggle();
     setupCategoryTabs();
     setupCommandPalette();
     setupBackToTop();
