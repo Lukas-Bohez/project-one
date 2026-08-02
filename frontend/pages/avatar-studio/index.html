@@ -5,18 +5,18 @@
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-SSEBSTQM21');</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Avatar Studio — Type text, place it on a timeline, preview with browser speech, and export as a WAV audio file. Free, no keys needed. Built by Lukas Bohez.">
+  <meta name="description" content="Avatar Studio — Type text, place it on a timeline, preview with browser speech, and record each line to build an MP3. Free, no keys needed. Built by Lukas Bohez.">
   <meta name="author" content="Lukas Bohez">
   <meta name="copyright" content="Copyright &copy; 2026 Lukas Bohez. All rights reserved.">
   <title>Avatar Studio — Timeline Dubbing & Audio Export | Quiz The Spire</title>
   <meta property="og:type" content="website">
   <meta property="og:title" content="Avatar Studio — Timeline Dubbing & Audio Export | Quiz The Spire">
-  <meta property="og:description" content="Type monologue lines on a timeline, preview with browser speech, and export as a WAV file. Free, runs entirely in your browser.">
+  <meta property="og:description" content="Type monologue lines on a timeline, preview with browser speech, and record each line to build an MP3. Free, runs entirely in your browser.">
   <meta property="og:url" content="https://quizthespire.com/pages/avatar-studio/">
   <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Avatar Studio — Timeline Dubbing & Audio Export">
-  <meta name="twitter:description" content="Type monologue lines, preview with browser speech, export as WAV. Free, no keys.">
+  <meta name="twitter:description" content="Type monologue lines, preview with browser speech, record each line to build an MP3. Free, no keys.">
   <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
   <meta name="theme-color" content="#16161C" media="(prefers-color-scheme:dark)">
   <meta name="theme-color" content="#F8F9FC" media="(prefers-color-scheme:light)">
@@ -54,7 +54,7 @@
     <div class="av-studio-layout">
       <div class="av-studio-timeline">
         <h2 class="av-section-title">Timeline Dubbing</h2>
-        <p class="av-section-desc">Type your monologue as blocks on a timeline. Preview with browser speech, export as WAV.</p>
+        <p class="av-section-desc">Type your monologue as blocks on a timeline. Preview with browser speech, record each line, and export as MP3.</p>
         <div class="av-timeline-toolbar">
           <button id="addBlockBtn" class="av-btn av-btn--primary">
             <i class="fa-solid fa-plus"></i> Add Block
@@ -82,7 +82,7 @@
           <i class="fa-solid fa-play"></i> Preview All
         </button>
         <button id="exportAudioBtn" class="av-btn av-btn--outline" disabled>
-          <i class="fa-solid fa-file-audio"></i> Export WAV
+          <i class="fa-solid fa-microphone-lines"></i> Record to MP3
         </button>
         <button id="exportSrtBtn" class="av-btn av-btn--outline" disabled>
           <i class="fa-solid fa-closed-captioning"></i> Export .SRT
@@ -103,7 +103,16 @@
         s
       </label>
       <span class="av-studio-block__duration" aria-label="Duration">—</span>
-      <button class="av-studio-block__preview av-btn av-btn--outline av-btn--sm" aria-label="Preview this block">
+      <button class="av-studio-block__record av-btn av-btn--outline av-btn--sm" aria-label="Record this block">
+        <i class="fa-solid fa-microphone"></i>
+      </button>
+      <button class="av-studio-block__stop av-btn av-btn--primary av-btn--sm av-studio-block__record--hidden" aria-label="Stop recording">
+        <i class="fa-solid fa-stop"></i>
+      </button>
+      <button class="av-studio-block__play av-btn av-btn--outline av-btn--sm" aria-label="Play recorded clip" disabled>
+        <i class="fa-solid fa-headphones"></i>
+      </button>
+      <button class="av-studio-block__preview av-btn av-btn--ghost av-btn--sm" aria-label="Preview this block with speech">
         <i class="fa-solid fa-play"></i>
       </button>
       <button class="av-studio-block__delete av-btn av-btn--ghost av-btn--sm" aria-label="Remove this block">
@@ -113,7 +122,6 @@
   </div>
 </template>
 
-<script src="vendor/mespeak.js"></script>
 <script src="avatar-studio.js"></script>
 </body>
 </html>

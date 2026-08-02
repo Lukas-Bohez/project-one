@@ -230,14 +230,15 @@ body{
   color:rgba(255,255,255,.85);line-height:1.6;position:relative;
 }
 .qts-hero__stats{
-  display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;
-  margin:1.75rem auto 0;max-width:780px;position:relative;
+  display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;
+  margin:1.75rem auto 0;max-width:840px;position:relative;
   padding:0 .75rem 1.25rem;
 }
 .qts-hero-stat{
   background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);
-  border-radius:var(--radius-md);padding:.85rem 1.25rem;text-align:center;
-  min-width:100px;flex:0 1 auto;backdrop-filter:blur(6px);
+  border-radius:var(--radius-md);padding:1rem 1.5rem;text-align:center;
+  min-width:110px;flex:0 1 auto;backdrop-filter:blur(6px);
+  margin:.25rem;
 }
 .qts-hero-stat__number{
   display:block;font-family:var(--ff-mono);font-size:clamp(1.35rem,3vw,1.9rem);
@@ -297,6 +298,8 @@ body{
    QUICK LAUNCH — Category tabs + tile grid
    ═══════════════════════════════════════════════ */
 .qts-quick-launch{margin-bottom:3rem;padding-bottom:1rem}
+#quick-start{margin-bottom:3rem}
+.qts-footer{margin-top:3rem}
 .qts-category-tabs{
   display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:1.5rem;justify-content:center;
 }
@@ -641,7 +644,6 @@ body{
       <span class="qts-tile__body">
         <span class="qts-tile__name">Convert The Spire Reborn</span>
         <span class="qts-tile__desc">Download YouTube playlists in 4K/8K. Integrated torrent + media player.</span>
-        <span class="qts-tile__pill qts-pill--version">v10.8.2</span>
       </span>
     </a>
     <a href="/pages/spire-ai/" class="qts-tile">
@@ -748,7 +750,7 @@ body{
     // Apps & Downloads
     { id:'convert', name:'Convert The Spire Reborn', icon:'fa-solid fa-download', cat:'apps',
       desc:'YouTube/playlist downloader with integrated BitPlayer for torrent & media playback.',
-      pills:[{text:'Free',cls:'qts-pill--version'},{text:'v10.8.2',cls:'qts-pill--version'}], pillClass:'qts-pill--version', href:'/pages/conversion/' },
+      pills:[{text:'Free',cls:'qts-pill--version'}], pillClass:'qts-pill--version', href:'/pages/conversion/' },
     { id:'lofi', name:'Lofi Extension', icon:'fa-solid fa-headphones', cat:'apps',
       desc:'Ambient music controls for Chrome and Firefox. Privacy-first, no tracking.',
       pill:'Free', pillClass:'qts-pill--version', href:'/pages/lofi-download/' },
