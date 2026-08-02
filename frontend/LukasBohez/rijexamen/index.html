@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Complete preparation for the Belgian practical driving exam Category B in Flanders — RGT hazard perception, manoeuvres, vehicle checks, traffic rules, common mistakes, and an interactive practice quiz.">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Belgian Driving Exam Prep — RGT, Manoeuvres & Practical Tips</title>
+<style>
+  /* Synced dark/light theme with Quiz The Spire */
+  :root {
+    --asphalt: #0c1929;
+    --amber: #e8920b;
+    --amber-light: #fef3c7;
+    --blue: #1a56db;
+    --blue-light: #eff6ff;
+    --green: #059669;
+    --green-light: #ecfdf5;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --bg: #f8f9fb;
+    --bg-alt: #fff;
+    --card-bg: #fff;
+    --card-border: #e2e8f0;
+    --hero-bg: linear-gradient(135deg, #0c1929 0%, #1e3a5f 50%, #1a56db 100%);
+    --hero-text: #fff;
+    --hero-text-muted: rgba(255,255,255,0.7);
+    --nav-bg: rgba(248,249,251,0.88);
+    --shadow-sm: 0 1px 2px rgba(12,25,41,0.05);
+    --shadow-md: 0 4px 12px rgba(12,25,41,0.08);
+    --shadow-lg: 0 12px 32px rgba(12,25,41,0.12);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* Dark theme overrides */
+  [data-theme="dark"] {
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --bg: #0f1112;
+    --bg-alt: #1a1d21;
+    --card-bg: #1a1d21;
+    --card-border: #2a2d31;
+    --hero-bg: linear-gradient(135deg, #0a0e14 0%, #131820 50%, #1a1d21 100%);
+    --nav-bg: rgba(15,17,18,0.92);
+    --border: #2a2d31;
+    --border-light: #1f2225;
+    --blue: #60a5fa;
+    --blue-light: rgba(96,165,250,0.1);
+    --green: #34d399;
+    --green-light: rgba(52,211,153,0.1);
+    --red: #f87171;
+    --red-light: rgba(248,113,113,0.1);
+    --amber: #fbbf24;
+    --amber-light: rgba(251,191,36,0.1);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.2);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: var(--font); font-size: 17px; line-height: 1.65;
+    color: var(--text); background: var(--bg); overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+  }
+  button { cursor: pointer; font: inherit; border: none; background: none; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .section { padding: 80px 0; transition: background 0.3s; }
+  .section-alt { background: var(--bg-alt); }
+
+  /* NAV */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--nav-bg); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border); padding: 10px 0;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .nav .container { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .nav-logo { font-weight: 800; font-size: 17px; color: var(--text); letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .nav-logo span { color: var(--amber); }
+  .nav-links { display: flex; gap: 16px; list-style: none; flex-wrap: wrap; }
+  .nav-links a { font-size: 12.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; transition: color 0.15s; }
+  .nav-links a:hover { color: var(--amber); text-decoration: none; }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-right .back-home {
+    font-size: 12px; font-weight: 700; color: var(--text-muted);
+    padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px;
+    transition: all 0.15s; white-space: nowrap; text-decoration: none;
+  }
+  .nav-right .back-home:hover { color: var(--blue); border-color: var(--blue); }
+  .nav-right .theme-btn {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    padding: 5px 10px; border: 1px solid var(--border); border-radius: 8px;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .nav-right .theme-btn:hover { color: var(--amber); border-color: var(--amber); }
+
+  /* HERO */
+  .hero {
+    position: relative; background: var(--hero-bg); color: var(--hero-text);
+    padding: 80px 0 100px; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 50% at 50% 30%, rgba(232,146,11,0.13) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 40% at 80% 60%, rgba(26,86,219,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 680px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 100px; padding: 6px 16px 6px 6px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.4px;
+    margin-bottom: 24px; color: rgba(255,255,255,0.9);
+  }
+  .hero-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+  .hero h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: 16px; }
+  .hero h1 em { font-style: normal; color: var(--amber); }
+  .hero p { font-size: 16px; line-height: 1.6; color: var(--hero-text-muted); max-width: 520px; margin-bottom: 28px; }
+  .hero-quickfacts { display: flex; gap: 24px; flex-wrap: wrap; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .hero-fact { display: flex; align-items: center; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.8); }
+  .hero-fact strong { color: #fff; font-size: 15px; }
+  .hero-fact-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .hero-fact-icon.amber { background: rgba(232,146,11,0.2); color: var(--amber); }
+  .hero-fact-icon.blue { background: rgba(26,86,219,0.2); color: #60a5fa; }
+  .hero-fact-icon.red { background: rgba(220,38,38,0.2); color: #f87171; }
+
+  /* STEP FLOW */
+  .step-flow { display: flex; gap: 0; counter-reset: step; margin: 40px 0; flex-wrap: wrap; }
+  .step-item {
+    flex: 1; min-width: 140px;
+    position: relative; padding: 24px 16px; text-align: center;
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md);
+    counter-increment: step; transition: background 0.3s, border-color 0.3s;
+  }
+  .step-item:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; }
+  .step-item:not(:first-child) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .step-item::before {
+    content: counter(step);
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--asphalt); color: #fff;
+    font-weight: 800; font-size: 14px; margin-bottom: 8px;
+  }
+  .step-item h4 { font-size: 13px; font-weight: 700; margin-bottom: 3px; color: var(--text); }
+  .step-item p { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+
+  /* SECTION HEADERS */
+  .section-header { margin-bottom: 36px; }
+  .section-header h2 { font-size: clamp(22px, 3.5vw, 26px); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .section-header p { font-size: 15px; color: var(--text-muted); }
+
+  /* CARD GRID */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg); padding: 24px;
+    transition: all 0.2s ease;
+  }
+  .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .card-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 100px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .badge-rgt { background: var(--red-light); color: var(--red); }
+  .badge-manoeuvre { background: var(--blue-light); color: var(--blue); }
+  .badge-regels { background: var(--amber-light); color: var(--amber); }
+  .badge-controle { background: var(--green-light); color: var(--green); }
+  .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .card p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+  .step-list { list-style: none; margin-top: 10px; }
+  .step-list li {
+    padding: 5px 0 5px 20px; position: relative;
+    font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--border-light);
+  }
+  .step-list li:last-child { border-bottom: none; }
+  .step-list li::before {
+    content: ''; position: absolute; left: 0; top: 13px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--amber);
+  }
+
+  /* ACCORDION */
+  .accordion { margin-bottom: 8px; }
+  .accordion-trigger {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius-md); font-size: 14.5px; font-weight: 700; color: var(--text);
+    transition: all 0.15s; text-align: left;
+  }
+  .accordion-trigger:hover { border-color: var(--amber); }
+  .accordion-trigger[aria-expanded="true"] { border-color: var(--amber); background: var(--amber-light); }
+  .accordion-trigger .icon { font-size: 18px; transition: transform 0.2s; color: var(--amber); flex-shrink: 0; }
+  .accordion-trigger[aria-expanded="true"] .icon { transform: rotate(45deg); }
+  .accordion-panel {
+    display: none; padding: 18px;
+    background: var(--card-bg); border: 1px solid var(--card-border); border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    font-size: 14px; color: var(--text); line-height: 1.6;
+  }
+  .accordion-panel.open { display: block; }
+  .accordion-panel ul, .accordion-panel ol { padding-left: 20px; margin: 6px 0; }
+  .accordion-panel ul li, .accordion-panel ol li { margin-bottom: 3px; }
+  .highlight { background: var(--amber-light); padding: 12px 16px; border-radius: var(--radius-sm); margin: 10px 0; font-weight: 600; border-left: 3px solid var(--amber); font-size: 13.5px; }
+
+  /* QUIZ */
+  .quiz-container { max-width: 700px; }
+  .quiz-progress { display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap; }
+  .quiz-dot { width: 20px; height: 4px; border-radius: 2px; background: var(--border); transition: background 0.2s; flex: 1; min-width: 16px; }
+  .quiz-dot.done { background: var(--green); }
+  .quiz-dot.wrong { background: var(--red); }
+  .quiz-dot.current { background: var(--amber); }
+  .quiz-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 28px; }
+  .quiz-question { font-size: 17px; font-weight: 700; margin-bottom: 18px; line-height: 1.4; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    width: 100%; text-align: left; padding: 13px 16px;
+    background: var(--card-bg); border: 2px solid var(--border); border-radius: var(--radius-md);
+    font-size: 14.5px; transition: all 0.15s; color: var(--text);
+  }
+  .quiz-option:hover { border-color: var(--blue); background: var(--blue-light); }
+  .quiz-option.correct { border-color: var(--green); background: var(--green-light); }
+  .quiz-option.incorrect { border-color: var(--red); background: var(--red-light); }
+  .quiz-feedback {
+    margin-top: 14px; padding: 14px; border-radius: var(--radius-md);
+    font-size: 13.5px; line-height: 1.5; display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.pass { background: var(--green-light); border-left: 3px solid var(--green); }
+  .quiz-feedback.fail { background: var(--red-light); border-left: 3px solid var(--red); }
+  .quiz-score { font-size: 36px; font-weight: 800; color: var(--text); text-align: center; margin-bottom: 6px; }
+  .quiz-score-label { font-size: 13.5px; color: var(--text-muted); text-align: center; margin-bottom: 18px; }
+
+  /* INFO BOXES */
+  .info-box { background: var(--blue-light); border-radius: var(--radius-md); padding: 18px 22px; border-left: 3px solid var(--blue); font-size: 14px; line-height: 1.5; margin-bottom: 16px; color: var(--text); }
+  .warning-box { background: var(--red-light); border-radius: var(--radius-md); padding: 18px 22px; border-left: 3px solid var(--red); font-size: 14px; line-height: 1.5; margin-bottom: 16px; color: var(--text); }
+
+  /* VIDEO EMBEDS */
+  .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .video-card {
+    background: var(--asphalt); border-radius: var(--radius-lg);
+    overflow: hidden; transition: all 0.25s ease;
+  }
+  .video-card:hover { box-shadow: var(--shadow-lg); }
+  .video-wrapper {
+    position: relative; width: 100%; padding-top: 56.25%; background: #000;
+  }
+  .video-wrapper iframe {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
+  }
+  .video-card-info { padding: 14px 16px; }
+  .video-card-info h4 {
+    font-size: 13.5px; font-weight: 700; color: #fff; margin-bottom: 3px; line-height: 1.3;
+  }
+  .video-card-info p { font-size: 11.5px; color: rgba(255,255,255,0.5); }
+  .video-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 100px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 7px;
+    background: rgba(232,146,11,0.2); color: var(--amber);
+  }
+
+  .video-hero {
+    background: var(--asphalt); border-radius: var(--radius-lg);
+    padding: 36px 28px; margin-bottom: 24px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .video-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 30%, rgba(232,146,11,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .video-hero-content { position: relative; z-index: 1; }
+  .video-hero h3 { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px; letter-spacing: -0.5px; }
+  .video-hero p { font-size: 13.5px; color: rgba(255,255,255,0.6); margin-bottom: 22px; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .video-hero .video-wrapper {
+    max-width: 720px; margin: 0 auto;
+    border-radius: var(--radius-md); overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  /* FOOTER */
+  .footer { background: var(--asphalt); color: rgba(255,255,255,0.6); padding: 28px 0; font-size: 12.5px; }
+  .footer .container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .footer a { color: var(--amber); }
+  .footer a:hover { color: #fff; text-decoration: none; }
+
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .hero { padding: 48px 0 60px; }
+    .section { padding: 48px 0; }
+    .card-grid { grid-template-columns: 1fr; }
+    .video-grid { grid-template-columns: 1fr; }
+    .step-flow { flex-direction: column; }
+    .step-item:not(:last-child) { border-radius: var(--radius-md) var(--radius-md) 0 0; border-right: 1px solid var(--card-border); }
+    .step-item:not(:first-child) { border-radius: 0 0 var(--radius-md) var(--radius-md); }
+    .step-item:not(:last-child) { border-bottom: none; }
+    .nav-links { gap: 10px; }
+    .nav-links a { font-size: 11px; }
+    .quiz-card { padding: 20px; }
+    .video-hero { padding: 24px 18px; }
+    .video-hero h3 { font-size: 17px; }
+    .accordion-trigger { font-size: 13.5px; padding: 12px 14px; }
+  }
+  @media (max-width: 480px) {
+    .container { padding: 0 14px; }
+    .hero h1 { font-size: 26px; }
+    .hero p { font-size: 14px; }
+    .hero-quickfacts { gap: 14px; }
+    .section-header h2 { font-size: 20px; }
+    .card { padding: 18px; }
+    .card h3 { font-size: 15px; }
+    .video-hero { padding: 18px 14px; }
+    .nav .container { gap: 8px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  @media print {
+    .nav, .footer, .quiz-container, .video-grid, .video-hero { display: none; }
+    body { background: #fff; font-size: 12px; color: #000; }
+    .section { padding: 16px 0; }
+    .card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <a href="#" class="nav-logo">🚗 Driving Exam<span> Flanders</span></a>
+    <ul class="nav-links">
+      <li><a href="#procedure">Procedure</a></li>
+      <li><a href="#rgt">RGT</a></li>
+      <li><a href="#manoeuvres">Manoeuvres</a></li>
+      <li><a href="#rules">Rules</a></li>
+      <li><a href="#quiz">Quiz</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="/" class="back-home" title="Back to Quiz The Spire">🏠 Home</a>
+      <button class="theme-btn" id="themeToggle" title="Toggle dark/light mode">🌓 Theme</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge"><span class="dot"></span> Updated July 2026</div>
+      <h1>Everything you <em>actually</em> need to know for your practical exam</h1>
+      <p>No routes you won't drive. Just the theory behind the practical exam: RGT hazard perception, manoeuvres, vehicle checks, traffic rules, and the exact exam procedure — step by step.</p>
+      <div class="hero-quickfacts">
+        <div class="hero-fact"><span class="hero-fact-icon amber">€</span><span>Exam fee: <strong>€100</strong></span></div>
+        <div class="hero-fact"><span class="hero-fact-icon blue">∞</span><span>Attempts: <strong>unlimited</strong></span></div>
+        <div class="hero-fact"><span class="hero-fact-icon red">⚠️</span><span>1st attempt: <strong>often fails</strong></span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- EXAM PROCEDURE -->
+<section class="section" id="procedure">
+  <div class="container reveal">
+    <div class="section-header">
+      <h2>How Your Exam Works</h2>
+      <p>The practical exam has two parts: first the hazard perception test (RGT), then driving on public roads. Here's the exact sequence.</p>
+    </div>
+    <div class="step-flow">
+      <div class="step-item">
+        <h4>Arrival & Check-in</h4>
+        <p>Show ID, provisional license, theory certificate, and RGT certificate. Pay €100.</p>
+      </div>
+      <div class="step-item">
+        <h4>Vehicle Check</h4>
+        <p>Examiner asks 2–3 questions: oil level, coolant, washer fluid, lights, tire tread.</p>
+      </div>
+      <div class="step-item">
+        <h4>RGT (Video Clips)</h4>
+        <p>5 video clips on a tablet. You tap when you see a hazard: brake, ease off gas, or do nothing. At least 3/5 correct needed.</p>
+      </div>
+      <div class="step-item">
+        <h4>Road Driving</h4>
+        <p>~35 minutes driving. Part with examiner instructions, part independent with GPS. One manoeuvre during the drive.</p>
+      </div>
+      <div class="step-item">
+        <h4>Result & Feedback</h4>
+        <p>You'll know immediately if you passed. The examiner explains what went well and what didn't.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RGT HAZARD PERCEPTION -->
+<section class="section section-alt" id="rgt">
+  <div class="container reveal">
+    <div class="section-header">
+      <h2>RGT — Hazard Perception Test</h2>
+      <p>The Risk Perception Test (RGT) happens before you drive. You watch 5 short video clips from the driver's perspective on a tablet. Tap the screen as soon as you spot a hazard: <strong>brake</strong>, <strong>ease off gas</strong>, or <strong>do nothing</strong>. You need at least 3 out of 5 correct. Practice with the videos below.</p>
+    </div>
+
+    <!-- Featured video -->
+    <div class="video-hero reveal">
+      <div class="video-hero-content">
+        <h3>▶️ Practice Exam #2 — 10 Exercises</h3>
+        <p>The most popular RGT compilation. Tap the screen when you see a hazard — just like the real exam.</p>
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/kykp7C46ioA"
+            title="Risicoperceptietest Oefenexamen #2"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            loading="lazy">
+          </iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- More RGT compilations -->
+    <div class="section-header" style="margin-top:36px;">
+      <h2 style="font-size:20px;">More Practice Videos</h2>
+      <p>Practice with these RGT compilations from the <strong>Risicoperceptie-test</strong> channel — the best resource for the Flemish driving exam.</p>
+    </div>
+
+    <div class="video-grid reveal">
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/L1N_34JQrA4"
+            title="Risicoperceptietest Oefenexamen #1"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <span class="video-badge">⭐ Recommended</span>
+          <h4>Practice Exam #1 — 13 Exercises</h4>
+          <p>Risicoperceptie-test · Dutch</p>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/y7UG7iI2yug"
+            title="Risicoperceptietest Oefenexamen 04"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <span class="video-badge">New</span>
+          <h4>Practice Exam 04 — 10 Exercises</h4>
+          <p>Risicoperceptie-test · Dutch</p>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/PwymVRjdfV8"
+            title="Risicoperceptietest Oefenexamen 11"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <h4>Practice Exam 11 — Extra Exercises</h4>
+          <p>Risicoperceptie-test · Dutch</p>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/F-z4Nisq-Xg"
+            title="Risicoperceptietest Oefenexamen 12"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <h4>Practice Exam 12 — Extra Exercises</h4>
+          <p>Risicoperceptie-test · Dutch</p>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/videoseries?list=PLTwvgP-_pcwfw7Pde8xOFkq-uvS2lafBP"
+            title="RGT Playlist Risicoperceptie-test"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <span class="video-badge">🔴 Advanced</span>
+          <h4>Full Playlist — All RGT Exercises</h4>
+          <p>Risicoperceptie-test · Continuous playlist</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:24px;">
+      <strong>💡 How to use these videos:</strong><br>
+      1. Open a compilation and go full screen.<br>
+      2. Tap the screen (or click with your mouse) as soon as you see a hazard — exactly like the real exam.<br>
+      3. The video tells you whether you reacted at the right moment.<br>
+      4. Repeat until you get the timing right for every clip.<br>
+      <strong>Goal:</strong> react early enough — not too late, not too early. At least 3 out of 5 correct = pass.
+    </div>
+
+    <!-- Common RGT scenarios -->
+    <div class="section-header" style="margin-top:36px;">
+      <h2 style="font-size:20px;">Common RGT Scenarios</h2>
+      <p>You'll definitely see these situations in the clips. Know what to do.</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card reveal">
+        <span class="card-badge badge-rgt">RGT — Scenario 1</span>
+        <h3>Child Running Out</h3>
+        <p>Driving through a residential area (30 km/h zone). A child suddenly runs onto the street from between parked cars.</p>
+        <ul class="step-list">
+          <li>Action: <strong>brake</strong></li>
+          <li>Hazard visible as soon as the child appears between cars</li>
+          <li>Reacting too late = fail</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-rgt">RGT — Scenario 2</span>
+        <h3>Cyclist at Roundabout</h3>
+        <p>Approaching a roundabout. A cyclist on the bike lane around the roundabout comes from the right as you need to exit.</p>
+        <ul class="step-list">
+          <li>Action: <strong>ease off gas</strong> (or brake if it's tight)</li>
+          <li>Cyclists on roundabouts have priority when you're exiting</li>
+          <li>Double-check your blind spot</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-rgt">RGT — Scenario 3</span>
+        <h3>Wet Road, Traffic Ahead</h3>
+        <p>Driving 70 km/h on a regional road. It's raining. Cars ahead suddenly brake for congestion.</p>
+        <ul class="step-list">
+          <li>Action: <strong>brake</strong></li>
+          <li>Double your following distance in rain</li>
+          <li>React as soon as brake lights appear ahead</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-rgt">RGT — Scenario 4</span>
+        <h3>Green Light, Intersection</h3>
+        <p>Approaching an intersection with a green light. A car from the right is clearly speeding and doesn't look like it's stopping.</p>
+        <ul class="step-list">
+          <li>Action: <strong>ease off gas</strong>, be ready to brake</li>
+          <li>Green light doesn't mean "safe" — it means "go if it's safe"</li>
+          <li>Anticipate other drivers' mistakes</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-rgt">RGT — Scenario 5</span>
+        <h3>Tractor Ahead</h3>
+        <p>On a rural road, 70 km/h. A tractor with trailer is doing 30 km/h ahead. Oncoming traffic approaches.</p>
+        <ul class="step-list">
+          <li>Action: <strong>ease off gas</strong>, don't overtake</li>
+          <li>Only overtake when it's safe and permitted</li>
+          <li>Showing patience is the correct answer here</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-rgt">RGT — Tip</span>
+        <h3>How to Score 5/5</h3>
+        <p>The key is <strong>reacting early</strong>. The faster you spot the hazard and choose the right action, the better your score. Don't hesitate — the system measures your reaction time.</p>
+        <ul class="step-list">
+          <li>Scan constantly: ahead, left, right, mirrors</li>
+          <li>Expect the unexpected in residential areas</li>
+          <li>When in doubt: easing off gas is safer than doing nothing</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MANOEUVRES -->
+<section class="section" id="manoeuvres">
+  <div class="container reveal">
+    <div class="section-header">
+      <h2>Manoeuvres</h2>
+      <p>The examiner will ask you to perform at least one manoeuvre. These are the most common ones — with exact steps.</p>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+        🅿️ Parallel Parking (reversing between two cars)
+        <span class="icon">+</span>
+      </button>
+      <div class="accordion-panel">
+        <ol>
+          <li>Stop next to the front car, about 50 cm away, your rear bumper aligned with theirs</li>
+          <li>Turn the wheel fully to the right (toward the curb)</li>
+          <li>Check mirrors and blind spot — reverse slowly</li>
+          <li>When your right front wheel is level with the other car's rear bumper: turn the wheel fully to the left</li>
+          <li>Keep reversing until your car is straight</li>
+          <li>Correct if needed: steer right and move forward a few centimeters</li>
+          <li><strong>Don't forget:</strong> handbrake on, engine off, steering lock on</li>
+        </ol>
+        <div class="highlight">⚠️ The examiner watches for: observation (blind spot!), speed (crawling pace), correct steering, and whether you stay within the lines.</div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+        ↙️ Reverse Bay Parking (into a marked bay)
+        <span class="icon">+</span>
+      </button>
+      <div class="accordion-panel">
+        <ol>
+          <li>Drive past the bay until your shoulder is level with the middle of the adjacent bay</li>
+          <li>Turn the wheel fully toward the bay</li>
+          <li>Check all around — mirrors and blind spot — reverse slowly</li>
+          <li>Once your car is aligned with the bay: quickly straighten the wheel</li>
+          <li>Make small steering corrections</li>
+          <li>Handbrake, engine off, steering lock on</li>
+        </ol>
+        <div class="highlight">⚠️ Important: don't cross the bay lines. Keep adjusting until you're straight. The examiner checks if you can do it in one smooth movement, but corrections are allowed.</div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+        🔄 Three-Point Turn (turning on a narrow street)
+        <span class="icon">+</span>
+      </button>
+      <div class="accordion-panel">
+        <ol>
+          <li>Stop at the right side of the road</li>
+          <li>Turn the wheel fully left, check mirrors + blind spot, drive slowly forward to the opposite side</li>
+          <li>Stop just before the curb on the opposite side</li>
+          <li>Turn the wheel fully right, check mirrors + blind spot, reverse slowly</li>
+          <li>Stop just before the curb</li>
+          <li>Turn left, check, and drive forward — you're now facing the opposite direction</li>
+        </ol>
+        <div class="highlight">⚠️ Maximum 3 moves (forward-reverse-forward). Check your blind spot for EVERY move. Yield to all other traffic.</div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+        🅿️ Forward Angle Parking (in a parking lot)
+        <span class="icon">+</span>
+      </button>
+      <div class="accordion-panel">
+        <ol>
+          <li>Keep enough distance from parked cars (at least 1.5m)</li>
+          <li>Start turning as soon as your front bumper reaches the start of the bay</li>
+          <li>Drive slowly into the bay</li>
+          <li>Straighten the wheel once your car is aligned</li>
+          <li>Stop fully inside the bay — not too far forward or back</li>
+          <li>Handbrake, engine off, steering lock on</li>
+        </ol>
+        <div class="highlight">⚠️ Watch for pedestrians walking between parked cars. Look out for other vehicles also manoeuvring.</div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+        🔧 Vehicle Checks — What You Need to Know
+        <span class="icon">+</span>
+      </button>
+      <div class="accordion-panel">
+        <p>Before you set off, the examiner may ask you to check a few things on the car. You don't need to do them all perfectly, but you must <strong>know where to look</strong>.</p>
+        <ul>
+          <li><strong>Oil level:</strong> Point to the dipstick. Explain: engine must be cold/off, pull dipstick, wipe clean, reinsert, then read between min and max.</li>
+          <li><strong>Coolant:</strong> Point to the reservoir (usually translucent with pink/blue/green fluid). Level between min and max. Engine must be cold before opening.</li>
+          <li><strong>Washer fluid:</strong> Point to the reservoir (usually marked with a windshield symbol). Level must be sufficient.</li>
+          <li><strong>Brake fluid:</strong> Point to the reservoir. Level between min and max.</li>
+          <li><strong>Tire tread:</strong> Minimum 1.6 mm across the full tread width. No cracks or bulges.</li>
+          <li><strong>Lights:</strong> Show how to check dipped beam, high beam, indicators, brake lights, and fog lights.</li>
+          <li><strong>Horn:</strong> Does it work? Give it a short press.</li>
+        </ul>
+        <div class="highlight">💡 You don't need to be a mechanic. The examiner just wants to see that you <strong>know where the reservoirs are</strong> and understand why regular checks matter.</div>
+      </div>
+    </div>
+
+    <!-- Manoeuvre videos -->
+    <div class="section-header" style="margin-top:36px;">
+      <h2 style="font-size:20px;">Manoeuvre Videos</h2>
+      <p>Watch these verified videos to master the 6 official manoeuvres.</p>
+    </div>
+
+    <div class="video-grid reveal">
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/NcPca7Pe81I"
+            title="De zes manoeuvres van het rijexamen"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <span class="video-badge">⭐ Recommended</span>
+          <h4>Overview — The 6 Official Manoeuvres</h4>
+          <p>Dutch</p>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/nGPZH8_zraA"
+            title="Parkeren in een vak, vooruit en achteruit"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <span class="video-badge">New</span>
+          <h4>Bay Parking — Forward & Reverse</h4>
+          <p>Dutch</p>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/HRgemzUo_v0"
+            title="Evenwijdig parkeren links en rechts"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <h4>Parallel Parking — Left & Right</h4>
+          <p>Dutch</p>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/8pbhPneZ5FM"
+            title="Keren in een smalle straat"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <h4>Turning in a Narrow Street</h4>
+          <p>Dutch</p>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/videoseries?list=PLTwvgP-_pcwfw7Pde8xOFkq-uvS2lafBP"
+            title="Volledige afspeellijst manoeuvres"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-card-info">
+          <h4>Full Playlist — All Manoeuvres</h4>
+          <p>Dutch · continuous playlist</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRAFFIC RULES -->
+<section class="section section-alt" id="rules">
+  <div class="container reveal">
+    <div class="section-header">
+      <h2>Traffic Rules You Must Know</h2>
+      <p>Not theory exam material — these are the rules you'll apply in practice and that examiners are strictest about.</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card reveal">
+        <span class="card-badge badge-regels">Priority</span>
+        <h3>Priority from the Right</h3>
+        <p>The default rule in Belgium: drivers coming from the right have priority, unless signs or markings say otherwise.</p>
+        <ul class="step-list">
+          <li>Applies at all intersections without priority signs</li>
+          <li>Shark teeth on the road = you must yield</li>
+          <li>Cyclists from the right also have priority</li>
+          <li>Approaching too slowly is also a mistake</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-regels">Speed</span>
+        <h3>Speed Limits</h3>
+        <p>The examiner tests whether you know AND apply the limits. Too slow is just as bad as too fast.</p>
+        <ul class="step-list">
+          <li><strong>Built-up area:</strong> 50 km/h (unless zone 30)</li>
+          <li><strong>Outside built-up area:</strong> 70 km/h (Flanders)</li>
+          <li><strong>Motorway:</strong> 120 km/h</li>
+          <li><strong>Zone 30:</strong> near schools, residential areas, city centers</li>
+          <li>Signs can be subtle — scan constantly</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-regels">Roundabouts</span>
+        <h3>Roundabouts</h3>
+        <p>Vehicles already ON the roundabout have priority. You must wait for a safe gap.</p>
+        <ul class="step-list">
+          <li>Choose the correct lane before entering</li>
+          <li>Always signal when exiting the roundabout</li>
+          <li>Watch for cyclists on the bike lane around the roundabout</li>
+          <li>Cyclists have priority when you exit</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-regels">Motorway</span>
+        <h3>Merging & Exiting</h3>
+        <p>The motorway section tests your comfort at high speed.</p>
+        <ul class="step-list">
+          <li><strong>Merging:</strong> build up speed on the slip road, check mirrors, blind spot, merge smoothly</li>
+          <li><strong>Keep right</strong> unless overtaking</li>
+          <li><strong>Exiting:</strong> move over in time, only slow down on the exit lane</li>
+          <li>Following distance: at least 2 seconds (4 seconds in rain)</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-regels">Vulnerable Users</span>
+        <h3>Cyclists & Pedestrians</h3>
+        <p>Vulnerable road users are the examiner's #1 priority.</p>
+        <ul class="step-list">
+          <li>Cyclists on a bike lane: always yield when turning</li>
+          <li>Zebra crossing: stop if a pedestrian clearly wants to cross</li>
+          <li>When opening your door: check blind spot first (for cyclists!)</li>
+          <li>School zones: extra alert, adjust speed</li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-regels">GPS</span>
+        <h3>GPS Navigation</h3>
+        <p>Since October 2023, GPS is mandatory during part of the exam.</p>
+        <ul class="step-list">
+          <li>You can use your own device or phone (in a holder!)</li>
+          <li>Sound on, screen visible</li>
+          <li>The examiner enters an address — you follow the instructions</li>
+          <li>Traffic rules ALWAYS take priority over GPS</li>
+          <li>If you miss a turn: stay calm, the GPS recalculates</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMON MISTAKES -->
+<section class="section">
+  <div class="container reveal">
+    <div class="section-header">
+      <h2>Why People Fail</h2>
+      <p>These are the real reasons — not generalities, but what examiners actually write on their forms.</p>
+    </div>
+
+    <div class="warning-box">
+      <strong>🚫 Instant fail:</strong> If the examiner has to intervene (brake or correct your steering), it's immediately over. This happens most often with priority mistakes and motorway merging.
+    </div>
+
+    <div class="card-grid">
+      <div class="card reveal">
+        <span class="card-badge badge-rgt">Critical</span>
+        <h3>Examiner Intervenes</h3>
+        <p>Braking or steering correction by the examiner = instant fail. Anticipate, don't be too passive but also not reckless.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-manoeuvre">Manoeuvre</span>
+        <h3>Forgetting the Handbrake</h3>
+        <p>After every parking manoeuvre: apply the handbrake. Sounds simple, gets forgotten incredibly often due to nerves.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-rgt">Critical</span>
+        <h3>Blind Spot Check</h3>
+        <p>Every direction change, every manoeuvre, when opening your door: inside mirror → side mirror → blind spot.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-regels">Priority</span>
+        <h3>Priority Mistakes</h3>
+        <p>Approaching too fast at a priority-from-the-right junction. Or hesitating too much on a priority road.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-regels">Speed</span>
+        <h3>Missing Speed Signs</h3>
+        <p>From 70 to 50 when entering a built-up area — the sign is sometimes inconspicuous. Scan constantly.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-badge badge-controle">Control</span>
+        <h3>Not Checking Mirrors Enough</h3>
+        <p>Not exaggerated, but systematic: a mirror check every 10–15 seconds. Especially before braking, before signaling.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="section section-alt" id="quiz">
+  <div class="container reveal">
+    <div class="section-header">
+      <h2>Test Your Knowledge</h2>
+      <p>10 multiple-choice questions about the practical exam. Like the RGT, but written. Score 7/10 or higher to pass.</p>
+    </div>
+
+    <div class="quiz-container">
+      <div class="quiz-progress" id="quizProgress"></div>
+      <div class="quiz-card" id="quizCard">
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+        <button id="quizNextBtn" style="display:none;margin-top:14px;padding:11px 22px;background:var(--asphalt);color:#fff;border-radius:100px;font-weight:700;font-size:13.5px;">Next →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <p>Based on information from <a href="https://www.gocavlaanderen.be" target="_blank" rel="noopener">GOCA Flanders</a> and <a href="https://www.km.be" target="_blank" rel="noopener">KM</a>. Unofficial guide — always verify with your driving school.</p>
+    <p>Good luck with your exam! 🍀</p>
+  </div>
+</footer>
+
+<script>
+// Dark mode synced with Quiz The Spire
+(function() {
+  var THEME_KEY = 'spire-theme';
+  function getTheme() {
+    return localStorage.getItem(THEME_KEY) || 'dark';
+  }
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+  }
+  function toggleTheme() {
+    var current = getTheme();
+    var next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+    // Sync across tabs
+    try { localStorage.setItem('spire-theme-sync', Date.now().toString()); } catch(e) {}
+  }
+  // Listen for external theme changes
+  window.addEventListener('storage', function(e) {
+    if (e.key === THEME_KEY || e.key === 'spire-theme-sync') {
+      applyTheme(getTheme());
+    }
+  });
+  applyTheme(getTheme());
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+})();
+
+function toggleAccordion(trigger) {
+  var panel = trigger.nextElementSibling;
+  var isOpen = trigger.getAttribute('aria-expanded') === 'true';
+  trigger.setAttribute('aria-expanded', !isOpen);
+  panel.classList.toggle('open', !isOpen);
+  var icon = trigger.querySelector('.icon');
+  if (icon) icon.textContent = isOpen ? '+' : '\u2212';
+}
+
+var revealObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('visible'); revealObserver.unobserve(e.target); } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(function(el) { revealObserver.observe(el); });
+
+// Quiz
+var quizData = [
+  { question: "You're driving in a 30 km/h zone. A child suddenly runs onto the street from between parked cars. What do you do?", options: ["Nothing — you're only doing 30 km/h", "Ease off the gas", "Brake"], correct: 2, explanation: "Even at 30 km/h you must brake immediately. The braking distance at 30 km/h is ~9 meters on dry roads. A child can appear within 2 meters of your car." },
+  { question: "You're exiting a roundabout. A cyclist on the adjacent bike lane is going straight. What do you do?", options: ["Keep going — you're already on the roundabout", "Yield to the cyclist", "Honk to warn the cyclist"], correct: 1, explanation: "When exiting a roundabout, you must yield to cyclists on the adjacent bike lane. Always check your blind spot." },
+  { question: "During the RGT (hazard perception test) you watch 5 video clips. How many must you assess correctly to pass?", options: ["2 out of 5", "3 out of 5", "All 5"], correct: 1, explanation: "You need at least 3 out of 5 clips correct. That's 60%. You have 3 response options: brake, ease off gas, or do nothing." },
+  { question: "The examiner asks you to parallel park. You've completed the manoeuvre. What must you absolutely not forget?", options: ["Turn off the radio", "Apply the handbrake", "Unbuckle your seatbelt"], correct: 1, explanation: "Forgetting the handbrake is one of the most common mistakes. After every parking manoeuvre: handbrake on, engine off, steering lock engaged." },
+  { question: "You're driving on a regional road outside a built-up area. What's the maximum speed in Flanders?", options: ["50 km/h", "70 km/h", "90 km/h"], correct: 1, explanation: "In Flanders, the maximum speed outside built-up areas is 70 km/h (since 2017). Inside built-up areas it's 50 km/h, unless otherwise indicated." },
+  { question: "You approach an intersection with no traffic lights or priority signs. A car comes from the right. What do you do?", options: ["Keep going — you were here first", "Yield to the car from the right", "Stop and wait until the other car also stops"], correct: 1, explanation: "In Belgium, the default rule is priority from the right. The driver coming from the right has priority. Slow down in time and yield." },
+  { question: "How long is the RGT certificate (hazard perception test) valid?", options: ["1 year", "3 years", "5 years"], correct: 1, explanation: "The RGT certificate is valid for 3 years. Your theory certificate is also valid for 3 years. Both must be valid on the day of your practical exam." },
+  { question: "You need to merge onto the motorway. What's the correct procedure?", options: ["Build up speed on the slip road, check mirrors, blind spot, merge smoothly", "Stop at the end of the slip road and wait for a gap", "Steer left immediately as soon as you're on the slip road"], correct: 0, explanation: "On the slip road, build up speed to match the traffic on the motorway. Check mirrors, blind spot, then merge smoothly. Stopping on the slip road is dangerous and wrong." },
+  { question: "What following distance should you maintain in dry weather?", options: ["1 second behind the vehicle ahead", "2 seconds behind the vehicle ahead", "5 seconds behind the vehicle ahead"], correct: 1, explanation: "The 2-second rule: pick a fixed point (bridge, tree) — when the vehicle ahead passes it, you should pass that same point at least 2 seconds later. In rain: 4 seconds." },
+  { question: "The examiner suddenly intervenes and brakes. What does this mean?", options: ["You've failed immediately", "You get a warning but can continue driving", "The exam restarts"], correct: 0, explanation: "If the examiner has to intervene (brake or correct your steering), you fail immediately. This is a 'serious fault' — the exam ends and you must rebook." }
+];
+
+var currentQuestion = 0;
+var score = 0;
+var answered = false;
+var userAnswers = [];
+
+function initQuiz() {
+  currentQuestion = 0; score = 0; answered = false; userAnswers.length = 0;
+  document.getElementById('quizProgress').innerHTML = quizData.map(function(_, i) { return '<div class="quiz-dot" id="dot' + i + '"></div>'; }).join('');
+  document.getElementById('quizNextBtn').style.display = 'none';
+  document.getElementById('quizFeedback').classList.remove('show', 'pass', 'fail');
+  showQuestion(0);
+}
+
+function showQuestion(index) {
+  if (index >= quizData.length) { showResults(); return; }
+  answered = false; currentQuestion = index;
+  var q = quizData[index];
+  document.getElementById('quizQuestion').textContent = 'Question ' + (index + 1) + ': ' + q.question;
+  document.getElementById('quizOptions').innerHTML = q.options.map(function(opt, i) {
+    return '<button class="quiz-option" onclick="answerQuestion(' + i + ')">' + opt + '</button>';
+  }).join('');
+  document.getElementById('quizFeedback').classList.remove('show', 'pass', 'fail');
+  document.getElementById('quizNextBtn').style.display = 'none';
+  document.querySelectorAll('.quiz-dot').forEach(function(dot, i) {
+    dot.classList.remove('current', 'done', 'wrong');
+    if (i === index) dot.classList.add('current');
+    else if (i < index && userAnswers[i] !== undefined) {
+      dot.classList.add(userAnswers[i] === quizData[i].correct ? 'done' : 'wrong');
+    }
+  });
+}
+
+function answerQuestion(choice) {
+  if (answered) return;
+  answered = true;
+  var q = quizData[currentQuestion];
+  var correct = choice === q.correct;
+  userAnswers[currentQuestion] = choice;
+  if (correct) score++;
+  document.querySelectorAll('.quiz-option').forEach(function(btn, i) {
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    if (i === choice && !correct) btn.classList.add('incorrect');
+  });
+  var fb = document.getElementById('quizFeedback');
+  fb.textContent = correct ? '✅ Correct! ' + q.explanation : '❌ Wrong! ' + q.explanation;
+  fb.classList.add('show', correct ? 'pass' : 'fail');
+  document.getElementById('quizNextBtn').style.display = 'inline-flex';
+  document.getElementById('quizNextBtn').textContent = currentQuestion < quizData.length - 1 ? 'Next →' : 'View Results';
+}
+
+function showResults() {
+  document.getElementById('quizProgress').innerHTML = '';
+  var pct = Math.round((score / quizData.length) * 100);
+  var passed = score >= 7;
+  document.getElementById('quizQuestion').textContent = '';
+  document.getElementById('quizOptions').innerHTML = '';
+  document.getElementById('quizFeedback').classList.remove('show');
+  document.getElementById('quizNextBtn').style.display = 'none';
+  document.getElementById('quizCard').innerHTML =
+    '<div class="quiz-score">' + score + '/' + quizData.length + '</div>' +
+    '<div class="quiz-score-label">' + (passed ? '🎉 Passed!' : '😔 Keep practicing') + ' — ' + pct + '%</div>' +
+    '<p style="text-align:center;font-size:14px;color:var(--text-muted);margin-bottom:20px;">' + (passed ? "You're well prepared for the RGT and the practical exam. Keep practicing with the videos." : 'You need at least 7/10. Review the wrong answers and try again.') + '</p>' +
+    '<div style="text-align:center;">' +
+      '<button onclick="initQuiz()" style="padding:11px 22px;background:var(--amber);color:#fff;border-radius:100px;font-weight:700;font-size:13.5px;">Try Again</button>' +
+    '</div>' +
+    '<div style="margin-top:18px;">' +
+      quizData.map(function(q, i) {
+        return '<div style="padding:8px 0;border-bottom:1px solid var(--border-light);font-size:13px;"><strong>Q' + (i+1) + ':</strong> ' + (userAnswers[i] === q.correct ? '✅' : '❌') + ' ' + q.question + '</div>';
+      }).join('') +
+    '</div>';
+}
+
+document.getElementById('quizNextBtn').addEventListener('click', function() { showQuestion(currentQuestion + 1); });
+initQuiz();
+</script>
+</body>
+</html>
