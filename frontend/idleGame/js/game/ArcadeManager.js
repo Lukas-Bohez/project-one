@@ -59,6 +59,7 @@ class ArcadeManager {
         zipUrl: 'dos-games/doom.zip',
         launchCommands: ['cd DOOM', 'DOOM.COM'],
         controls: 'Arrow keys to move/turn, Ctrl to fire, Space to use doors/switches, Alt (held) to strafe',
+        resourceInterval: 2.5,
         bonusType: 'resourceBonus',
         bonusAmount: 0.05, // 5% resource bonus per hour
       },
@@ -74,6 +75,7 @@ class ArcadeManager {
         launchCommands: ['DIGGER.COM'],
         controls: 'Arrow keys to move and dig, F1 to fire',
         cyclesLimit: 500, // Limit CPU cycles to slow down the game
+        resourceInterval: 1.5, // Faster resource ticks for Digger (it IS the mining game)
         bonusType: 'craftingBonus',
         bonusAmount: 0.03, // 3% crafting bonus per hour
       },
@@ -88,6 +90,7 @@ class ArcadeManager {
         zipUrl: 'dos-games/keen4.zip',
         launchCommands: ['cd KEEN4', 'KEEN4E.EXE'],
         controls: 'Arrow keys to move, Space to jump, Ctrl to fire, Alt for the pogo stick',
+        resourceInterval: 3.0,
         bonusType: 'efficiencyBonus',
         bonusAmount: 0.04, // 4% efficiency bonus per hour
       },
@@ -102,6 +105,7 @@ class ArcadeManager {
         zipUrl: 'dos-games/prince.zip',
         launchCommands: ['cd Ppersia', 'PRINCE.EXE'],
         controls: 'Arrow keys to move/jump/crouch, Shift to grab ledges, draw your sword, or drink a potion',
+        resourceInterval: 3.0,
         bonusType: 'goldBonus',
         bonusAmount: 0.02, // 2% gold bonus per hour
       },
@@ -175,7 +179,7 @@ class ArcadeManager {
     this.state.arcade.gameStartTime = null;
   }
 
-  // Update arcade bonuses (called each game tick)
+  // Update arcade bonuses and generate resources (called each game tick)
   update(deltaTime) {
     // Safety check
     if (!this.state || !this.state.arcade) {
@@ -183,12 +187,122 @@ class ArcadeManager {
       return;
     }
 
-    // If a game is active, accumulate play time
+    // If a game is active, accumulate play time and generate resources
     if (this.state.arcade.activeGame && this.state.arcade.gameStartTime) {
       const gameId = this.state.arcade.activeGame;
       this.state.arcade.playTime[gameId] = (this.state.arcade.playTime[gameId] || 0) + deltaTime;
       this.state.arcade.totalPlayTime += deltaTime;
+
+      // --- DOS GAME RESOURCE GENERATION ---
+      // While a DOS game is actively being played, simulate in-game events
+      // that yield real resources. This replaces the old "time = generic %"
+      // system with actual materials you can see and use immediately.
+      this._generateGameResources(gameId, deltaTime);
     }
+  }
+
+  /**
+   * Generate real resources while a DOS game is actively being played.
+   * Simulates the event-driven system described in dos-arcade-bridge.js.
+   * Each game yields different resource types based on its gameplay genre:
+   *
+   *   Digger    – mining → Stone, Coal, Iron, Silver, Gold
+   *   DOOM      – combat → hire workers
+   *   Prince    – exploration → Iron, Silver, Gold
+   *   Keen      – platformer → Stone, Iron, Gold (smaller amounts)
+   */
+  _generateGameResources(gameId, deltaTime) {
+    if (!this.gameEngine || !this.gameEngine.state) return;
+
+    const game = this.games[gameId];
+    if (!game) return;
+
+    if (!this.state.arcade._resAccum) this.state.arcade._resAccum = {};
+    if (!this.state.arcade._materialsGathered) this.state.arcade._materialsGathered = {};
+    this.state.arcade._resAccum[gameId] = (this.state.arcade._resAccum[gameId] || 0) + deltaTime;
+
+    const interval = game.resourceInterval || 2.0;
+    const state = this.gameEngine.state;
+    const res = state.resources;
+    const workers = state.workers;
+
+    while (this.state.arcade._resAccum[gameId] >= interval) {
+      this.state.arcade._resAccum[gameId] -= interval;
+
+      switch (gameId) {
+        case 'digger':
+          if (Math.random() < 0.65) {
+            const pick = ['stone', 'coal'][Math.floor(Math.random() * 2)];
+            res[pick] = (res[pick] || 0) + 1;
+            this._trackMaterial(gameId, pick, 1);
+          } else {
+            const pick = ['silver', 'gold'][Math.floor(Math.random() * 2)];
+            const amt = pick === 'gold' ? 1 : 2;
+            res[pick] = (res[pick] || 0) + amt;
+            this._trackMaterial(gameId, pick, amt);
+          }
+          if (Math.random() < 0.10 && res.gold >= 5) {
+            workers.stoneMiner = (workers.stoneMiner || 0) + 1;
+            res.gold -= 5;
+            this._trackMaterial(gameId, 'workers', 1);
+          }
+          break;
+
+        case 'doom':
+          if (Math.random() < 0.70) {
+            const workerPick = ['stoneMiner', 'coalMiner'][Math.floor(Math.random() * 2)];
+            workers[workerPick] = (workers[workerPick] || 0) + 1;
+            this._trackMaterial(gameId, 'workers', 1);
+          } else if (Math.random() < 0.50) {
+            workers.ironMiner = (workers.ironMiner || 0) + 1;
+            this._trackMaterial(gameId, 'workers', 1);
+          } else {
+            res.gold = (res.gold || 0) + 10;
+            this._trackMaterial(gameId, 'gold', 10);
+          }
+          break;
+
+        case 'prince':
+          if (Math.random() < 0.60) {
+            const pick = ['iron', 'silver'][Math.floor(Math.random() * 2)];
+            res[pick] = (res[pick] || 0) + (pick === 'silver' ? 1 : 2);
+            this._trackMaterial(gameId, pick, pick === 'silver' ? 1 : 2);
+          } else {
+            res.gold = (res.gold || 0) + 5;
+            this._trackMaterial(gameId, 'gold', 5);
+          }
+          break;
+
+        case 'commander':
+          if (Math.random() < 0.70) {
+            const pick = ['stone', 'iron'][Math.floor(Math.random() * 2)];
+            res[pick] = (res[pick] || 0) + 1;
+            this._trackMaterial(gameId, pick, 1);
+          } else if (Math.random() < 0.30 && res.gold >= 5) {
+            workers.stoneMiner = (workers.stoneMiner || 0) + 1;
+            res.gold -= 5;
+            this._trackMaterial(gameId, 'workers', 1);
+          }
+          break;
+      }
+    }
+  }
+
+  _trackMaterial(gameId, type, amount) {
+    if (!this.state.arcade._materialsGathered) this.state.arcade._materialsGathered = {};
+    if (!this.state.arcade._materialsGathered[gameId]) this.state.arcade._materialsGathered[gameId] = {};
+    this.state.arcade._materialsGathered[gameId][type] = (this.state.arcade._materialsGathered[gameId][type] || 0) + amount;
+  }
+
+  getMaterialsGathered() {
+    if (!this.state.arcade._materialsGathered) return {};
+    const totals = {};
+    Object.values(this.state.arcade._materialsGathered).forEach((perGame) => {
+      Object.entries(perGame).forEach(([type, amt]) => {
+        totals[type] = (totals[type] || 0) + amt;
+      });
+    });
+    return totals;
   }
 
   // Calculate total arcade bonuses

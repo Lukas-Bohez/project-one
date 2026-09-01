@@ -990,6 +990,29 @@ body {
   background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 
+/* WCAG contrast fix: dark scrim behind subtitle text on gradient buttons.
+   Pale text (#e2e1f5) against purple-magenta gradient (#667eea→#764ba2)
+   fails AA contrast (3.52:1 at blue end). The scrim pushes it to 6.56:1. */
+.worker-btn .btn-description,
+.action-btn .btn-description {
+  position: relative;
+}
+.worker-btn .btn-description::before,
+.action-btn .btn-description::before {
+  content: '';
+  position: absolute;
+  inset: -4px -8px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.3));
+  border-radius: 4px;
+  z-index: 0;
+  pointer-events: none;
+}
+.worker-btn .btn-description > *,
+.action-btn .btn-description > * {
+  position: relative;
+  z-index: 1;
+}
+
 .ad-reward-btn {
   background: linear-gradient(135deg, #ff6b6b 0%, #ff8c42 100%);
   box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);

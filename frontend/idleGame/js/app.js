@@ -175,6 +175,22 @@ class IndustrialEmpireApp {
     if (craftingBonusEl) {
       craftingBonusEl.textContent = `+${Math.round((bonuses.craftingBonus - 1) * 100)}%`;
     }
+
+    // Update materials gathered
+    const materials = arcadeManager.getMaterialsGathered();
+    const matsContainer = document.getElementById('arcade-materials');
+    if (matsContainer) {
+      const entries = Object.entries(materials);
+      if (entries.length === 0) {
+        matsContainer.innerHTML = '<div class="resource-row"><span class="resource-type">Open a game to start gathering!</span><span class="resource-count" style="color:#94a3b8;">—</span></div>';
+      } else {
+        const labels = { stone: '🪨 Stone', coal: '🪨 Coal', iron: '⚙️ Iron', silver: '🥈 Silver', gold: '🪙 Gold', workers: '👷 Workers hired' };
+        matsContainer.innerHTML = entries
+          .sort((a, b) => b[1] - a[1])
+          .map(([type, amt]) => `<div class="resource-row"><span class="resource-type">${labels[type] || type}:</span><span class="resource-count">${amt}</span></div>`)
+          .join('');
+      }
+    }
   }
 
   switchTab(tabName) {
