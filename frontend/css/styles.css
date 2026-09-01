@@ -1,6 +1,52 @@
 /*---------------------------------------/*
- # SETTINGS
+ # SETTINGS — Canonical design tokens (visual-deai pass)
+   Consolidates the two conflicting token systems:
+   - Old styles.css used --primary-color / --bg-60:30:10 / --font-body: Inter
+   - Old index.html used --spire-* / --bg / --ff-body: IBM Plex Sans
+   - This file now defines ONE canonical set with backward-compat aliases
 /*---------------------------------------*/
+
+/* ── Light mode (default) ── */
+:root {
+  --bg: #f4f5f9;
+  --bg-elevated: #ffffff;
+  --card: #ffffff;
+  --border: #e1e3ec;
+  --text: #171a24;
+  --text-muted: #656b85;
+  --accent: #5458c9;
+  --accent-strong: #3d40a0;
+  --accent-warm: #b5793a;
+  --success: #3d9468;
+  --danger: #c14f48;
+  --font-display: 'Space Grotesk', 'Segoe UI', sans-serif;
+  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 2px 8px rgba(23, 26, 36, 0.08);
+  --shadow-md: 0 16px 40px rgba(23, 26, 36, 0.14);
+  /* Backward-compat aliases */
+  --primary-color: var(--accent);
+  --text-inverse: #ffffff;
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-elevated);
+  --bg-tertiary: var(--card);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
+  --border-color: var(--border);
+  --border-focus: var(--accent);
+  --surface-radius-md: var(--radius-md);
+  --surface-radius-lg: var(--radius-lg);
+  --surface-radius-pill: var(--radius-full);
+  --panel-gradient: linear-gradient(135deg, rgba(255,255,255,.98), rgba(248,250,252,.92));
+  --button-surface: #fff;
+  --button-surface-hover: #f8fafc;
+  --button-border: #e2e8f0;
+  --button-text: #1e293b;
+}
 
 /* Skip-to-content link for keyboard / screen-reader users */
 
@@ -193,158 +239,40 @@ html {
   padding: 1rem;
 }
 
-:root {
-  /* Primary brand color (10%) */
-  --primary-color: #2c6fb8; /* blue */
-  --secondary-color: #1f5aa0; /* slightly darker blue for gradients */
-  --tertiary-color: #1a4f93;
-
-  /* Light mode neutrals */
-  --bg-60: #f7f8fa; /* 60% background - very light */
-  --bg-30: #e1e4e8; /* 30% surface/grey */
-  --bg-10: #ffffff; /* 10% accents (pure white) */
-
-  /* Text colors */
-  --text-60: #111418; /* primary text (dark) */
-  --text-30: #4b5561; /* secondary text (muted) */
-  --text-10: #64748b; /* subtle muted - WCAG AA on white */
-
-  /* UI helpers */
-  --border-color: #d3d7db;
-  --accent-color: var(--primary-color);
-  /* Lighter accent used in highlights and links */
-  --brand-accent: #60a5fa;
-  --brand-accent-2: #93c5fd;
-  --success-color: #1f8a49;
-  --danger-color: #c62828;
-  --hover-bg: #f0f3f6;
-  --active-bg: #e6eef8;
-  --shadow-light: rgba(44, 76, 124, 0.06);
-  --surface-strong: rgba(255, 255, 255, 0.98);
-  --surface-raised: rgba(255, 255, 255, 0.95);
-  --surface-muted: rgba(255, 255, 255, 0.92);
-  --surface-outline: rgba(44, 76, 124, 0.08);
-  --surface-outline-strong: rgba(44, 76, 124, 0.1);
-  --surface-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
-  --surface-shadow-md: 0 4px 20px rgba(15, 23, 42, 0.08);
-  --surface-shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.12);
-  --surface-shadow-xl: 0 18px 50px rgba(15, 23, 42, 0.16);
-  --surface-radius-md: 12px;
-  --surface-radius-lg: 18px;
-  --surface-radius-xl: 24px;
-  --surface-radius-pill: 999px;
-
-  /* Spacing and sizing */
-  --border-radius: 8px;
-  --border-radius-sm: 4px;
-  --border-radius-lg: 12px;
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-xxl: 2.5rem;
-
-  /* Typography */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 2rem;
-  --font-body: 'Inter', 'Segoe UI', Arial, sans-serif;
-  --font-display: 'Space Grotesk', 'Segoe UI', Arial, sans-serif;
-
-  /* Map commonly used vars to the 60/30/10 tokens */
-  --bg-primary: var(--bg-60);
-  --bg-secondary: var(--bg-30);
-  --bg-tertiary: var(--bg-10);
-  --text-primary: var(--text-60);
-  --text-secondary: var(--text-30);
-  --text-muted: var(--text-10);
-  --text-inverse: #ffffff;
-  --border-focus: var(--primary-color);
-  --shadow-medium: rgba(44, 76, 124, 0.15);
-  --shadow-heavy: rgba(44, 76, 124, 0.25);
-  --pulse-color: var(--primary-color);
-  --pulse-glow: rgba(44, 111, 184, 0.7);
-  --bg-overlay: rgba(0, 0, 0, 0.15);
-  --warning-color: #e65100;
-  --info-color: #0d61aa;
-  --panel-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.92));
-  --header-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a8a 35%, #2563eb 70%, #3b82f6 100%);
-  --button-surface: #fff;
-  --button-surface-hover: #f8fafc;
-  --button-border: #e2e8f0;
-  --button-text: #1e293b;
-  --button-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-}
-
-/* Dark theme - activated by data-theme attribute on html element */
-
+/* ── Dark theme ── */
 html[data-theme='dark'],
 [data-theme='dark'],
 .theme-dark {
-  /* Primary brand color (10%) - keep blue */
-  --primary-color: #2c6fb8;
-  --secondary-color: #1f5aa0;
-  --tertiary-color: #1a4f93;
-
-  /* Dark mode neutrals */
-  --bg-60: #0f1112; /* 60% background - near black */
-  --bg-30: #1f2326; /* 30% surface/grey */
-  --bg-10: #0a0b0c; /* accents */
-
-  /* Text colors */
-  --text-60: #e6eef8; /* primary text (light) */
-  --text-30: #b9c5d6; /* secondary text */
-  --text-10: #94a3b8; /* subtle muted - readable on dark bg */
-
-  /* UI helpers */
-  --border-color: #2a3034;
-  --accent-color: var(--primary-color);
-  --success-color: #36b37e;
-  --danger-color: #ff6b6b;
-  --hover-bg: #14171a;
-  --active-bg: #1a1f23;
-  --shadow-light: rgba(0, 0, 0, 0.5);
-
-  /* Map commonly used vars */
-  --bg-primary: var(--bg-60);
-  --bg-secondary: var(--bg-30);
-  --bg-tertiary: var(--bg-10);
-  --text-primary: var(--text-60);
-  --text-secondary: var(--text-30);
-  --text-muted: var(--text-10);
+  --bg: #0b0d12;
+  --bg-elevated: #12151d;
+  --card: #171b26;
+  --border: #262b3a;
+  --text: #e9eaf2;
+  --text-muted: #868ca8;
+  --accent: #6f74e8;
+  --accent-strong: #4a4fc4;
+  --accent-warm: #d99a4e;
+  --success: #4caf7d;
+  --danger: #d1615a;
+  --shadow-sm: 0 2px 8px rgba(5,6,10,.28);
+  --shadow-md: 0 16px 40px rgba(5,6,10,.4);
+  /* Backward-compat aliases */
+  --primary-color: var(--accent);
   --text-inverse: #0f1112;
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-elevated);
+  --bg-tertiary: var(--card);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
+  --border-color: var(--border);
   --border-focus: #60a5fa;
-  --shadow-medium: rgba(0, 0, 0, 0.6);
-  --shadow-heavy: rgba(0, 0, 0, 0.8);
-  --pulse-color: var(--primary-color);
-  --pulse-glow: rgba(44, 111, 184, 0.7);
-  --bg-overlay: rgba(255, 255, 255, 0.12);
-  --warning-color: #ffb74d;
-  --info-color: #4fc3f7;
-  --surface-strong: rgba(15, 17, 18, 0.98);
-  --surface-raised: rgba(15, 17, 18, 0.94);
-  --surface-muted: rgba(15, 17, 18, 0.9);
-  --surface-outline: rgba(96, 165, 250, 0.12);
-  --surface-outline-strong: rgba(96, 165, 250, 0.15);
-  --surface-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --surface-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --surface-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --surface-shadow-xl: 0 18px 44px rgba(0, 0, 0, 0.5);
-  --surface-radius-md: 12px;
-  --surface-radius-lg: 18px;
-  --surface-radius-xl: 24px;
-  --surface-radius-pill: 999px;
-  --panel-gradient: linear-gradient(135deg, rgba(15, 17, 18, 0.98), rgba(17, 24, 39, 0.92));
-  --header-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a8a 35%, #2563eb 70%, #3b82f6 100%);
-  --button-surface: rgba(15, 17, 18, 0.9);
-  --button-surface-hover: rgba(30, 58, 138, 0.15);
-  --button-border: rgba(96, 165, 250, 0.2);
+  --panel-gradient: linear-gradient(135deg, rgba(15,17,18,.98), rgba(17,24,39,.92));
+  --button-surface: rgba(15,17,18,.9);
+  --button-surface-hover: rgba(30,58,138,.15);
+  --button-border: rgba(96,165,250,.2);
   --button-text: #e2e8f0;
-  --button-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --surface-shadow-lg: 0 8px 32px rgba(0,0,0,.5);
+  --surface-shadow-xl: 0 18px 44px rgba(0,0,0,.5);
 }
 
 /*---------------------------------------/*
