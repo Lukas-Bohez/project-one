@@ -242,7 +242,7 @@ class ArcadeManager {
             this._trackMaterial(gameId, pick, amt);
           }
           if (Math.random() < 0.10 && res.gold >= 5) {
-            workers.stoneMiner = (workers.stoneMiner || 0) + 1;
+            workers.stoneMiners = (workers.stoneMiners || 0) + 1;
             res.gold -= 5;
             this._trackMaterial(gameId, 'workers', 1);
           }
@@ -254,7 +254,7 @@ class ArcadeManager {
             workers[workerPick] = (workers[workerPick] || 0) + 1;
             this._trackMaterial(gameId, 'workers', 1);
           } else if (Math.random() < 0.50) {
-            workers.ironMiner = (workers.ironMiner || 0) + 1;
+            workers.ironMiners = (workers.ironMiners || 0) + 1;
             this._trackMaterial(gameId, 'workers', 1);
           } else {
             res.gold = (res.gold || 0) + 10;
@@ -279,7 +279,7 @@ class ArcadeManager {
             res[pick] = (res[pick] || 0) + 1;
             this._trackMaterial(gameId, pick, 1);
           } else if (Math.random() < 0.30 && res.gold >= 5) {
-            workers.stoneMiner = (workers.stoneMiner || 0) + 1;
+            workers.stoneMiners = (workers.stoneMiners || 0) + 1;
             res.gold -= 5;
             this._trackMaterial(gameId, 'workers', 1);
           }

@@ -4163,11 +4163,19 @@ class GameEngine {
 
   // Utility methods
   formatNumber(num) {
-    if (num < 1000) return Math.floor(num).toString();
-    if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
-    if (num < 1000000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num < 1000000000000) return (num / 1000000000).toFixed(1) + 'B';
-    return (num / 1000000000000).toFixed(1) + 'T';
+    if (num == null || Number.isNaN(num)) return '0';
+    if (!Number.isFinite(num)) return num > 0 ? '∞' : '-∞';
+    const sign = num < 0 ? '-' : '';
+    const abs = Math.abs(num);
+    if (abs < 1000) return sign + Math.floor(abs).toString();
+    const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+    let tier = Math.min(Math.floor(Math.log10(abs) / 3), SUFFIXES.length - 1);
+    let scaled = abs / Math.pow(1000, tier);
+    if (Number(scaled.toFixed(1)) >= 1000 && tier < SUFFIXES.length - 1) {
+      tier += 1;
+      scaled = abs / Math.pow(1000, tier);
+    }
+    return sign + scaled.toFixed(1) + SUFFIXES[tier];
   }
 
   formatTime(seconds) {
@@ -4346,7 +4354,11 @@ class GameEngine {
   }
 
   calculateOfflineProgress(offlineSeconds) {
-    if (offlineSeconds > 60) {
+    const OFFLINE_CAP_SECONDS = 12 * 3600; // 12h cap — prevents week-long AFK windfalls
+    const cappedSeconds = Math.min(offlineSeconds, OFFLINE_CAP_SECONDS);
+    const wasCapped = offlineSeconds > OFFLINE_CAP_SECONDS;
+
+    if (cappedSeconds > 60) {
       // Calculate offline stone production from miners
       const stoneMinerRate =
         (this.state.workers?.stoneMiners || 0) *
@@ -4371,10 +4383,10 @@ class GameEngine {
 
       // Apply 50% offline efficiency penalty
       const offlineEfficiency = 0.5;
-      const stoneGained = stoneMinerRate * offlineSeconds * offlineEfficiency;
-      const coalGained = coalMinerRate * offlineSeconds * offlineEfficiency;
-      const ironGained = ironMinerRate * offlineSeconds * offlineEfficiency;
-      const silverGained = silverMinerRate * offlineSeconds * offlineEfficiency;
+      const stoneGained = stoneMinerRate * cappedSeconds * offlineEfficiency;
+      const coalGained = coalMinerRate * cappedSeconds * offlineEfficiency;
+      const ironGained = ironMinerRate * cappedSeconds * offlineEfficiency;
+      const silverGained = silverMinerRate * cappedSeconds * offlineEfficiency;
 
       this.state.resources.stone += stoneGained;
       this.state.resources.coal += coalGained;
@@ -4383,11 +4395,12 @@ class GameEngine {
 
       const totalGained = stoneGained + coalGained + ironGained + silverGained;
       if (totalGained > 0) {
+        const capNote = wasCapped ? ` (capped at ${OFFLINE_CAP_SECONDS / 3600}h)` : '';
         this.showNotification(
-          `⏰ Offline for ${this.formatTime(offlineSeconds)} - gained resources at 50% rate!`
+          `⏰ Offline for ${this.formatTime(offlineSeconds)}${capNote} - gained resources at 50% rate!`
         );
         console.log(
-          `Offline for ${this.formatTime(offlineSeconds)}, gained ${Math.floor(stoneGained)} stone, ${Math.floor(coalGained)} coal, ${Math.floor(ironGained)} iron, ${Math.floor(silverGained)} silver`
+          `Offline for ${this.formatTime(offlineSeconds)}${capNote}, gained ${Math.floor(stoneGained)} stone, ${Math.floor(coalGained)} coal, ${Math.floor(ironGained)} iron, ${Math.floor(silverGained)} silver`
         );
       }
     }
