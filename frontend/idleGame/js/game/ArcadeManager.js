@@ -57,7 +57,7 @@ class ArcadeManager {
         unlockLevel: 0,
         description: 'Classic FPS that defined a generation',
         zipUrl: 'dos-games/doom.zip',
-        launchCommands: ['cd DOOM', 'DOOM.COM'],
+        launchCommands: ['DOOM.EXE'],
         controls: 'Arrow keys to move/turn, Ctrl to fire, Space to use doors/switches, Alt (held) to strafe',
         resourceInterval: 2.5,
         bonusType: 'resourceBonus',
@@ -72,7 +72,7 @@ class ArcadeManager {
         unlockLevel: 0,
         description: 'Classic arcade digging action',
         zipUrl: 'dos-games/digger.zip',
-        launchCommands: ['DIGGER.COM'],
+        launchCommands: ['cd Digger83', 'DIGGER.COM'],
         controls: 'Arrow keys to move and dig, F1 to fire',
         cyclesLimit: 500, // Limit CPU cycles to slow down the game
         resourceInterval: 1.5, // Faster resource ticks for Digger (it IS the mining game)
@@ -88,7 +88,7 @@ class ArcadeManager {
         unlockLevel: 0,
         description: 'Side-scrolling platform adventure',
         zipUrl: 'dos-games/keen4.zip',
-        launchCommands: ['cd KEEN4', 'KEEN4E.EXE'],
+        launchCommands: ['cd CKeen1', 'KEEN1.EXE'],
         controls: 'Arrow keys to move, Space to jump, Ctrl to fire, Alt for the pogo stick',
         resourceInterval: 3.0,
         bonusType: 'efficiencyBonus',

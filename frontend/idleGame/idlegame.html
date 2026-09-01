@@ -11,7 +11,7 @@
     <meta name="owner" content="Lukas Bohez">
     <meta name="copyright" content="© 2026 Lukas Bohez. All rights reserved.">
     
-    <link rel="stylesheet" href="css/style.min.css?v=4">
+    <link rel="stylesheet" href="css/style.min.css?v=5">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/favicon.ico">
@@ -1225,11 +1225,12 @@
             }
             
             // Try to properly exit/stop the DOSBox instance
-            if (currentDosbox && currentDosbox.exit) {
+            if (currentDosbox) {
                 try {
-                    currentDosbox.exit();
+                    if (typeof currentDosbox.stop === 'function') currentDosbox.stop();
+                    else if (typeof currentDosbox.exit === 'function') currentDosbox.exit();
                 } catch (e) {
-                    console.log('Error exiting dosbox:', e);
+                    console.log('Error stopping dosbox:', e);
                 }
             }
             
@@ -1359,7 +1360,7 @@
     <script src="js/game/NewResourceManager.min.js?v=3"></script>
     <script src="js/game/RebirthThemes.min.js?v=3"></script>
     <script src="js/game/RebirthRewards.min.js?v=3"></script>
-    <script src="js/game/ArcadeManager.js?v=4"></script>
+    <script src="js/game/ArcadeManager.js?v=5"></script>
     <script src="js/save/SaveManager.min.js?v=3"></script>
     <script src="js/ui/UIManager.min.js?v=3"></script>
     <script src="js/ui/UIThemeManager.min.js?v=3"></script>
