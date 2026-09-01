@@ -7,7 +7,7 @@ class GameEngine {
   constructor() {
     this.state = this.getInitialState();
     this.isRunning = false;
-    this.tickRate = 60; // 60 FPS
+    this.tickRate = 20; // 20 FPS — calm, idle-friendly cadence
     this.tickInterval = null;
     this.lastUpdate = Date.now();
     this.gameStartTime = Date.now();
@@ -402,10 +402,10 @@ class GameEngine {
 
     if (now < this.nextAutoSellFinishedAt) return;
 
-    // Sell ALL items in city at once (cap per tick to prevent frame drops)
+    // Sell all items in city at once (cap per tick to prevent visual/sound flood)
     const inv = this.state.cityInventory?.finished || {};
     let itemsSold = 0;
-    const maxSellsPerTick = 1000;
+    const maxSellsPerTick = 50;
     for (const k in inv) {
       while (inv[k] > 0 && itemsSold < maxSellsPerTick) {
         const success = this.sellOneFinished();
@@ -1711,8 +1711,8 @@ class GameEngine {
     // Hide the unlock button after purchasing + celebration
     const button = document.querySelector(`[data-unlock="${key}"]`);
     if (button) {
-      this.spawnParticles(button, '#ffd700', 15);
-      this.spawnConfetti(button, 12);
+      this.spawnParticles(button, '#ffd700', 8);
+      this.spawnConfetti(button, 6);
       this.triggerScreenShake();
       this.triggerScreenFlash();
       // Dramatic delay before hiding
@@ -1832,7 +1832,7 @@ class GameEngine {
       'Build a run with purpose instead of treating every reset like a dead end.';
     let progressLabel = 'Legacy progress';
     let progressValue = Math.min(1, rebirths / 10);
-    let progressNote = 'Every rebirth should feel like a chapter, not a punishment.';
+    let progressNote = 'Every rebirth builds on the last — your legacy grows, your tools sharpen, and the next run always starts stronger.';
     let nextGoal = `Push toward Rebirth ${rebirths + 1}`;
     let nextReward = 'Permanent upgrades make the next loop stronger than the last.';
 
@@ -1860,7 +1860,7 @@ class GameEngine {
       progressLabel = 'Automation progress';
       progressValue = Math.min(1, (completedResearch / 4) * 0.65 + (citySystemsCount / 3) * 0.35);
       progressNote =
-        'The loop gets more meaningful when machines and departments do the repetitive work.';
+        'Machines and departments carry the weight now. You set the direction — the empire moves on its own.';
       nextGoal = !this.state.research?.automation
         ? 'Research Automation'
         : !this.state.city?.salesDepartment
@@ -2032,7 +2032,7 @@ class GameEngine {
       this.triggerMineShake(btn);
 
       // Particles scale with combo - more clicks = more spectacular
-      const particleCount = Math.min(12, 3 + Math.floor((this._comboCount || 0) / 3));
+      const particleCount = Math.min(8, 2 + Math.floor((this._comboCount || 0) / 5));
       this.spawnParticles(btn, color, particleCount);
     }
 
@@ -2043,16 +2043,13 @@ class GameEngine {
     const totalStone = this.state.stats.totalResourcesMined.stone;
     if (totalStone === 10) {
       this.showNotification("🪨 10 stone mined! You're getting the hang of it!");
-      this.triggerScreenShake();
     } else if (totalStone === 100) {
       this.showNotification('⛏️ 100 stone! A true miner!');
-      this.triggerScreenShake();
-      this.spawnParticles(btn, '#ffd700', 20);
     } else if (totalStone === 1000) {
       this.showNotification('💎 1000 stone! LEGENDARY MINER!');
       this.triggerScreenShake();
-      this.spawnParticles(btn, '#ffd700', 25);
-      this.spawnParticles(btn, '#64ffda', 25);
+      this.spawnParticles(btn, '#ffd700', 15);
+      this.spawnParticles(btn, '#64ffda', 15);
     }
 
     console.log('Mined 1 stone manually');
@@ -2316,7 +2313,7 @@ class GameEngine {
     // Visual feedback for crafting
     const craftBtn = document.getElementById(`craft-${tier}-btn`);
     if (craftBtn) {
-      this.spawnParticles(craftBtn, '#f093fb', 6);
+      this.spawnParticles(craftBtn, '#f093fb', 4);
       this.spawnFloatingNumber(craftBtn, `+${produceAmount} ✨`, '#f093fb');
     }
 
@@ -2764,7 +2761,7 @@ class GameEngine {
       const btn = document.getElementById(btnMap[stateKey] || btnMap[processorType]);
       if (btn) {
         this.triggerPurchaseEffect(btnMap[stateKey] || btnMap[processorType]);
-        this.spawnParticles(btn, '#a044ff', 8);
+        this.spawnParticles(btn, '#a044ff', 4);
         this.spawnFloatingNumber(btn, `🏗️ Built!`, '#a044ff');
       }
 
@@ -2806,7 +2803,7 @@ class GameEngine {
       const btn = document.getElementById(btnId);
       if (btn) {
         this.spawnFloatingNumber(btn, `📊 -${this.formatNumber(cost)}g`, '#4facfe');
-        this.spawnParticles(btn, '#00f2fe', 6);
+        this.spawnParticles(btn, '#00f2fe', 3);
       }
 
       console.log(`Hired ${traderType} for ${cost} gold`);
@@ -2843,7 +2840,7 @@ class GameEngine {
       const btn = document.getElementById(btnId);
       if (btn) {
         this.spawnFloatingNumber(btn, `${emojis[transportType]} Bought!`, '#ff9a9e');
-        this.spawnParticles(btn, '#fecfef', 8);
+        this.spawnParticles(btn, '#fecfef', 4);
         if (transportType === 'train') this.triggerScreenShake(); // Trains are big!
       }
 
@@ -3238,7 +3235,7 @@ class GameEngine {
       // Research completion celebration - feel the science!
       const resBtn = document.getElementById(`research-${researchType}-btn`);
       if (resBtn) {
-        this.spawnParticles(resBtn, '#667eea', 15);
+        this.spawnParticles(resBtn, '#667eea', 8);
         this.spawnFloatingNumber(resBtn, `🧪 Eureka!`, '#667eea');
         this.triggerScreenShake();
         this.spawnConfetti(resBtn, 10);
@@ -3782,12 +3779,12 @@ class GameEngine {
     this.triggerScreenShake();
     this.triggerScreenFlash();
 
-    // Dramatic particle burst + confetti from center of screen
+    // Gentle particle burst + confetti from center of screen
     const header = document.querySelector('.game-header');
     if (header) {
-      this.spawnParticles(header, '#ffd700', 20);
-      this.spawnParticles(header, '#ff416c', 15);
-      this.spawnConfetti(header, 20);
+      this.spawnParticles(header, '#ffd700', 12);
+      this.spawnParticles(header, '#ff416c', 8);
+      this.spawnConfetti(header, 10);
     }
 
     console.log(
@@ -4201,8 +4198,16 @@ class GameEngine {
   }
 
   playSound(type) {
-    // Web Audio API micro-sounds - no audio files needed
+    // Web Audio API micro-sounds — throttle to avoid audio spam in late game
     try {
+      const now = Date.now();
+      this._soundBudget = this._soundBudget || { count: 0, windowStart: now };
+      if (now - this._soundBudget.windowStart > 1000) {
+        this._soundBudget = { count: 0, windowStart: now };
+      }
+      if (this._soundBudget.count >= 4) return; // max 4 sounds/sec
+      this._soundBudget.count++;
+
       if (!this._audioCtx) {
         this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -4214,74 +4219,74 @@ class GameEngine {
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      const now = ctx.currentTime;
-      gain.gain.setValueAtTime(0.08, now);
+      const audioNow = ctx.currentTime;
+      gain.gain.setValueAtTime(0.08, audioNow);
 
       switch (type) {
         case 'mine':
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(220, now);
-          osc.frequency.exponentialRampToValueAtTime(440, now + 0.08);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-          osc.start(now);
-          osc.stop(now + 0.12);
+          osc.frequency.setValueAtTime(220, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(440, audioNow + 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.12);
+          osc.start(audioNow);
+          osc.stop(audioNow + 0.12);
           break;
         case 'sell':
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(523, now);
-          osc.frequency.exponentialRampToValueAtTime(784, now + 0.1);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-          osc.start(now);
-          osc.stop(now + 0.15);
+          osc.frequency.setValueAtTime(523, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(784, audioNow + 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.15);
+          osc.start(audioNow);
+          osc.stop(audioNow + 0.15);
           break;
         case 'hire':
         case 'research':
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(330, now);
-          osc.frequency.exponentialRampToValueAtTime(660, now + 0.06);
-          osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-          osc.start(now);
-          osc.stop(now + 0.18);
+          osc.frequency.setValueAtTime(330, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(660, audioNow + 0.06);
+          osc.frequency.exponentialRampToValueAtTime(880, audioNow + 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.18);
+          osc.start(audioNow);
+          osc.stop(audioNow + 0.18);
           break;
         case 'build':
           // Chunky thud - low saw wave with quick decay
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(120, now);
-          osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
-          gain.gain.setValueAtTime(0.06, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-          osc.start(now);
-          osc.stop(now + 0.2);
+          osc.frequency.setValueAtTime(120, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(80, audioNow + 0.15);
+          gain.gain.setValueAtTime(0.06, audioNow);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.2);
+          osc.start(audioNow);
+          osc.stop(audioNow + 0.2);
           break;
         case 'transport':
           // Whoosh - rising square wave
           osc.type = 'square';
-          gain.gain.setValueAtTime(0.04, now);
-          osc.frequency.setValueAtTime(200, now);
-          osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-          osc.start(now);
-          osc.stop(now + 0.15);
+          gain.gain.setValueAtTime(0.04, audioNow);
+          osc.frequency.setValueAtTime(200, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(600, audioNow + 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.15);
+          osc.start(audioNow);
+          osc.stop(audioNow + 0.15);
           break;
         case 'prestige':
           // Epic ascending triad
           osc.type = 'sine';
-          gain.gain.setValueAtTime(0.07, now);
-          osc.frequency.setValueAtTime(262, now);
-          osc.frequency.setValueAtTime(330, now + 0.1);
-          osc.frequency.setValueAtTime(392, now + 0.2);
-          osc.frequency.setValueAtTime(523, now + 0.3);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-          osc.start(now);
-          osc.stop(now + 0.5);
+          gain.gain.setValueAtTime(0.07, audioNow);
+          osc.frequency.setValueAtTime(262, audioNow);
+          osc.frequency.setValueAtTime(330, audioNow + 0.1);
+          osc.frequency.setValueAtTime(392, audioNow + 0.2);
+          osc.frequency.setValueAtTime(523, audioNow + 0.3);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.5);
+          osc.start(audioNow);
+          osc.stop(audioNow + 0.5);
           break;
         default:
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(440, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-          osc.start(now);
-          osc.stop(now + 0.1);
+          osc.frequency.setValueAtTime(440, audioNow);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.1);
+          osc.start(audioNow);
+          osc.stop(audioNow + 0.1);
       }
     } catch (e) {
       // Audio not available - silently ignore
@@ -4792,6 +4797,9 @@ class GameEngine {
   spawnFloatingNumber(element, text, color) {
     if (!element) return;
     const rect = element.getBoundingClientRect();
+    // Guard against off-screen / detached elements placing effects at (0,0)
+    if (rect.left === 0 && rect.top === 0 && rect.width === 0 && rect.height === 0) return;
+    if (rect.top < 0 || rect.left < 0) return;
     const el = document.createElement('div');
     el.className = 'floating-number';
     el.textContent = text;
@@ -4849,10 +4857,12 @@ class GameEngine {
   spawnParticles(element, color, count) {
     if (!element) return;
     const rect = element.getBoundingClientRect();
+    if (rect.left === 0 && rect.top === 0 && rect.width === 0 && rect.height === 0) return;
+    if (rect.top < 0 || rect.left < 0) return;
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
 
-    for (let i = 0; i < (count || 6); i++) {
+    for (let i = 0; i < (count || 4); i++) {
       const p = document.createElement('div');
       p.className = 'particle';
       p.style.background = color || '#64ffda';
@@ -4951,6 +4961,7 @@ class GameEngine {
     const goldEl = document.getElementById('gold-amount');
     if (!goldEl) return;
     const rect = goldEl.getBoundingClientRect();
+    if (rect.left === 0 && rect.top === 0 && rect.width === 0 && rect.height === 0) return;
     const el = document.createElement('div');
     el.className = 'big-gold-number';
     el.textContent = text;

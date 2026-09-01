@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDIComposer – by Lukas Bohez</title>
+<meta name="author" content="Lukas Bohez">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="toasts"></div>
+<input type="file" id="fi-midi" accept=".mid,.midi" multiple>
+<input type="file" id="fi-verify" accept=".mid,.midi">
+<div id="app">
+<header id="header">
+<div class="logo-mark"><div class="logo-spectrum"><div class="ls-bar" style="height:8px;--dur:.55s"></div><div class="ls-bar" style="height:14px;--dur:.7s"></div><div class="ls-bar" style="height:20px;--dur:.5s"></div><div class="ls-bar" style="height:11px;--dur:.8s"></div><div class="ls-bar" style="height:17px;--dur:.6s"></div><div class="ls-bar" style="height:9px;--dur:.65s"></div></div><span class="logo-text">MIDI<span>Composer</span></span><span class="logo-byline">by Lukas Bohez</span></div>
+<nav id="nav">
+<button class="nav-tab active" data-page="compose" onclick="App.page('compose',this)"><span class="tab-num"><span class="tab-num-n">1</span></span> Compose</button>
+<button class="nav-tab" data-page="prompt" onclick="App.page('prompt',this)"><span class="tab-num"><span class="tab-num-n">2</span></span> Prompt</button>
+<button class="nav-tab" data-page="mix" onclick="App.page('mix',this)"><span class="tab-num"><span class="tab-num-n">3</span></span> Mix & Preview</button>
+<button class="nav-tab" data-page="export" onclick="App.page('export',this)"><span class="tab-num"><span class="tab-num-n">4</span></span> Export</button>
+</nav><div class="hsp"></div><div id="header-actions">
+<button id="themeToggleBtn" onclick="App.toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i></button>
+<a href="/" class="btn sm" style="text-decoration:none;color:var(--txt-m)"><i class="fa-solid fa-house"></i> Home</a>
+</div></header>
+<div id="pages">
+<div class="page active" id="page-compose"><div id="compose-inner">
+<div class="section-header"><span class="section-title"><i class="fa-solid fa-film"></i> Scene / Style</span><div class="section-line"></div></div>
+<div class="preset-grid" id="preset-grid"></div>
+<div class="section-header"><span class="section-title"><i class="fa-solid fa-gauge"></i> Intensity</span><div class="section-line"></div></div>
+<div class="intensity-strip" id="intensity-strip"><div class="int-card" style="opacity:.4"><i class="fa-solid fa-arrow-up"></i><span class="int-label">Pick a scene above</span></div></div>
+<div class="section-header"><span class="section-title"><i class="fa-solid fa-music"></i> Melody (optional)</span><div class="section-line"></div></div>
+<div class="melody-zone" id="melody-zone" onclick="App.mzClick(event)"><div id="mz-empty"><div class="mz-icon"><i class="fa-solid fa-waveform-lines"></i></div><div class="mz-label"><strong>Drop a .mid file here</strong> or click to browse</div></div><div id="mz-loaded" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:var(--teal)"><i class="fa-solid fa-circle-check"></i> <span id="mz-filename">—</span></span><button class="btn sm ghost-red" onclick="App.clrMelody(event)"><i class="fa-solid fa-xmark"></i> Remove</button></div><div id="mz-meta" style="font-size:10px;font-family:var(--mono);color:var(--txt-m)">—</div><div id="mz-tracks"></div></div></div>
+<div class="two-col"><div class="compose-col">
+<div class="section-header"><span class="section-title"><i class="fa-solid fa-clock"></i> Length & BPM</span><div class="section-line"></div></div>
+<div class="field"><label>Song Length</label><div class="field-row"><input type="range" min="10" max="300" step="5" value="60" id="dur-sl" oninput="App.dur()"><span class="field-val" id="dur-v">1:00</span></div><div class="field-hints"><span>10 sec</span><span>5 min</span></div></div>
+<div class="field"><label>Tempo <span id="bpm-hint" style="color:var(--teal);font-size:9px;margin-left:4px"></span></label><div class="field-row"><input type="range" min="40" max="220" value="90" id="bpm-sl" oninput="document.getElementById('bpm-num').value=this.value;App.bpm()"><input type="number" class="bpm-input" id="bpm-num" value="90" min="40" max="220" onchange="document.getElementById('bpm-sl').value=Math.max(40,Math.min(220,parseInt(this.value)||90));App.bpm()"></div></div>
+<div class="field"><label>Extra instructions</label><textarea class="extra-area" id="extra" placeholder='e.g. "no drums", "more piano", "key change"...' oninput="App.buildPrompt()"></textarea></div>
+</div><div class="compose-col">
+<div class="section-header"><span class="section-title"><i class="fa-solid fa-guitar"></i> Instruments</span><div class="section-line"></div></div>
+<div class="instruments-grid" id="instruments-grid"></div>
+</div></div>
+<div class="compose-cta"><button class="btn lg primary" id="gen-prompt-btn" onclick="App.goPrompt()"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Prompt</button></div>
+</div></div>
+<div class="page" id="page-prompt"><div class="prompt-toolbar"><span class="prompt-toolbar-label"><i class="fa-solid fa-code"></i> AI Prompt</span><div class="hsp"></div><span id="pt-scene-badge" style="padding:3px 9px;border-radius:20px;background:var(--ind-d);font-size:10px;color:var(--ind)">No scene selected</span><div class="hsp"></div><button class="btn ghost-ind" onclick="App.page('compose')"><i class="fa-solid fa-arrow-left"></i> Edit</button><button class="btn primary" onclick="App.copyPrompt()"><i class="fa-solid fa-clipboard"></i> Copy Prompt</button><button class="btn ghost-green" onclick="App.page('mix')">Paste Response <i class="fa-solid fa-arrow-right"></i></button></div><div class="prompt-area-wrapper"><div id="prompt-area" class="empty" contenteditable="true" spellcheck="false">Generate a prompt on the Compose tab first.</div></div><div class="prompt-footer"><i class="fa-solid fa-circle-info" style="color:var(--ind)"></i>Copy this prompt into any AI. Paste the JSON response into Mix & Preview.<span style="margin-left:auto"><kbd>Ctrl+Enter</kbd> copy</span></div></div>
+<div class="page" id="page-mix"><div id="mix-inner"><div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden"><div class="panel-head"><span class="panel-title"><i class="fa-solid fa-comment-code"></i> Paste AI Response</span><div class="hsp"></div><button class="btn sm" onclick="App.page('prompt')"><i class="fa-solid fa-arrow-left"></i> Back</button></div><textarea id="json-paste" placeholder='Paste the JSON response here…'></textarea><div class="paste-actions"><div class="paste-row"><button class="btn ghost-green full" onclick="App.parse()" style="font-weight:700"><i class="fa-solid fa-play"></i> Preview</button><button class="btn ghost-amber" onclick="App.repairParse()"><i class="fa-solid fa-wrench"></i> Fix JSON</button><button class="btn ghost-red" onclick="App.clearMix()"><i class="fa-solid fa-trash"></i></button></div><div class="paste-row"><button class="btn ghost-teal full" onclick="App.quantize()"><i class="fa-solid fa-align-center"></i> Tighten</button></div><div id="parse-msg"></div><div id="repair-log"></div></div></div><div style="display:flex;flex-direction:column;overflow:hidden;background:var(--bg2)"><div class="panel-head"><span class="panel-title"><i class="fa-solid fa-sliders"></i> Mixer</span></div><div id="mixer-scroll"><div id="mixer-empty">Paste a response and click Preview</div></div></div></div><div id="mix-footer"><div class="status-dot" id="mix-dot"></div><span id="mix-status" style="font-size:11px;color:var(--txt-m)">Waiting for response…</span><div class="hsp"></div><button class="btn ghost-green lg" id="dl-btn2" disabled onclick="App.download()"><i class="fa-solid fa-download"></i> Download MIDI</button></div></div>
+<div class="page" id="page-export"><div id="export-inner"><div class="export-hero"><div class="export-title">Export your music</div><div class="export-sub">Open in FL Studio, Ableton, Logic, LMMS — any DAW.</div></div><div class="export-cards"><div class="export-card"><div class="export-card-title"><i class="fa-solid fa-file-audio"></i> Full Arrangement</div><div class="export-card-desc">All tracks — melody, chords, bass, drums.</div><button class="btn ghost-green full lg" id="dl-full-btn" disabled onclick="App.download()"><i class="fa-solid fa-download"></i> Download MIDI</button></div><div class="export-card"><div class="export-card-title"><i class="fa-solid fa-folder-open"></i> Open MIDI</div><div class="export-card-desc">Browse and load .mid files.</div><button class="btn ghost-teal full lg" onclick="document.getElementById('fi-midi').click()"><i class="fa-solid fa-folder-open"></i> Browse</button></div></div><div class="export-footer">Created by <strong>Lukas Bohez (Oroka Conner)</strong>.</div></div></div>
+</div>
+<div id="statusbar"><div class="status-dot" id="s-dot"></div><span id="s-main">Pick a scene and click Generate Prompt</span><div class="sb-spacer"></div><span><kbd>Ctrl+Shift+D</kbd> download</span></div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>
