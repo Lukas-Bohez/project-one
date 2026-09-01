@@ -166,6 +166,13 @@ document.addEventListener('DOMContentLoaded', function () {
   // #endregion
 
   // #region --- Data Fetching (from your backend) ---
+  const withTimeout = (promise, ms = 12000) => {
+    const timer = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out')), ms)
+    );
+    return Promise.race([promise, timer]);
+  };
+
   const fetchFreshQuestions = async (activeOnly = false) => {
     const questionsEndpoint = `${lanIP}/api/v1/questions/`;
     const answersBaseEndpoint = `${lanIP}/api/v1/answers`;
@@ -175,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log(`[API Request] Fetching questions from: ${questionsEndpoint}`);
     const questionsUrl = activeOnly ? `${questionsEndpoint}?active_only=true` : questionsEndpoint;
 
-    const questionsResponse = await fetch(questionsUrl);
+    const questionsResponse = await withTimeout(fetch(questionsUrl));
     if (!questionsResponse.ok) {
       throw new Error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
     }
@@ -186,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const themePromises = uniqueThemeIds.map(async (id) => {
       try {
         const themeUrl = `${themesBaseEndpoint}${id}/`;
-        const response = await fetch(themeUrl);
+        const response = await withTimeout(fetch(themeUrl));
         return response.ok ? await response.json() : { id, name: 'Unknown Theme' };
       } catch (error) {
         console.warn(`Failed to fetch theme ${id}:`, error);
@@ -204,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
       questions.map(async (question) => {
         try {
           const answersUrl = `${answersBaseEndpoint}?question_id=${encodeURIComponent(question.id)}`;
-          const answersResponse = await fetch(answersUrl);
+          const answersResponse = await withTimeout(fetch(answersUrl));
           const answersData = answersResponse.ok ? await answersResponse.json() : { answers: [] };
 
           return {
@@ -334,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const themesUrl = `${lanIP}/api/v1/themes/`;
     console.log(`[API Request] Fetching themes from: ${themesUrl}`);
 
-    const response = await fetch(themesUrl);
+    const response = await withTimeout(fetch(themesUrl));
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const themes = await response.json();
 
@@ -822,6 +829,9 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       console.log('Initializing practice hub...');
 
+      // Ensure question event listeners are attached even when initial markup exists
+      setupQuestionEventListeners();
+
       // Check if we should force refresh on startup
       const urlParams = new URLSearchParams(window.location.search);
       const forceRefresh = urlParams.has('nocache') || urlParams.has('refresh');
@@ -852,7 +862,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const themesUrl = `${lanIP}/api/v1/themes/`;
       console.log(`[API Request] Fetching themes in main from: ${themesUrl}`);
 
-      const themesResponse = await fetch(themesUrl);
+      const themesResponse = await withTimeout(fetch(themesUrl));
       if (!themesResponse.ok) throw new Error(`HTTP error! status: ${themesResponse.status}`);
       const themes = await themesResponse.json();
 

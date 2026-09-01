@@ -1,0 +1,55 @@
+# config/quizthespire.service
+#
+# DRAFT — this assumes a deploy layout that hasn't been confirmed:
+#   - a dedicated "quizthespire" system user/group
+#   - the binary living at /opt/quizthespire/bin/quizthespire-server
+#   - downloads written under /opt/quizthespire/downloads
+#   - nothing else already bound to the service's port
+# Swap in the real values before using this. If there's already a running
+# setup (existing user, existing service, a reverse proxy in front), tell
+# me what it looks like and this can be corrected to match instead of
+# guessed at.
+#
+# Install: copy to /etc/systemd/system/quizthespire.service, then
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now quizthespire
+
+[Unit]
+Description=quizthespire.com Go backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=quizthespire
+Group=quizthespire
+WorkingDirectory=/opt/quizthespire
+ExecStart=/opt/quizthespire/bin/quizthespire-server
+Restart=on-failure
+RestartSec=5s
+
+# Resource ceiling — placeholder. Size this against actual free RAM once
+# nginx/Caddy, any DB, and everything else on the Pi 5 are accounted for;
+# 8GB total does not mean 8GB available to this one service.
+MemoryMax=4G
+# Leaves roughly a core of headroom on a 4-core Pi 5 for the OS and
+# anything else running alongside this.
+CPUQuota=300%
+
+# Sandboxing (ProtectSystem=full as requested — ProtectSystem=strict is
+# tighter still if you want to lock this down further later: it makes the
+# whole filesystem read-only except /dev, /proc, /sys, and whatever's
+# listed in ReadWritePaths below).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/quizthespire/downloads /var/log/quizthespire
+
+# Logging via journald — view with: journalctl -u quizthespire -f
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=quizthespire
+
+[Install]
+WantedBy=multi-user.target

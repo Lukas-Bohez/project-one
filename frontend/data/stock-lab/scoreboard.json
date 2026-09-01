@@ -1,0 +1,58 @@
+[
+  {
+    "date": "2026-08-07",
+    "model": "Naive Baseline",
+    "ticker": "SPY",
+    "call": "up",
+    "actual": "up",
+    "result": "correct"
+  },
+  {
+    "date": "2026-08-07",
+    "model": "Moving Average Crossover",
+    "ticker": "SPY",
+    "call": "up",
+    "actual": "up",
+    "result": "correct"
+  },
+  {
+    "date": "2026-08-07",
+    "model": "ARIMA",
+    "ticker": "SPY",
+    "call": "down",
+    "actual": "up",
+    "result": "miss"
+  },
+  {
+    "date": "2026-08-07",
+    "model": "Headline Sentiment",
+    "ticker": "SPY",
+    "call": "up",
+    "actual": "up",
+    "result": "correct"
+  },
+  {
+    "date": "2026-08-07",
+    "model": "Small Regression",
+    "ticker": "SPY",
+    "call": "down",
+    "actual": "up",
+    "result": "miss"
+  },
+  {
+    "date": "2026-08-07",
+    "model": "Naive Baseline",
+    "ticker": "AAPL",
+    "call": "up",
+    "actual": "down",
+    "result": "miss"
+  },
+  {
+    "date": "2026-08-07",
+    "model": "Moving Average Crossover",
+    "ticker": "AAPL",
+    "call": "up",
+    "actual": "down",
+    "result": "miss"
+  }
+]

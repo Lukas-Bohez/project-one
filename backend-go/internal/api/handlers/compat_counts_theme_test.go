@@ -4,11 +4,10 @@ import (
     "encoding/json"
     "net/http/httptest"
     "testing"
-    "context"
 )
 
-type fakeThemeRepo struct{ Count int }
-func (f fakeThemeRepo) QuestionCount(ctx context.Context, themeID int64) (int, error) { return f.Count, nil }
+// fakeThemeRepo is defined once, in compat_counts_test.go, and shared by
+// every test in this package that needs a ThemeRepo double.
 
 func TestThemeQuestionCountHandler(t *testing.T) {
     h := ThemeQuestionCountHandler{Repo: fakeThemeRepo{Count: 12}}

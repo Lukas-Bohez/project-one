@@ -75,6 +75,7 @@ frontend/cert/*.pem
 lh-*.json
 lighthouse-report.json
 flake-report*.txt
+flake_report*.txt
 
 # OS / editor noise
 .DS_Store

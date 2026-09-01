@@ -79,11 +79,11 @@ type ThemeQuestionCountHandler struct {
 }
 
 func (h ThemeQuestionCountHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodGet {
-        w.Header().Set("Allow", http.MethodGet)
-        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
+    // Note: method is validated per-action below, not here - this handler
+    // multiplexes two legacy sub-resources ("question_count" is GET-only,
+    // "migrate-to" is POST-only) onto one path pattern, and a single
+    // GET-only guard here previously made the POST-only "migrate-to" case
+    // unreachable no matter what it checked internally.
     // Expect path like /api/v1/themes/{id}/question_count or /api/themes/{id}/question_count
     segs := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
     idx := -1
@@ -100,6 +100,11 @@ func (h ThemeQuestionCountHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
     action := segs[idx+2]
     switch action {
     case "question_count":
+        if r.Method != http.MethodGet {
+            w.Header().Set("Allow", http.MethodGet)
+            http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+            return
+        }
         idStr := segs[idx+1]
         id, err := strconv.ParseInt(idStr, 10, 64)
         if err != nil || id <= 0 {

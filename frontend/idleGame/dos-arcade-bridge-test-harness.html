@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOS Arcade Bridge — Test Harness</title>
+<style>
+  :root {
+    --bg: #0b0d0a;
+    --panel: #14170f;
+    --line: #2a2f22;
+    --amber: #ffb000;
+    --amber-dim: #8a6300;
+    --text: #d8d2c0;
+    --text-dim: #7a7568;
+    --bad: #ff5a4d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,176,0,0.025) 0px, rgba(255,176,0,0.025) 1px, transparent 1px, transparent 3px);
+    color: var(--text);
+    font-family: 'Consolas', 'Courier New', ui-monospace, monospace;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .crt-frame {
+    max-width: 980px;
+    margin: 0 auto;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(255,176,0,0.04);
+  }
+  .titlebar {
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--amber-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+  }
+  .body-pad { padding: 22px 24px 28px; }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 4px;
+    color: var(--amber);
+    letter-spacing: 0.02em;
+  }
+  .sub {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin: 0 0 22px;
+  }
+  h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 6px;
+    margin: 26px 0 12px;
+    display: flex;
+    justify-content: space-between;
+  }
+  h2 .tag { color: var(--amber-dim); letter-spacing: 0.04em; }
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  }
+  button {
+    font-family: inherit;
+    font-size: 12.5px;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 10px 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.12s ease, color 0.12s ease;
+  }
+  button:hover { border-color: var(--amber-dim); color: var(--amber); }
+  button:active { transform: translateY(1px); }
+  button.spam { border-style: dashed; color: var(--text-dim); }
+  .two-col {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 22px;
+    margin-top: 24px;
+  }
+  @media (max-width: 680px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+  #log {
+    background: #000;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    height: 340px;
+    overflow-y: auto;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .log-line { padding: 2px 0; white-space: pre-wrap; word-break: break-word; }
+  .log-line.ok { color: var(--amber); }
+  .log-line.dropped { color: var(--bad); opacity: 0.75; }
+  .log-line .t { color: var(--text-dim); }
+  #state {
+    background: #000;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    height: 340px;
+    overflow-y: auto;
+  }
+  #state .row { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dotted var(--line); }
+  #state .cat { color: var(--text-dim); margin-top: 10px; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.1em; }
+  .empty { color: var(--text-dim); font-style: italic; }
+</style>
+</head>
+<body>
+<div class="crt-frame">
+  <div class="titlebar">
+    <span>dos-arcade-bridge-test-harness.html</span>
+    <span id="clock"></span>
+  </div>
+  <div class="body-pad">
+    <h1>DOS Arcade Bridge — Test Harness</h1>
+    <p class="sub">Fires simulated events at <code>window.dosGameBridge</code> against a mock Industrial Empire state, for all four Retro Arcade games. No WASM build required — this validates the bridge logic and rate limiter on its own. See masterprompt §8.</p>
+
+    <h2>DOOM <span class="tag">existing WASM target (doomgeneric)</span></h2>
+    <div class="btn-grid">
+      <button data-event="doom:kill" data-payload='{"monsterTypeId":3}'>Kill — tier1 (fodder)</button>
+      <button data-event="doom:kill" data-payload='{"monsterTypeId":9}'>Kill — tier2 (medium)</button>
+      <button data-event="doom:kill" data-payload='{"monsterTypeId":16}'>Kill — tier3 (heavy)</button>
+      <button data-event="doom:kill" data-payload='{"monsterTypeId":20}'>Kill — tier4 (boss)</button>
+      <button data-event="doom:level:complete" data-payload='{"levelNumber":1}'>Level complete (E1M1)</button>
+      <button class="spam" data-spam="doom:kill" data-payload='{"monsterTypeId":3}'>⚡ Spam ×20 (tests cooldown)</button>
+    </div>
+
+    <h2>Digger <span class="tag">existing WASM target (sobomax/digger)</span></h2>
+    <div class="btn-grid">
+      <button data-event="digger:collect:emerald" data-payload='{}'>Dig up emerald</button>
+      <button data-event="digger:collect:gold" data-payload='{}'>Dig up gold bag</button>
+      <button data-event="digger:kill" data-payload='{}'>Defeat nobbin/hobbin</button>
+      <button data-event="digger:level:complete" data-payload='{"levelNumber":1}'>Level complete</button>
+      <button class="spam" data-spam="digger:collect:emerald" data-payload='{}'>⚡ Spam ×20 (tests cooldown)</button>
+    </div>
+
+    <h2>Prince of Persia <span class="tag">new WASM port (SDLPoP)</span></h2>
+    <div class="btn-grid">
+      <button data-event="pop:mine:tick" data-payload='{}'>Room transition (mine tick)</button>
+      <button data-event="pop:pickup:gold" data-payload='{"amount":5}'>Pickup — gold (5)</button>
+      <button data-event="pop:pickup:potion" data-payload='{}'>Pickup — potion</button>
+      <button data-event="pop:level:complete" data-payload='{"levelNumber":1}'>Level complete (L1)</button>
+      <button class="spam" data-spam="pop:mine:tick" data-payload='{}'>⚡ Spam ×20 (tests cooldown)</button>
+    </div>
+
+    <h2>Commander Keen <span class="tag">new WASM port (Omnispeak)</span></h2>
+    <div class="btn-grid">
+      <button data-event="keen:collect:item" data-payload='{}'>Collect item</button>
+      <button data-event="keen:enemy:defeated" data-payload='{}'>Stun/defeat enemy</button>
+      <button data-event="keen:level:complete" data-payload='{"levelNumber":1}'>Level complete</button>
+      <button class="spam" data-spam="keen:collect:item" data-payload='{}'>⚡ Spam ×20 (tests cooldown)</button>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>Event log</h2>
+        <div id="log"><div class="empty">No events fired yet.</div></div>
+      </div>
+      <div>
+        <h2>Mock Industrial Empire state</h2>
+        <div id="state"><div class="empty">Empty — fire an event.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--
+  Loads the real bridge file — this harness tests the actual bridge logic
+  your Cline implementation ships, not a separate copy of it. Keep this
+  file next to dos-arcade-bridge.js.
+-->
+<script src="dos-arcade-bridge.js"></script>
+<script>
+  // ---- Mock Industrial Empire, replaced by the real game state once wired ----
+  const mockState = { workers: {}, resources: {} };
+
+  window.IndustrialEmpire = {
+    hireWorker(type, count) {
+      mockState.workers[type] = (mockState.workers[type] || 0) + count;
+      renderState();
+    },
+    addResource(type, amount) {
+      mockState.resources[type] = (mockState.resources[type] || 0) + amount;
+      renderState();
+    },
+  };
+
+  // ---- Logging ----
+  const logEl = document.getElementById('log');
+  let logStarted = false;
+
+  function logLine(text, ok) {
+    if (!logStarted) { logEl.innerHTML = ''; logStarted = true; }
+    const div = document.createElement('div');
+    div.className = 'log-line ' + (ok ? 'ok' : 'dropped');
+    const t = new Date().toLocaleTimeString();
+    div.innerHTML = `<span class="t">[${t}]</span> ${text}`;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function renderState() {
+    const stateEl = document.getElementById('state');
+    const hasWorkers = Object.keys(mockState.workers).length > 0;
+    const hasResources = Object.keys(mockState.resources).length > 0;
+    if (!hasWorkers && !hasResources) {
+      stateEl.innerHTML = '<div class="empty">Empty — fire an event.</div>';
+      return;
+    }
+    let html = '';
+    if (hasWorkers) {
+      html += '<div class="cat">Workforce</div>';
+      for (const [k, v] of Object.entries(mockState.workers)) {
+        html += `<div class="row"><span>${k}</span><span>+${v}</span></div>`;
+      }
+    }
+    if (hasResources) {
+      html += '<div class="cat">Resources</div>';
+      for (const [k, v] of Object.entries(mockState.resources)) {
+        html += `<div class="row"><span>${k}</span><span>+${v}</span></div>`;
+      }
+    }
+    stateEl.innerHTML = html;
+  }
+
+  // ---- Wire buttons ----
+  function fire(eventName, payload) {
+    const counted = window.dosGameBridge.emit(eventName, payload);
+    logLine(
+      `${eventName} ${JSON.stringify(payload)} → ${counted ? 'counted' : 'DROPPED (cooldown)'}`,
+      counted
+    );
+  }
+
+  document.querySelectorAll('button[data-event]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      fire(btn.dataset.event, JSON.parse(btn.dataset.payload));
+    });
+  });
+
+  document.querySelectorAll('button[data-spam]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const eventName = btn.dataset.spam;
+      const payload = JSON.parse(btn.dataset.payload);
+      for (let i = 0; i < 20; i++) fire(eventName, payload);
+    });
+  });
+
+  // ---- Clock, purely decorative ----
+  function tickClock() {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+</script>
+</body>
+</html>

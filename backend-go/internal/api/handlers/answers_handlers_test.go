@@ -10,9 +10,18 @@ import (
     "github.com/Lukas-Bohez/project-one/backend-go/internal/models"
 )
 
+// mockAnswerStore is a configurable AnswerStore test double: set only the
+// *Func fields the test under test actually exercises. Calling a method
+// whose func field was left nil panics with a clear message rather than a
+// bare nil-pointer dereference, so a test that accidentally reaches an
+// unconfigured method fails with an obvious cause.
 type mockAnswerStore struct {
-    listFunc func(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, int, error)
-    getFunc  func(ctx context.Context, id int64) (*models.Answer, error)
+    listFunc       func(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, int, error)
+    getFunc        func(ctx context.Context, id int64) (*models.Answer, error)
+    createFunc     func(ctx context.Context, a models.Answer) (int64, error)
+    updateFunc     func(ctx context.Context, a models.Answer) error
+    deleteFunc     func(ctx context.Context, id int64) error
+    percentageFunc func(ctx context.Context) (float64, error)
 }
 
 func (m mockAnswerStore) ListByQuestionID(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, int, error) {
@@ -23,10 +32,38 @@ func (m mockAnswerStore) GetByID(ctx context.Context, id int64) (*models.Answer,
     return m.getFunc(ctx, id)
 }
 
+func (m mockAnswerStore) Create(ctx context.Context, a models.Answer) (int64, error) {
+    if m.createFunc == nil {
+        panic("mockAnswerStore.Create called but createFunc was not set")
+    }
+    return m.createFunc(ctx, a)
+}
+
+func (m mockAnswerStore) Update(ctx context.Context, a models.Answer) error {
+    if m.updateFunc == nil {
+        panic("mockAnswerStore.Update called but updateFunc was not set")
+    }
+    return m.updateFunc(ctx, a)
+}
+
+func (m mockAnswerStore) Delete(ctx context.Context, id int64) error {
+    if m.deleteFunc == nil {
+        panic("mockAnswerStore.Delete called but deleteFunc was not set")
+    }
+    return m.deleteFunc(ctx, id)
+}
+
+func (m mockAnswerStore) Percentage(ctx context.Context) (float64, error) {
+    if m.percentageFunc == nil {
+        panic("mockAnswerStore.Percentage called but percentageFunc was not set")
+    }
+    return m.percentageFunc(ctx)
+}
+
 func TestAnswerHandler_List(t *testing.T) {
     sample := []models.Answer{{ID: 1, QuestionID: 123, AnswerText: "A", IsCorrect: true}}
     store := mockAnswerStore{
-        listFunc: func(questionID int64, limit, offset int) ([]models.Answer, int, error) {
+        listFunc: func(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, int, error) {
             return sample, 1, nil
         },
     }
@@ -56,7 +93,7 @@ func TestAnswerHandler_List(t *testing.T) {
 func TestAnswerByIDHandler_Get(t *testing.T) {
     expected := &models.Answer{ID: 5, QuestionID: 1, AnswerText: "B", IsCorrect: false}
     store := mockAnswerStore{
-        getFunc: func(id int64) (*models.Answer, error) { return expected, nil },
+        getFunc: func(ctx context.Context, id int64) (*models.Answer, error) { return expected, nil },
     }
 
     h := AnswerByIDHandler{Repo: store}

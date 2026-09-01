@@ -1,7 +1,31 @@
 /**
  * ArcadeManager.js - Manages DOS games arcade integration
  * Players can play classic DOS games to boost their idle game progress
+ *
+ * FIXED (see code_quality_audit.md, "Arcade / DOS games integration"):
+ *  1. `executable` is now `launchCommands` (a string array). The old single
+ *     string used shell-style `cd X && Y.EXE` chaining - COMMAND.COM has no
+ *     `&&` operator, so that whole line was passed to DOS as one invalid
+ *     command for every game except digger (which had no `cd` in it and so
+ *     happened to work). js-dos runs one DOS command per "-c" flag it's
+ *     given (see openDosGame() in idlegame.html), so a game that needs a
+ *     directory change now lists that as its own array element.
+ *  2. Added `controls` to each game so the pre-launch tutorial overlay can
+ *     show real, game-specific instructions instead of nothing.
+ *  3. Added ARCADE_PLAYTESTING_MODE as one named switch instead of four
+ *     scattered "FREE for playtesting" comments. The unlock-gating logic
+ *     below (canUnlockGame/unlockGame) already fully implements real
+ *     cost/level gating - flip this one flag off, and fill in real
+ *     unlockCost/unlockLevel values per game, when arcade is ready to be a
+ *     progression reward rather than an always-on bonus. That's a game
+ *     design decision (what the costs/levels should actually be), so it's
+ *     left as an explicit decision point rather than guessed at here.
  */
+
+// Set to false once real unlock costs/levels (below) are decided and
+// filled in. While true, every game in `games` is unlocked at zero cost
+// regardless of its configured unlockCost/unlockLevel.
+const ARCADE_PLAYTESTING_MODE = true;
 
 class ArcadeManager {
   constructor(gameEngine) {
@@ -11,7 +35,9 @@ class ArcadeManager {
     // Initialize arcade state
     if (!this.state.arcade) {
       this.state.arcade = {
-        unlockedGames: ['doom', 'digger', 'commander', 'prince'], // All unlocked for playtesting
+        unlockedGames: ARCADE_PLAYTESTING_MODE
+          ? ['doom', 'digger', 'commander', 'prince']
+          : [],
         playTime: {}, // Track time played per game
         highScores: {}, // Future: track high scores
         totalPlayTime: 0,
@@ -26,12 +52,13 @@ class ArcadeManager {
         id: 'doom',
         name: 'DOOM',
         icon: '👾',
-        cost: 0, // FREE for playtesting
+        cost: 0,
         unlockCost: 0,
         unlockLevel: 0,
         description: 'Classic FPS that defined a generation',
         zipUrl: 'dos-games/doom.zip',
-        executable: 'cd DOOM && DOOM.COM',
+        launchCommands: ['cd DOOM', 'DOOM.COM'],
+        controls: 'Arrow keys to move/turn, Ctrl to fire, Space to use doors/switches, Alt (held) to strafe',
         bonusType: 'resourceBonus',
         bonusAmount: 0.05, // 5% resource bonus per hour
       },
@@ -39,26 +66,28 @@ class ArcadeManager {
         id: 'digger',
         name: 'Digger',
         icon: '⛏️',
-        cost: 0, // FREE for playtesting
+        cost: 0,
         unlockCost: 0,
         unlockLevel: 0,
         description: 'Classic arcade digging action',
         zipUrl: 'dos-games/digger.zip',
-        executable: 'DIGGER.COM',
+        launchCommands: ['DIGGER.COM'],
+        controls: 'Arrow keys to move and dig, F1 to fire',
         cyclesLimit: 500, // Limit CPU cycles to slow down the game
         bonusType: 'craftingBonus',
         bonusAmount: 0.03, // 3% crafting bonus per hour
       },
       commander: {
         id: 'commander',
-        name: 'Commander Keen',
+        name: 'Commander Keen 4',
         icon: '🚀',
-        cost: 0, // FREE for playtesting
+        cost: 0,
         unlockCost: 0,
         unlockLevel: 0,
         description: 'Side-scrolling platform adventure',
         zipUrl: 'dos-games/keen4.zip',
-        executable: 'cd KEEN4 && KEEN4E.EXE',
+        launchCommands: ['cd KEEN4', 'KEEN4E.EXE'],
+        controls: 'Arrow keys to move, Space to jump, Ctrl to fire, Alt for the pogo stick',
         bonusType: 'efficiencyBonus',
         bonusAmount: 0.04, // 4% efficiency bonus per hour
       },
@@ -66,12 +95,13 @@ class ArcadeManager {
         id: 'prince',
         name: 'Prince of Persia',
         icon: '🔱',
-        cost: 0, // FREE for playtesting
+        cost: 0,
         unlockCost: 0,
         unlockLevel: 0,
         description: 'Legendary platformer with fluid animation',
         zipUrl: 'dos-games/prince.zip',
-        executable: 'cd Ppersia && PRINCE.EXE',
+        launchCommands: ['cd Ppersia', 'PRINCE.EXE'],
+        controls: 'Arrow keys to move/jump/crouch, Shift to grab ledges, draw your sword, or drink a potion',
         bonusType: 'goldBonus',
         bonusAmount: 0.02, // 2% gold bonus per hour
       },

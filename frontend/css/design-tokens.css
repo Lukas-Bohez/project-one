@@ -1,0 +1,129 @@
+/*
+  Quiz The Spire — canonical design tokens
+  =========================================
+  One token set, meant to replace the color/font/radius/shadow
+  variables currently declared separately (and inconsistently) in:
+
+    - portfolio repo:   src/app/globals.css  (:root / .dark)
+    - main hub:         frontend/index.html (inline --ff-*)
+                         frontend/css/styles.css (--font-*, --primary-color, ...)
+
+  Migration notes are at the bottom of this file — read those before
+  wiring this in, since both existing files use different variable
+  NAMES for overlapping concepts and this file picks one name per
+  concept for both repos to converge on.
+
+  Theme switching: the main hub's own SPRING_2026_POLISH_PASS.md
+  already flagged that `body.light-mode` and `[data-theme="light"]`
+  both exist in the JS. Pick whichever one the theme-toggle script
+  actually sets, delete the other, and use that same selector below.
+  This file uses `[data-theme="light"]` — swap the selector if the
+  main hub's toggle actually uses `body.light-mode`.
+*/
+
+:root {
+  /* Surfaces */
+  --bg: #0b0d12;
+  --bg-elevated: #12151d;
+  --card: #171b26;
+  --border: #262b3a;
+
+  /* Text */
+  --text: #e9eaf2;
+  --text-muted: #868ca8;
+
+  /* Accent — primary interactive color. Used for links, primary
+     buttons, focus rings, active states. This is the only color
+     that should carry "brand" weight across the whole site. */
+  --accent: #6f74e8;
+  --accent-strong: #4a4fc4; /* hover / pressed */
+
+  /* Accent — warm. Reward and achievement ONLY: streak milestones,
+     rank-ups, "solo built" pride stats. Do not use for general UI,
+     decoration, or a fourth badge color — see design-system.md. */
+  --accent-warm: #d99a4e;
+
+  /* Functional colors — desaturated on purpose so they don't
+     compete with --accent. Not raw Tailwind green-500/red-500. */
+  --success: #4caf7d;
+  --danger: #d1615a;
+
+  /* Type */
+  --font-display: 'Space Grotesk', 'Segoe UI', sans-serif;
+  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+  /* Radius — buttons and cards use --radius-md, NOT a full pill.
+     Reserve 9999px for things that are genuinely circular
+     (avatar, icon-only buttons). */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Shadow — two steps, used deliberately, not on every element.
+     --shadow-md is reserved for the hero panel and anything that
+     should visibly sit above the rest of the page. */
+  --shadow-sm: 0 2px 8px rgba(5, 6, 10, 0.28);
+  --shadow-md: 0 16px 40px rgba(5, 6, 10, 0.4);
+}
+
+[data-theme='light'] {
+  --bg: #f4f5f9;
+  --bg-elevated: #ffffff;
+  --card: #ffffff;
+  --border: #e1e3ec;
+
+  --text: #171a24;
+  --text-muted: #656b85;
+
+  --accent: #5458c9;
+  --accent-strong: #3d40a0;
+  --accent-warm: #b5793a;
+
+  --success: #3d9468;
+  --danger: #c14f48;
+
+  --shadow-sm: 0 2px 8px rgba(23, 26, 36, 0.08);
+  --shadow-md: 0 16px 40px rgba(23, 26, 36, 0.14);
+
+  /* Type/radius tokens are unchanged in light mode — omit them
+     here and let the :root values cascade. */
+}
+
+/*
+  ==========================================================
+  MIGRATION MAP — old variable -> new variable, per repo
+  ==========================================================
+
+  portfolio repo (src/app/globals.css)
+  -------------------------------------
+  --bg              -> --bg              (value changes: #f5f5f3/#0d0f10 -> see above)
+  --bg-2            -> --bg-elevated (or --card, depending on use — check each call site)
+  --bg-3            -> --card
+  --line / --line-mid -> --border  (drop the two-step opacity system, use --border everywhere)
+  --accent          -> --accent          (value changes: #009957/#60a5fa -> #6f74e8/#5458c9)
+  --btn-primary-bg / --btn-primary-bg-hover -> --accent / --accent-strong
+  --btn-primary-fg  -> --text on dark surfaces (or a new --on-accent: #ffffff if contrast needs it)
+  --btn-secondary-bg / --btn-secondary-hover -> --card / --bg-elevated
+  --text / --text-2 / --text-3 -> --text / --text-muted (collapse the three-step system to two)
+  font-geist-sans / font-geist-mono -> --font-body / --font-mono (drop Geist entirely)
+
+  Also: TopShell.tsx hardcodes `text-blue-400`, `border-blue-400`,
+  `bg-blue-400/15` directly as Tailwind utility classes instead of
+  reading any of the above. Those need to become `var(--accent)`-based,
+  not just get new hex values plugged into the same hardcoded pattern.
+
+  main hub (frontend/index.html + frontend/css/styles.css)
+  ----------------------------------------------------------
+  --color-bg / --color-surface / --color-card / --color-border
+                    -> --bg / --bg-elevated / --card / --border
+  --color-text-primary / --color-text-secondary -> --text / --text-muted
+  --color-accent / --color-accent-own -> --accent / --accent-strong
+  --color-success   -> --success (value changes: #22c55e -> #4caf7d)
+  --ff-display AND --font-display (pick one name) -> --font-display
+  --ff-body (IBM Plex Sans) vs --font-body (Inter — pick IBM Plex Sans, drop Inter) -> --font-body
+  --primary-color / --text-inverse (seen in .c-skip-link) -> fold into --accent / --text as appropriate;
+    run a full grep for any other stray names in this family before
+    considering the migration complete (see masterprompt Phase 0).
+*/

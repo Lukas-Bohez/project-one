@@ -107,22 +107,10 @@ func scanUserPublic(scanner interface {
 		return models.UserPublic{}, err
 	}
 
-	if rfidCode.Valid {
-		value := rfidCode.String
-		item.RFIDCode = &value
-	}
-	if lastActive.Valid {
-		value := lastActive.Time.UTC()
-		item.LastActive = &value
-	}
-	if sessionExpiresAt.Valid {
-		value := sessionExpiresAt.Time.UTC()
-		item.SessionExpiresAt = &value
-	}
-	if updatedBy.Valid {
-		value := updatedBy.Int64
-		item.UpdatedBy = &value
-	}
+	item.RFIDCode = nullString(rfidCode)
+	item.LastActive = nullTimeUTC(lastActive)
+	item.SessionExpiresAt = nullTimeUTC(sessionExpiresAt)
+	item.UpdatedBy = nullInt64(updatedBy)
 
 	return item, nil
 }

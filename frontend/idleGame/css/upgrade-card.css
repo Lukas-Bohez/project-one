@@ -1,0 +1,147 @@
+/**
+ * upgrade-card.css
+ * -----------------------------------------------------------------------
+ * Self-contained example of a container-query-driven upgrade card, using
+ * a "Ledger & Brass" token direction (tycoon/ledger vernacular, rather
+ * than the cream+serif or near-black+neon defaults). Swap the custom
+ * properties at the top for your existing palette if you already have
+ * one — the @container structure underneath doesn't depend on the exact
+ * colors.
+ *
+ * `color-mix()` needs a fairly modern browser (Chrome 111+ / Firefox
+ * 113+ / Safari 16.4+) — fine for a project already using container
+ * queries, which have similar support requirements.
+ *
+ * Companion markup shape assumed:
+ * <div class="upgrade-card-container">
+ *   <article class="upgrade-card">
+ *     <div class="upgrade-card__icon">🍋</div>
+ *     <div class="upgrade-card__body">
+ *       <h3 class="upgrade-card__name">Lemonade Stand</h3>
+ *       <p class="upgrade-card__desc">+1 coin/sec</p>
+ *     </div>
+ *     <div class="upgrade-card__buy">
+ *       <button class="upgrade-card__buy-btn">
+ *         <span class="upgrade-card__cost tabular">120</span>
+ *       </button>
+ *     </div>
+ *   </article>
+ * </div>
+ */
+
+:root {
+  --ledger-bg: #0f2e28;
+  --ledger-surface: #163b33;
+  --ledger-surface-hover: #1c463d;
+  --brass: #c9a24b;
+  --brass-dim: #9c7f3c;
+  --gain-green: #5fbe8a;
+  --ink-text: #f1ecdd;
+  --ink-text-muted: #8fa89e;
+  --radius: 10px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Numbers that change every tick should never jiggle the layout — lock
+   every digit to the same width. This is the one rule in this file
+   that's non-negotiable for an idle game's currency displays. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.upgrade-card-container {
+  container-type: inline-size;
+  container-name: upgrade-card;
+}
+
+.upgrade-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: var(--ledger-surface);
+  border: 1px solid color-mix(in srgb, var(--brass) 25%, transparent);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  font-family: var(--font-body);
+  color: var(--ink-text);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.upgrade-card:hover {
+  background: var(--ledger-surface-hover);
+}
+
+.upgrade-card__name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin: 0;
+  color: var(--ink-text);
+}
+
+.upgrade-card__desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ink-text-muted);
+  display: none; /* shown again at the wider container-query step below */
+}
+
+.upgrade-card__buy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--brass);
+  color: var(--ledger-bg);
+  border: none;
+  border-radius: calc(var(--radius) - 4px);
+  padding: var(--space-2) var(--space-3);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.upgrade-card__buy-btn:disabled {
+  background: var(--brass-dim);
+  color: var(--ink-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.upgrade-card__buy-btn:focus-visible {
+  outline: 2px solid var(--gain-green);
+  outline-offset: 2px;
+}
+
+/* Narrow (default): stacked, no description. Fits a phone or a sidebar. */
+
+/* >= 280px container width: go horizontal — icon, text, buy button in a row. */
+@container upgrade-card (min-width: 280px) {
+  .upgrade-card {
+    flex-direction: row;
+    align-items: center;
+  }
+  .upgrade-card__body {
+    flex: 1;
+  }
+}
+
+/* >= 420px: room to show the description permanently instead of hiding it,
+   and to give the buy button more breathing room. */
+@container upgrade-card (min-width: 420px) {
+  .upgrade-card__desc {
+    display: block;
+  }
+  .upgrade-card__buy-btn {
+    padding: var(--space-2) calc(var(--space-3) * 1.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upgrade-card {
+    transition: none;
+  }
+}

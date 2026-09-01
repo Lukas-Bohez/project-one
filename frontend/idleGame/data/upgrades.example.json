@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "upgrades": [
+    {
+      "id": "lemonade_stand",
+      "name": "Lemonade Stand",
+      "category": "starter",
+      "baseCost": 10,
+      "costGrowth": 1.15,
+      "effectType": "flatIncomePerSecond",
+      "effectValue": 1,
+      "unlock": null
+    },
+    {
+      "id": "newspaper_route",
+      "name": "Newspaper Route",
+      "category": "starter",
+      "baseCost": 100,
+      "costGrowth": 1.16,
+      "effectType": "flatIncomePerSecond",
+      "effectValue": 8,
+      "unlock": { "type": "ownedAtLeast", "upgradeId": "lemonade_stand", "count": 5 }
+    },
+    {
+      "id": "car_wash",
+      "name": "Car Wash",
+      "category": "local",
+      "baseCost": 1200,
+      "costGrowth": 1.17,
+      "effectType": "flatIncomePerSecond",
+      "effectValue": 47,
+      "unlock": { "type": "totalEarned", "amount": 1000 }
+    },
+    {
+      "id": "efficient_pricing",
+      "name": "Efficient Pricing",
+      "category": "multiplier",
+      "baseCost": 5000,
+      "costGrowth": 1.5,
+      "effectType": "globalMultiplier",
+      "effectValue": 1.1,
+      "maxOwned": 20,
+      "unlock": { "type": "ownedAtLeast", "upgradeId": "newspaper_route", "count": 10 }
+    }
+  ]
+}

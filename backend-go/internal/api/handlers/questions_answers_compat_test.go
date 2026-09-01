@@ -21,6 +21,7 @@ func (f fakeAnswerStore) GetByID(ctx context.Context, id int64) (*models.Answer,
 func (f fakeAnswerStore) Create(ctx context.Context, a models.Answer) (int64, error) { return 0, nil }
 func (f fakeAnswerStore) Update(ctx context.Context, a models.Answer) error { return nil }
 func (f fakeAnswerStore) Delete(ctx context.Context, id int64) error { return nil }
+func (f fakeAnswerStore) Percentage(ctx context.Context) (float64, error) { return 0, nil }
 
 func TestQuestionsAnswersHandler_OK(t *testing.T) {
     sample := []models.Answer{

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/models"
 )
@@ -88,16 +87,16 @@ func scanQuestion(scanner interface {
 	Scan(dest ...any) error
 }) (models.Question, error) {
 	var (
-		item      models.Question
+		item        models.Question
 		explanation sql.NullString
-		urlValue  sql.NullString
-		lightMax  sql.NullFloat64
-		lightMin  sql.NullFloat64
-		tempMax   sql.NullFloat64
-		tempMin   sql.NullFloat64
-		createdBy sql.NullInt64
-		createdAt sql.NullTime
-		updatedAt sql.NullTime
+		urlValue    sql.NullString
+		lightMax    sql.NullFloat64
+		lightMin    sql.NullFloat64
+		tempMax     sql.NullFloat64
+		tempMin     sql.NullFloat64
+		createdBy   sql.NullInt64
+		createdAt   sql.NullTime
+		updatedAt   sql.NullTime
 	)
 
 	if err := scanner.Scan(
@@ -123,59 +122,17 @@ func scanQuestion(scanner interface {
 		return models.Question{}, err
 	}
 
-	if explanation.Valid {
-		item.Explanation = &explanation.String
-	}
-	if urlValue.Valid {
-		item.URL = &urlValue.String
-	}
-	if lightMax.Valid {
-		value := lightMax.Float64
-		item.LightMax = &value
-	}
-	if lightMin.Valid {
-		value := lightMin.Float64
-		item.LightMin = &value
-	}
-	if tempMax.Valid {
-		value := tempMax.Float64
-		item.TempMax = &value
-	}
-	if tempMin.Valid {
-		value := tempMin.Float64
-		item.TempMin = &value
-	}
-	if createdBy.Valid {
-		value := createdBy.Int64
-		item.CreatedBy = &value
-	}
-	if createdAt.Valid {
-		value := createdAt.Time.UTC()
-		item.CreatedAt = &value
-	}
-	if updatedAt.Valid {
-		value := updatedAt.Time.UTC()
-		item.UpdatedAt = &value
-	}
+	item.Explanation = nullString(explanation)
+	item.URL = nullString(urlValue)
+	item.LightMax = nullFloat64(lightMax)
+	item.LightMin = nullFloat64(lightMin)
+	item.TempMax = nullFloat64(tempMax)
+	item.TempMin = nullFloat64(tempMin)
+	item.CreatedBy = nullInt64(createdBy)
+	item.CreatedAt = nullTimeUTC(createdAt)
+	item.UpdatedAt = nullTimeUTC(updatedAt)
 
 	return item, nil
-}
-
-func ptrString(value string) *string {
-	return &value
-}
-
-func ptrFloat64(value float64) *float64 {
-	return &value
-}
-
-func ptrInt64(value int64) *int64 {
-	return &value
-}
-
-func ptrTime(value time.Time) *time.Time {
-	v := value.UTC()
-	return &v
 }
 
 // ActiveCount returns the number of active questions (is_active = TRUE)

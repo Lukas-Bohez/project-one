@@ -31,7 +31,15 @@
   let currentPickerTab = 'official';
 
   // ── Helpers ──
-  function $(sel) {
+    // Reliability: timeout wrapper to prevent silent hangs
+  function withTimeout(promise, ms = 12000) {
+    const timer = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out')), ms)
+    );
+    return Promise.race([promise, timer]);
+  }
+
+function $(sel) {
     return document.querySelector(sel);
   }
   function $$(sel) {
@@ -53,7 +61,7 @@
         headers['X-Password'] = storedPassword;
       }
     }
-    return fetch(url, { ...opts, headers }).then(async (r) => {
+    return withTimeout(fetch(url, { ...opts, headers })).then(async (r) => {
       const data = await r.json().catch(() => null);
       if (!r.ok) throw { status: r.status, detail: data?.detail || r.statusText };
       return data;
@@ -62,7 +70,7 @@
 
   function apiRaw(endpoint, opts = {}) {
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
-    return fetch(url, opts).then(async (r) => {
+    return withTimeout(fetch(url, opts)).then(async (r) => {
       const data = await r.json().catch(() => null);
       if (!r.ok) throw { status: r.status, detail: data?.detail || r.statusText };
       return data;

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Prediction Lab | Quiz The Spire</title>
+  <meta name="description" content="Public, daily stock-direction predictions for SPY + major tickers. Live scoreboard, honest track record, and multiple models including a naive baseline." />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Stock Prediction Lab | Quiz The Spire" />
+  <meta property="og:description" content="Daily up/down predictions with live scoreboard and honest track record." />
+  <meta property="og:url" content="https://quizthespire.com/pages/stock-lab/" />
+  <meta property="og:image" content="https://quizthespire.com/images/stock-lab-og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Stock Prediction Lab | Quiz The Spire" />
+  <meta name="twitter:description" content="Daily up/down predictions with live scoreboard and honest track record." />
+  <meta name="twitter:image" content="https://quizthespire.com/images/stock-lab-og.jpg" />
+
+  <link rel="canonical" href="https://quizthespire.com/pages/stock-lab/" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/pages/stock-lab/stock-lab.css" />
+</head>
+<body>
+  <header class="header" role="banner">
+    <div class="container header-content">
+      <nav class="header-nav-left">
+        <a href="/" class="nav-btn nav-btn-article">Quiz The Spire</a>
+      </nav>
+      <div class="logo">
+        <a href="/" aria-label="Quiz The Spire - Return to homepage">Stock Prediction Lab</a>
+      </div>
+      <nav class="header-nav-right">
+        <button id="theme-toggle" class="c-theme-toggle">Light Mode</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+    <div class="page-header">
+      <h1>Stock Prediction Lab</h1>
+      <p>A public, ongoing experiment: multiple prediction approaches checked against real outcomes, with a naive baseline included for honesty.</p>
+    </div>
+
+    <div class="support-message">
+      <p><strong>Not investment advice.</strong> This is a public experiment in whether any of these models actually work.</p>
+    </div>
+
+    <section class="stock-lab" aria-labelledby="labHeading">
+      <h2 id="labHeading" class="sr-only">Lab dashboard</h2>
+
+      <div class="lab-toolbar">
+        <div class="lab-meta">
+          <div class="lab-pill">
+            <span class="lab-pill__label">Models</span>
+            <span class="lab-pill__value" id="modelCount">5</span>
+          </div>
+          <div class="lab-pill">
+            <span class="lab-pill__label">Tickers</span>
+            <span class="lab-pill__value" id="tickerCount">5</span>
+          </div>
+          <div class="lab-pill">
+            <span class="lab-pill__label">Last updated</span>
+            <span class="lab-pill__value" id="lastUpdated">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lab-loading" id="labLoading" style="display:none" aria-live="polite">
+        <div class="sai-spinner" aria-hidden="true"></div>
+        <p>Loading predictions…</p>
+      </div>
+
+      <div class="lab-error" id="labError" style="display:none" role="alert" aria-live="assertive">
+        <p id="labErrorText">Could not load predictions.</p>
+        <button class="btn btn-secondary" id="retryBtn">Retry</button>
+      </div>
+
+      <div class="lab-empty" id="labEmpty" style="display:none" aria-live="polite">
+        <p>No predictions yet. Check back after the next market close.</p>
+      </div>
+
+      <div class="lab-grid" id="labGrid"></div>
+
+      <div class="scoreboard">
+        <h2>Scoreboard</h2>
+        <p class="scoreboard-note">Append-only, dated log. Past entries cannot be edited.</p>
+        <div class="scoreboard-table-wrap">
+          <table class="scoreboard-table" id="scoreboardTable" aria-label="Prediction scoreboard">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Model</th>
+                <th scope="col">Ticker</th>
+                <th scope="col">Call</th>
+                <th scope="col">Actual</th>
+                <th scope="col">Result</th>
+              </tr>
+            </thead>
+            <tbody id="scoreboardBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/themeManager.js"></script>
+  <script src="/js/pages/stock-lab/stock-lab.js" defer></script>
+</body>
+</html>

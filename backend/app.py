@@ -416,14 +416,32 @@ except Exception:
 
 
 # Middleware to catch unhandled errors and prevent crashes
+import time as _time
+
+
 @app.middleware("http")
 async def log_incoming_requests(request, call_next):
+    start = _time.perf_counter()
     try:
         response = await call_next(request)
+        elapsed_ms = (_time.perf_counter() - start) * 1000
+        logging.getLogger("uvicorn.access").info(
+            "%s %s %s %s in %.1fms",
+            request.method,
+            request.url.path,
+            response.status_code,
+            getattr(response, "http_version", ""),
+            elapsed_ms,
+        )
         return response
     except Exception as e:
+        elapsed_ms = (_time.perf_counter() - start) * 1000
         logging.getLogger("uvicorn.error").error(
-            f"Unhandled error on {request.method} {request.url.path}: {e}"
+            "Unhandled error on %s %s after %.1fms: %s",
+            request.method,
+            request.url.path,
+            elapsed_ms,
+            e,
         )
         from starlette.responses import JSONResponse
 

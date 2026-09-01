@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/httpx"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
 )
 
@@ -16,7 +16,7 @@ type QuestionHandler struct {
 func (h QuestionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		httpx.Error(w, r, http.StatusMethodNotAllowed, "method not allowed", nil)
 		return
 	}
 
@@ -25,7 +25,7 @@ func (h QuestionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if rawLimit := r.URL.Query().Get("limit"); rawLimit != "" {
 		parsedLimit, err := strconv.Atoi(rawLimit)
 		if err != nil || parsedLimit < 0 {
-			http.Error(w, "invalid limit", http.StatusBadRequest)
+			httpx.Error(w, r, http.StatusBadRequest, "invalid limit", nil)
 			return
 		}
 		limit = parsedLimit
@@ -33,12 +33,11 @@ func (h QuestionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	questions, err := h.Repo.List(r.Context(), activeOnly, limit)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]any{
+	httpx.JSON(w, http.StatusOK, map[string]any{
 		"count":     len(questions),
 		"questions": questions,
 	})

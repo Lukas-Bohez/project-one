@@ -746,6 +746,7 @@
                     </div>
                 </div>
                 <div class="modal-body" style="padding: 0;">
+                    <p id="dos-game-controls" style="margin: 0; padding: 10px 15px; text-align: center; font-size: 0.9em; color: #cbd5e1; background: rgba(0,0,0,0.25); border-bottom: 1px solid rgba(255,255,255,0.1);"></p>
                     <div id="dosbox-container" style="width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;">
                         <canvas id="dosbox" style="max-width: 100%; max-height: 400px;"></canvas>
                     </div>
@@ -1142,6 +1143,10 @@
             const modal = document.getElementById('dos-game-modal');
             const title = document.getElementById('dos-game-title');
             title.textContent = `🎮 ${game.name}`;
+            const controlsBar = document.getElementById('dos-game-controls');
+            if (controlsBar) {
+                controlsBar.textContent = game.controls || '';
+            }
             modal.style.display = 'flex';
             
             // Clear previous dosbox instance
@@ -1178,9 +1183,20 @@
                 
                 // Fetch and add the game zip file
                 fs.extract(gamePath).then(() => {
-                    console.log('Game extracted successfully, running:', game.executable);
-                    // Run the executable
-                    main(["-c", game.executable]);
+                    // js-dos runs one DOS command per "-c" flag (see
+                    // https://www.npmjs.com/package/js-dos/v/6.22.23,
+                    // main(["-c", "DIGGER.COM"])). A game whose launch
+                    // needs a directory change is a *second* DOS command,
+                    // not "&&" appended to the first - COMMAND.COM doesn't
+                    // have that operator, which is why the previous single
+                    // "cd X && Y.EXE" string never actually ran Y.EXE for
+                    // any game except digger (no cd needed there).
+                    console.log('Game extracted successfully, running:', game.launchCommands);
+                    const dosArgs = [];
+                    for (const cmd of game.launchCommands) {
+                        dosArgs.push('-c', cmd);
+                    }
+                    main(dosArgs);
                 }).catch((error) => {
                     console.error('Error loading game:', error);
                     console.error('Game path attempted:', gamePath);

@@ -143,9 +143,9 @@ func scanAnswer(scanner interface {
 	Scan(dest ...any) error
 }) (models.Answer, error) {
 	var (
-		item       models.Answer
-		createdAt  sql.NullTime
-		updatedAt  sql.NullTime
+		item      models.Answer
+		createdAt sql.NullTime
+		updatedAt sql.NullTime
 	)
 
 	if err := scanner.Scan(
@@ -159,14 +159,8 @@ func scanAnswer(scanner interface {
 		return models.Answer{}, err
 	}
 
-	if createdAt.Valid {
-		value := createdAt.Time.UTC()
-		item.CreatedAt = &value
-	}
-	if updatedAt.Valid {
-		value := updatedAt.Time.UTC()
-		item.UpdatedAt = &value
-	}
+	item.CreatedAt = nullTimeUTC(createdAt)
+	item.UpdatedAt = nullTimeUTC(updatedAt)
 
 	return item, nil
 }

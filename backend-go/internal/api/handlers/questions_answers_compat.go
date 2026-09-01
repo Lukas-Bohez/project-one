@@ -1,13 +1,11 @@
 package handlers
 
 import (
-    "context"
-    "encoding/json"
     "net/http"
     "strconv"
     "strings"
 
-    "github.com/Lukas-Bohez/project-one/backend-go/internal/models"
+    "github.com/Lukas-Bohez/project-one/backend-go/internal/httpx"
 )
 
 // QuestionsAnswersHandler provides a compatibility endpoint for frontend callers
@@ -64,17 +62,13 @@ func (h QuestionsAnswersHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
     answers, total, err := h.Repo.ListByQuestionID(r.Context(), qid, limit, offset)
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
         return
     }
 
-    w.Header().Set("Content-Type", "application/json")
-    _ = json.NewEncoder(w).Encode(map[string]any{
+    httpx.JSON(w, http.StatusOK, map[string]any{
         "count":   len(answers),
         "total":   total,
         "answers": answers,
     })
 }
-
-// Ensure compile-time compatibility with the Answer type
-var _ = models.Answer{}

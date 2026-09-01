@@ -18,6 +18,7 @@ type mockAllStore struct {
     createFunc func(ctx context.Context, a models.Answer) (int64, error)
     updateFunc func(ctx context.Context, a models.Answer) error
     deleteFunc func(ctx context.Context, id int64) error
+    percentageFunc func(ctx context.Context) (float64, error)
 }
 
 func (m mockAllStore) ListByQuestionID(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, int, error) {
@@ -53,6 +54,13 @@ func (m mockAllStore) Delete(ctx context.Context, id int64) error {
         return m.deleteFunc(ctx, id)
     }
     return nil
+}
+
+func (m mockAllStore) Percentage(ctx context.Context) (float64, error) {
+    if m.percentageFunc != nil {
+        return m.percentageFunc(ctx)
+    }
+    return 0, nil
 }
 
 func TestAnswerHandler_Create(t *testing.T) {

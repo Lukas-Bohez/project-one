@@ -1,0 +1,53 @@
+/**
+ * container-query-retrofit.css
+ * -----------------------------------------------------------------------
+ * Retrofits container queries onto the REAL markup — .panel-grid >
+ * .panel containing .action-btn buttons (each with .btn-title /
+ * .btn-cost / .btn-description inside) — rather than a hypothetical new
+ * card component. There's no existing container-query usage anywhere in
+ * style.css today (checked both the source and the minified build), so
+ * this is a genuine addition, not an extension of something already
+ * there.
+ *
+ * Add this as a new section in style.css, right after the existing
+ * "Panel Grid Layout" and "Action Buttons" sections — don't replace
+ * those rules, layer on top of them. The five existing @media
+ * breakpoints (768px, 480px, and the landscape one for the arcade) can
+ * stay exactly as they are; they're handling page-level layout, which
+ * is still the right tool for that. Container queries are for
+ * .action-btn adapting to whatever column width .panel-grid actually
+ * gives it, independent of viewport size.
+ */
+
+.panel-grid {
+  container-type: inline-size;
+  container-name: action-panel;
+}
+
+/* Below ~240px per button (a narrow mobile column, or a future dense
+   sidebar layout): tighten the title, drop the description — the cost
+   is the one line that actually matters at this width. */
+@container action-panel (max-width: 240px) {
+  .action-btn .btn-title {
+    font-size: 0.85rem;
+  }
+  .action-btn .btn-description {
+    display: none;
+  }
+}
+
+/* 240–400px (today's typical mobile/narrow-panel case): title + cost
+   visible, description available but compact. */
+@container action-panel (min-width: 240px) and (max-width: 400px) {
+  .action-btn .btn-description {
+    font-size: 0.7rem;
+  }
+}
+
+/* 400px+: full three-line layout, matching today's default design. */
+@container action-panel (min-width: 400px) {
+  .action-btn .btn-description {
+    display: block;
+    font-size: 0.75rem;
+  }
+}

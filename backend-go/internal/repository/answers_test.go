@@ -8,6 +8,8 @@ import (
     "time"
 
     "github.com/DATA-DOG/go-sqlmock"
+
+    "github.com/Lukas-Bohez/project-one/backend-go/internal/models"
 )
 
 func TestListByQuestionID_ReturnsAnswersAndTotal(t *testing.T) {
