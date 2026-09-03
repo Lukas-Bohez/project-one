@@ -43,31 +43,119 @@
     overlay.querySelector('.adblock-softwall__secondary').addEventListener('click', closeNotice);
 
     whitelistButton.addEventListener('click', handleWhitelistClaim);
+
+    // Self-heal: if a real ad renders while the banner is up (the detection
+    // was a false positive), dismiss the banner and remember that ads work.
+    var healTimer = window.setInterval(function () {
+      if (!overlay.parentNode) {
+        window.clearInterval(healTimer);
+        return;
+      }
+      if (findRenderedAd()) {
+        window.clearInterval(healTimer);
+        try {
+          localStorage.setItem(
+            'adblock-dismissed',
+            JSON.stringify({
+              timestamp: Date.now(),
+              ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
+            })
+          );
+        } catch (e) {
+          // localStorage unavailable — just close the banner
+        }
+        closeNotice();
+      }
+    }, 1000);
+  }
+
+  var ADSENSE_URL =
+    'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449';
+  var CANARY_STYLE =
+    'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;';
+
+  // True when the element is hidden from layout (the way ad blockers hide ads).
+  function isElementHidden(el) {
+    if (!el || !el.parentNode) return true;
+    var style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+      return true;
+    }
+    return el.offsetWidth === 0 || el.offsetHeight === 0;
+  }
+
+  // Generic canary: appends a bait element and an identical control element.
+  // The bait carries ad-typical class names so blockers hide it, the control
+  // does not. Only when the bait is hidden AND the control is visible do we
+  // conclude an ad blocker is active. If the control is hidden too, something
+  // else in the environment is interfering and we stay quiet (fail open).
+  function runCanaryCheck(baitClassName, waitMs) {
+    return new Promise(function (resolve) {
+      var bait = document.createElement('div');
+      bait.className = baitClassName;
+      bait.style.cssText = CANARY_STYLE;
+
+      var control = document.createElement('div');
+      control.style.cssText = CANARY_STYLE;
+
+      document.body.appendChild(bait);
+      document.body.appendChild(control);
+
+      window.setTimeout(function () {
+        var baitHidden = isElementHidden(bait);
+        var controlHidden = isElementHidden(control);
+        if (bait && bait.parentNode) bait.remove();
+        if (control && control.parentNode) control.remove();
+
+        // Return true if the ad blocker is DISABLED (bait not blocked).
+        resolve(!(baitHidden && !controlHidden));
+      }, waitMs);
+    });
+  }
+
+  // ── Ground truth: did a real ad actually render on this page? ────────────
+  // Heuristics (canary bait, network probes) can misfire. A rendered AdSense
+  // creative is observable proof that ads are working for this visitor, so it
+  // must always win over any heuristic.
+  function findRenderedAd() {
+    var slots = document.querySelectorAll('ins.adsbygoogle');
+    for (var i = 0; i < slots.length; i++) {
+      var slot = slots[i];
+      if (slot.getAttribute('data-ad-status') === 'filled') return slot;
+      if (slot.querySelector('iframe')) return slot;
+      if (slot.getBoundingClientRect().height > 5) return slot;
+    }
+    // AdSense places its creative iframe inside the ad wrappers.
+    var wrappedIframes = document.querySelectorAll('.ad-unit-wrapper iframe');
+    if (wrappedIframes.length > 0) return wrappedIframes[0];
+    return null;
+  }
+
+  // Last gate before the banner may appear: ads can render a few seconds
+  // after load, so observe briefly and only confirm "blocked" if no real ad
+  // shows up in the meantime.
+  var GROUND_TRUTH_OBSERVE_MS = 8000;
+  function confirmBlockedThen(onConfirmedBlocked) {
+    var started = Date.now();
+    (function check() {
+      if (findRenderedAd()) return; // Ads genuinely render — stay quiet
+      if (Date.now() - started >= GROUND_TRUTH_OBSERVE_MS) {
+        onConfirmedBlocked();
+        return;
+      }
+      window.setTimeout(check, 600);
+    })();
   }
 
   // Re-run adblock canary check
   function verifyWhitelistingAsync() {
-    return new Promise(function (resolve) {
-      var canary = document.createElement('div');
-      canary.className = 'ad-banner adsbox doubleclick pub_300x250 text-ad';
-      canary.style.cssText =
-        'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
-      document.body.appendChild(canary);
-
-      window.setTimeout(function () {
-        var blocked = false;
-        if (canary && canary.parentNode) {
-          var display = window.getComputedStyle(canary).display;
-          var visibility = window.getComputedStyle(canary).visibility;
-          var height = canary.offsetHeight;
-
-          blocked = display === 'none' || visibility === 'hidden' || height === 0;
-          canary.remove();
-        }
-        // Return true if adblock is DISABLED (not blocked)
-        resolve(!blocked);
-      }, 400);
-    });
+    return runCanaryCheck('ad-banner adsbox doubleclick pub_300x250 text-ad', 400).then(
+      function (whitelisted) {
+        // Ads visibly rendering is definitive proof of whitelisting, even if
+        // a leftover cosmetic rule still hides the canary bait.
+        return whitelisted || !!findRenderedAd();
+      }
+    );
   }
 
   // Handle user claiming to have disabled adblocker
@@ -121,49 +209,59 @@
 
   // Detection methods
   function detectAdblockBait() {
-    var bait = document.createElement('div');
-    bait.className = 'adsbox ad-banner ad-placement text-ad';
-    bait.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;';
-    document.body.appendChild(bait);
-
-    return new Promise(function (resolve) {
-      window.setTimeout(function () {
-        var blocked = false;
-        if (bait && bait.parentNode) {
-          blocked =
-            bait.offsetHeight === 0 ||
-            bait.clientHeight === 0 ||
-            window.getComputedStyle(bait).display === 'none';
-          bait.remove();
-        }
-        resolve(blocked);
-      }, 120);
-    });
+    return runCanaryCheck('adsbox ad-banner ad-placement text-ad', 200);
   }
 
-  function detectAdblockFallback() {
-    return new Promise(function (resolve) {
-      var scriptLoaded = !!window.adsbygoogle;
+  // True when this page actually serves AdSense ads (so blocking is relevant).
+  function pageUsesAdSense() {
+    return !!(
+      document.querySelector('script[src*="googlesyndication"], ins.adsbygoogle') ||
+      window.adsbygoogle
+    );
+  }
 
-      if (!scriptLoaded) {
-        var iframeCheckTimeout = window.setTimeout(function () {
-          var frames = document.querySelectorAll('iframe');
-          for (var i = 0; i < frames.length; i++) {
-            try {
-              if (frames[i].src && frames[i].src.indexOf('googlesyndication') !== -1) {
-                scriptLoaded = true;
-                break;
-              }
-            } catch (e) {
-              // Cross-origin iframe, skip
-            }
-          }
-          resolve(!scriptLoaded);
-        }, 500);
-      } else {
-        resolve(false);
-      }
-    });
+  // True when the AdSense library actually made it through (ads can serve).
+  function isAdSenseLoaded() {
+    return !!(window.adsbygoogle && typeof window.adsbygoogle.push === 'function');
+  }
+
+  // Network-level check: try to reach the AdSense script. With mode 'no-cors'
+  // a successful request resolves as an opaque response, while ad blockers,
+  // DNS firewalls, etc. cause the request to fail. We retry once to rule out
+  // transient network hiccups, and fail open on any error.
+  function probeAdSenseNetwork(attempt) {
+    return fetch(ADSENSE_URL, { mode: 'no-cors', cache: 'no-store' })
+      .then(function () {
+        return false; // Script reachable — not blocked
+      })
+      .catch(function () {
+        if (attempt < 2) {
+          return new Promise(function (resolve) {
+            window.setTimeout(resolve, 400);
+          }).then(function () {
+            return probeAdSenseNetwork(attempt + 1);
+          });
+        }
+        return true; // Still failing after retry — treat as blocked
+      });
+  }
+
+  // Replaces the old "is window.adsbygoogle defined within 500ms" heuristic,
+  // which flagged every visitor whose AdSense script simply took a moment to
+  // load (slow connection, cold cache, mobile). Ad blockers do not reliably
+  // remove the global, but they do reliably kill the network request — so we
+  // probe the network instead of watching a timer.
+  function detectNetworkBlocking() {
+    // Old browsers without fetch: skip this check entirely (fail open).
+    if (typeof window.fetch !== 'function') return Promise.resolve(false);
+    // Offline: network failures prove nothing about ad blockers.
+    if (window.navigator && navigator.onLine === false) return Promise.resolve(false);
+    // Pages that never load ads should never see the banner.
+    if (!pageUsesAdSense()) return Promise.resolve(false);
+    // Ads already loaded and working — nothing is blocked.
+    if (isAdSenseLoaded()) return Promise.resolve(false);
+
+    return probeAdSenseNetwork(1);
   }
 
   function detectAdblock() {
@@ -175,13 +273,14 @@
         var age = Date.now() - data.timestamp;
         if (age < data.ttl) {
           // Still within TTL, but re-verify in case user re-enabled adblocker
-          Promise.all([detectAdblockBait(), detectAdblockFallback()])
+          Promise.all([detectAdblockBait(), detectNetworkBlocking()])
             .then(function (results) {
               var blocked = results[0] || results[1];
               if (blocked) {
-                // User re-enabled adblocker, show banner again
+                // User re-enabled adblocker, show banner again — but only if
+                // no real ad is actually rendering (ground truth wins).
                 localStorage.removeItem('adblock-dismissed');
-                showAdblockNotice();
+                confirmBlockedThen(showAdblockNotice);
               }
               // else: still genuinely whitelisted, stay quiet
             })
@@ -197,11 +296,13 @@
     }
 
     // No valid dismissal, run full detection
-    Promise.all([detectAdblockBait(), detectAdblockFallback()])
+    Promise.all([detectAdblockBait(), detectNetworkBlocking()])
       .then(function (results) {
         var blocked = results[0] || results[1];
         if (blocked) {
-          showAdblockNotice();
+          // Heuristics say blocked, but a rendered ad is proof they are
+          // wrong — observe briefly and only then show the banner.
+          confirmBlockedThen(showAdblockNotice);
         }
       })
       .catch(function () {
@@ -209,15 +310,31 @@
       });
   }
 
-  // Run detection after the browser is idle to avoid blocking LCP/TBT.
-  var scheduleDetection = function () {
+  // Run detection after the page has fully loaded (so the async AdSense script
+  // had a fair chance to arrive) and the browser is idle, to avoid blocking
+  // LCP/TBT and to avoid false positives from scripts still in flight.
+  var GRACE_AFTER_LOAD_MS = 1500;
+
+  var runDetectionWhenIdle = function () {
     if ('requestIdleCallback' in window) {
-      requestIdleCallback(function () {
-        detectAdblock();
-      }, { timeout: 2000 });
+      requestIdleCallback(detectAdblock, { timeout: 2000 });
     } else {
       // Fallback: delay detection so it doesn't run during initial render
-      window.setTimeout(detectAdblock, 2000);
+      window.setTimeout(detectAdblock, 500);
+    }
+  };
+
+  var scheduleDetection = function () {
+    if (document.readyState === 'complete') {
+      window.setTimeout(runDetectionWhenIdle, GRACE_AFTER_LOAD_MS);
+    } else {
+      window.addEventListener(
+        'load',
+        function () {
+          window.setTimeout(runDetectionWhenIdle, GRACE_AFTER_LOAD_MS);
+        },
+        { once: true }
+      );
     }
   };
 
