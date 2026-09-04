@@ -46,7 +46,7 @@
 <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg"/>
 <meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM"/>
 
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Quiz The Spire","applicationCategory":"MultimediaApplication","operatingSystem":"Windows, Linux, macOS, Android","softwareVersion":"10.8.2","downloadUrl":"https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest","url":"https://quizthespire.com/","description":"Quiz The Spire — Lukas Bohez's quiz platform, creator tools & open-source apps. Real-time multiplayer quizzes, YouTube downloader, MIDI composer, and more."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Quiz The Spire","applicationCategory":"MultimediaApplication","operatingSystem":"Windows, Linux, macOS, Android","softwareVersion":"13.0.7","downloadUrl":"https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest","url":"https://quizthespire.com/","description":"Quiz The Spire — Lukas Bohez's quiz platform, creator tools & open-source apps. Real-time multiplayer quizzes, YouTube downloader, MIDI composer, and more."}</script>
 <meta name="theme-color" content="#16161C" media="(prefers-color-scheme:dark)"/>
 <meta name="theme-color" content="#F8F9FC" media="(prefers-color-scheme:light)"/>
 
@@ -555,6 +555,12 @@ body{
         <span>Search</span>
         <kbd>⌘K</kbd>
       </button>
+      <a href="/LukasBohez/" class="qts-nav__link" aria-label="Portfolio">
+        <i class="fa-solid fa-briefcase"></i> <span>Portfolio</span>
+      </a>
+      <a href="/pages/support/" class="qts-nav__link" aria-label="Support chat">
+        <i class="fa-solid fa-headset"></i> <span>Support</span>
+      </a>
       <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" class="qts-nav__link" aria-label="GitHub">
         <i class="fa-brands fa-github"></i>
       </a>
@@ -582,7 +588,7 @@ body{
       <span class="qts-hero-stat__label hero-stat-label">Projects</span>
     </div>
     <div class="qts-hero-stat hero-stat">
-      <span class="qts-hero-stat__number hero-stat-number" data-target="950" data-suffix="+">950+</span>
+      <span class="qts-hero-stat__number hero-stat-number" data-target="1000" data-suffix="+" data-display="1k+">1k+</span>
       <span class="qts-hero-stat__label hero-stat-label">Downloads</span>
     </div>
     <div class="qts-hero-stat hero-stat">
@@ -601,6 +607,12 @@ body{
   <div class="qts-hero__ctas">
     <a href="#quick-launch" class="qts-btn qts-btn--hero-primary">
       <i class="fa-solid fa-compass"></i> Explore the tools
+    </a>
+    <a href="/LukasBohez/" class="qts-btn qts-btn--hero-secondary">
+      <i class="fa-solid fa-briefcase"></i> Portfolio
+    </a>
+    <a href="/pages/support/" class="qts-btn qts-btn--hero-secondary">
+      <i class="fa-solid fa-headset"></i> Support Chat
     </a>
     <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="qts-btn qts-btn--hero-secondary">
       <i class="fa-brands fa-github"></i> GitHub
@@ -643,7 +655,7 @@ body{
       <span class="qts-tile__icon"><i class="fa-solid fa-download"></i></span>
       <span class="qts-tile__body">
         <span class="qts-tile__name">Convert The Spire Reborn</span>
-        <span class="qts-tile__desc">Download YouTube playlists in 4K/8K. Integrated torrent + media player.</span>
+        <span class="qts-tile__desc">Download YouTube playlists in 4K/8K. Self-healing downloads, torrent + media player, now on Android.</span>
       </span>
     </a>
     <a href="/pages/spire-ai/" class="qts-tile">
@@ -698,12 +710,14 @@ body{
 
 <!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
 <footer class="qts-footer">
-  <p class="qts-footer__about">Built and maintained by <strong>Lukas Bohez</strong>. 950+ downloads across 95+ countries. <small>Last updated: July 2026</small></p>
+  <p class="qts-footer__about">Built and maintained by <strong>Lukas Bohez</strong>. 1k+ downloads across 95+ countries. <small>Last updated: July 2026</small></p>
   <div class="qts-footer__bmc">
     <a class="qts-btn qts-btn--outline" href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer">Support on GitHub Sponsors</a>
   </div>
   <p class="qts-footer__text"><strong>&copy; 2026 Quiz The Spire</strong><br/>Created, Owned & Operated by <strong>Lukas Bohez</strong><br/>All rights reserved.</p>
   <p class="qts-footer__links">
+    <a href="/LukasBohez/" class="qts-footer__link">Portfolio</a>
+    <span class="qts-footer__sep">&middot;</span>
     <a href="/LukasBohez/projects/" class="qts-footer__link">Projects</a>
     <span class="qts-footer__sep">&middot;</span>
     <a href="/pages/support/" class="qts-footer__link">Support</a>
@@ -751,7 +765,7 @@ body{
   const TOOLS = [
     // Apps & Downloads
     { id:'convert', name:'Convert The Spire Reborn', icon:'fa-solid fa-download', cat:'apps',
-      desc:'YouTube/playlist downloader with integrated BitPlayer for torrent & media playback.',
+      desc:'YouTube/playlist downloader with BitPlayer torrent & media, self-healing yt-dlp updates, now on Android.',
       pills:[{text:'Free',cls:'qts-pill--version'}], pillClass:'qts-pill--version', href:'/pages/conversion/' },
     { id:'lofi', name:'Lofi Extension', icon:'fa-solid fa-headphones', cat:'apps',
       desc:'Ambient music controls for Chrome and Firefox. Privacy-first, no tracking.',

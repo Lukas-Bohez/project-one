@@ -17,7 +17,7 @@
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
-      element.textContent = target + suffix;
+      element.textContent = element.dataset.display || (target + suffix);
       return;
     }
 
@@ -39,7 +39,7 @@
       if (progress < 1) {
         requestAnimationFrame(updateCounter);
       } else {
-        element.textContent = target + suffix; // Ensure final value is exact
+        element.textContent = element.dataset.display || (target + suffix); // Ensure final value is exact
       }
     }
 
