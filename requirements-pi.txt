@@ -1,0 +1,11 @@
+# Raspberry Pi / hardware-only requirements (gamepads, GPIO, smbus).
+# Install on the physical Pi only:
+#   pip install -r requirements-pi.txt
+# (which also pulls in the web dependencies via -r requirements.txt)
+smbus2==0.4.1
+spidev==3.6
+pygame==2.6.1
+lgpio==0.2.2.0
+rpi-lgpio==0.6
+
+-r requirements.txt

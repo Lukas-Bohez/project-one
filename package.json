@@ -9,9 +9,19 @@
     "update:portfolio": "PORTFOLIO_DEPLOY_DIR=/home/student/Project/project-one/frontend/portfolio/out /home/student/Project/Portfolio/scripts/update-portfolio.sh",
     "start": "next start",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings=0",
-    "test": "npm run lint && npm run build",
+    "lint:frontend": "eslint \"frontend/**/*.js\" --max-warnings=0",
+    "test": "echo \"No test runner configured yet — see ci.yml\"",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx}": [
+      "eslint --max-warnings=0"
+    ],
+    "*.{bak,log}": [
+      "false"
+    ]
   },
   "dependencies": {
     "@sanity/client": "^7.20.0",
@@ -32,6 +42,8 @@
     "eslint-config-next": "16.2.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^4",
     "typescript": "^5"

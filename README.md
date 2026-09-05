@@ -39,6 +39,16 @@ Welcome to my personal portfolio codebase and the self-hosted lab behind Quiz Th
 - `configs/` — Server and service configurations
 - `data/` — Database models and dumps
 
+> **Which frontend is canonical?** The Apache web root at `frontend/` is the
+> live site (quizthespire.com) — the vanilla-JS tool pages, the idle game,
+> and the static hub homepage all live there. The Next.js app at the repo
+> root (`src/app`, `next.config.ts`) builds the **portfolio** at
+> `/LukasBohez/` and is exported to `frontend/portfolio/out`, not served
+> directly. For a change to any page or tool on quizthespire.com, edit
+> `frontend/`; for a change to the portfolio, edit the root Next.js app.
+> The Go backend under `backend-go/` mirrors `backend/`'s API surface and is
+> the migration target for the Python FastAPI services.
+
 ## Recent Improvements (4-Phase Mega Pass)
 
 ### Phase 1: Portfolio Polish ✅
