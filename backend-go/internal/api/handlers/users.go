@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/httpx"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
 )
 
@@ -31,7 +32,7 @@ func (h UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.Repo.ListPublic(r.Context(), limit)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
 		return
 	}
 

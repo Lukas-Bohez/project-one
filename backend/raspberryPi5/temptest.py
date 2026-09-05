@@ -74,7 +74,7 @@ class TemperatureSensor:
             else:
                 raise Exception("Invalid response from temperature sensor")
 
-        except Exception as e:
+        except Exception:
             # Try to reconnect and retry once
             try:
                 self._disconnect()
@@ -97,7 +97,7 @@ class TemperatureSensor:
             try:
                 usb.util.release_interface(self.device, self.interface)
                 self.device.attach_kernel_driver(self.interface)
-            except Exception as e:
+            except Exception:
                 pass  # Ignore cleanup errors
 
     def __del__(self):

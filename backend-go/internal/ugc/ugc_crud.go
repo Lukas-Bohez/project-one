@@ -9,7 +9,7 @@
 // authorization roles (admin/moderator) beyond simple content-ownership
 // checks; gate admin-only routes like ReviewDMCANotice with your own
 // role-check middleware.
-package handlers
+package ugc
 
 import (
 	"context"
@@ -27,9 +27,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"quizthespire/server/chat"
-	"quizthespire/server/middleware"
-	"quizthespire/server/models"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/chat"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/middleware"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/models"
 )
 
 // CurrentTOSVersion is the ToS/UGC-policy version publish actions are
@@ -301,9 +301,9 @@ func (h *Handler) CreateQuiz(w http.ResponseWriter, r *http.Request) {
 		CategoryID: in.CategoryID, Status: models.StatusDraft,
 	}
 	for _, qi := range in.Questions {
-		q := models.Question{Prompt: qi.Prompt, Type: qi.Type}
+		q := models.UGCQuestion{Prompt: qi.Prompt, Type: qi.Type}
 		for _, ai := range qi.Answers {
-			q.Answers = append(q.Answers, models.Answer{Text: ai.Text, IsCorrect: ai.IsCorrect})
+			q.Answers = append(q.Answers, models.UGCAnswer{Text: ai.Text, IsCorrect: ai.IsCorrect})
 		}
 		quiz.Questions = append(quiz.Questions, q)
 	}

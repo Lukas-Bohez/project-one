@@ -79,16 +79,19 @@ func TestQuizUserCheckHandlerCompat(t *testing.T) {
 	}
 }
 
+// Shutdown is intentionally not implemented yet - it must not pretend to
+// succeed, so the handler returns 501 with a clear message rather than a
+// 200 that implies the server stopped.
 func TestShutdownHandlerCompat(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/shutdown", nil)
 	rec := httptest.NewRecorder()
 
 	ShutdownHandler{}.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected status 200, got %d", rec.Code)
+	if rec.Code != http.StatusNotImplemented {
+		t.Fatalf("expected status 501, got %d", rec.Code)
 	}
-	if !strings.Contains(rec.Body.String(), `"message":"Shutdown initiated"`) {
+	if !strings.Contains(rec.Body.String(), `"error":"Shutdown is not implemented yet"`) {
 		t.Fatalf("unexpected payload: %s", rec.Body.String())
 	}
 }

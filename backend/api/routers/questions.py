@@ -223,7 +223,7 @@ async def update_question_endpoint(
 ):
     user_id = current_user_info.get("id")
     role = current_user_info.get("role")
-    _client_ip = get_client_ip(request) if request else "unknown"
+    _ = get_client_ip(request) if request else "unknown"
 
     if role != "admin":
         raise HTTPException(status_code=403, detail="Only admins can edit questions")

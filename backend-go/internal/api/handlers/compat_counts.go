@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/httpx"
     "context"
     "encoding/json"
     "net/http"
@@ -23,7 +24,7 @@ func (h UsersActiveHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
     cnt, err := h.Repo.ActiveCount(r.Context())
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
         return
     }
     w.Header().Set("Content-Type", "application/json")
@@ -43,7 +44,7 @@ func (h QuestionsActiveHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
     }
     cnt, err := h.Repo.ActiveCount(r.Context())
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
         return
     }
     w.Header().Set("Content-Type", "application/json")
@@ -63,7 +64,7 @@ func (h AnswersPercentageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
     }
     perc, err := h.Repo.Percentage(r.Context())
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
         return
     }
     w.Header().Set("Content-Type", "application/json")
@@ -113,7 +114,7 @@ func (h ThemeQuestionCountHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
         }
         cnt, err := h.Repo.QuestionCount(r.Context(), id)
         if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
+            httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
             return
         }
         w.Header().Set("Content-Type", "application/json")

@@ -121,12 +121,12 @@ const (
 // Users
 // ---------------------------------------------------------------------------
 
-// User is the minimal account shape the rest of this file's foreign keys
+// UGCUser is the minimal account shape the rest of this file's foreign keys
 // depend on. PasswordHash is exactly that — a bcrypt/argon2 hash computed
 // upstream of this model; no hashing happens here, and this file has no
 // opinion on session vs JWT auth (see the Authenticator seam in
 // server/chat/hub.go and UserIDFromContext in server/handlers/ugc_crud.go).
-type User struct {
+type UGCUser struct {
 	ID           uint   `gorm:"primaryKey" json:"id"`
 	Username     string `gorm:"size:32;uniqueIndex;not null" json:"username"`
 	Email        string `gorm:"size:255;uniqueIndex;not null" json:"-"`
@@ -170,7 +170,7 @@ func (Tag) TableName() string { return "ugc_tags" }
 type Quiz struct {
 	ID          uint          `gorm:"primaryKey" json:"id"`
 	AuthorID    uint          `gorm:"index;not null" json:"author_id"`
-	Author      User          `gorm:"foreignKey:AuthorID" json:"-"`
+	Author      UGCUser        `gorm:"foreignKey:AuthorID" json:"-"`
 	CategoryID  *uint         `gorm:"index" json:"category_id,omitempty"`
 	Category    *Category     `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
 	Title       string        `gorm:"size:150;not null" json:"title"`
@@ -179,7 +179,7 @@ type Quiz struct {
 	ViewCount   int64         `gorm:"default:0;not null" json:"view_count"`
 
 	Tags      []Tag      `gorm:"many2many:ugc_quiz_tags;" json:"tags,omitempty"`
-	Questions []Question `gorm:"constraint:OnDelete:CASCADE;" json:"questions,omitempty"`
+	Questions []UGCQuestion `gorm:"constraint:OnDelete:CASCADE;" json:"questions,omitempty"`
 
 	PublishedAt *time.Time     `json:"published_at,omitempty"`
 	CreatedAt   time.Time      `json:"created_at"`
@@ -189,20 +189,20 @@ type Quiz struct {
 
 func (Quiz) TableName() string { return "ugc_quizzes" }
 
-type Question struct {
+type UGCQuestion struct {
 	ID         uint         `gorm:"primaryKey" json:"id"`
 	QuizID     uint         `gorm:"index;not null" json:"quiz_id"`
 	Prompt     string       `gorm:"type:text;not null" json:"prompt"`
 	Type       QuestionType `gorm:"size:20;not null;default:single_choice" json:"type"`
 	OrderIndex int          `gorm:"not null;default:0" json:"order_index"`
-	Answers    []Answer     `gorm:"constraint:OnDelete:CASCADE;" json:"answers,omitempty"`
+	Answers    []UGCAnswer  `gorm:"constraint:OnDelete:CASCADE;" json:"answers,omitempty"`
 	CreatedAt  time.Time    `json:"created_at"`
 	UpdatedAt  time.Time    `json:"updated_at"`
 }
 
-func (Question) TableName() string { return "ugc_questions" }
+func (UGCQuestion) TableName() string { return "ugc_questions" }
 
-type Answer struct {
+type UGCAnswer struct {
 	ID         uint   `gorm:"primaryKey" json:"id"`
 	QuestionID uint   `gorm:"index;not null" json:"question_id"`
 	Text       string `gorm:"type:text;not null" json:"text"`
@@ -210,7 +210,7 @@ type Answer struct {
 	OrderIndex int    `gorm:"not null;default:0" json:"order_index"`
 }
 
-func (Answer) TableName() string { return "ugc_answers" }
+func (UGCAnswer) TableName() string { return "ugc_answers" }
 
 // ---------------------------------------------------------------------------
 // Branching stories: a Story is a graph of StoryNodes connected by
@@ -222,7 +222,7 @@ func (Answer) TableName() string { return "ugc_answers" }
 type Story struct {
 	ID          uint          `gorm:"primaryKey" json:"id"`
 	AuthorID    uint          `gorm:"index;not null" json:"author_id"`
-	Author      User          `gorm:"foreignKey:AuthorID" json:"-"`
+	Author      UGCUser        `gorm:"foreignKey:AuthorID" json:"-"`
 	CategoryID  *uint         `gorm:"index" json:"category_id,omitempty"`
 	Category    *Category     `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
 	Title       string        `gorm:"size:150;not null" json:"title"`
@@ -383,8 +383,8 @@ func (TOSAcceptance) TableName() string { return "user_tos_acceptances" }
 // can add columns and indexes but won't safely handle destructive changes,
 // so it's a convenience for dev/test databases, not a migration strategy.
 var AllModels = []interface{}{
-	&User{}, &Category{}, &Tag{},
-	&Quiz{}, &Question{}, &Answer{},
+	&UGCUser{}, &Category{}, &Tag{},
+	&Quiz{}, &UGCQuestion{}, &UGCAnswer{},
 	&Story{}, &StoryNode{}, &StoryChoice{},
 	&ChatRoom{}, &ChatMessage{},
 	&Report{}, &ModerationAction{}, &DMCANotice{}, &TOSAcceptance{},

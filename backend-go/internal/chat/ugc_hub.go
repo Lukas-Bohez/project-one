@@ -22,8 +22,8 @@ import (
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
 
-	"quizthespire/server/middleware"
-	"quizthespire/server/models"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/middleware"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/models"
 )
 
 const (

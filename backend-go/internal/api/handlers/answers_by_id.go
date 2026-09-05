@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/httpx"
     "context"
     "encoding/json"
     "net/http"
@@ -34,7 +35,7 @@ func (h AnswerByIDHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     case http.MethodGet:
         item, err := h.Repo.GetByID(r.Context(), id)
         if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
+            httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
             return
         }
         if item == nil {
@@ -57,7 +58,7 @@ func (h AnswerByIDHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
                     http.Error(w, "not found", http.StatusNotFound)
                     return
                 }
-                http.Error(w, err.Error(), http.StatusInternalServerError)
+                httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
                 return
             }
             w.Header().Set("Content-Type", "application/json")
@@ -73,7 +74,7 @@ func (h AnswerByIDHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
                     http.Error(w, "not found", http.StatusNotFound)
                     return
                 }
-                http.Error(w, err.Error(), http.StatusInternalServerError)
+                httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
                 return
             }
             w.WriteHeader(http.StatusNoContent)

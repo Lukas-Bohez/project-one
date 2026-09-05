@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/httpx"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -39,7 +40,7 @@ func (h AnswerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		id, err := h.Repo.Create(r.Context(), payload)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
 			return
 		}
 		w.Header().Set("Location", "/api/v1/answers/"+strconv.FormatInt(id, 10))
@@ -82,7 +83,7 @@ func (h AnswerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	answers, total, err := h.Repo.ListByQuestionID(r.Context(), questionID, limit, offset)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
 		return
 	}
 

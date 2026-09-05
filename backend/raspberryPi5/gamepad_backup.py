@@ -360,7 +360,7 @@ class SNESGamepadController:
                         volume = line[start:end]
                         print(f"Volume: {volume}%")
                         return
-                    except Exception as e:
+                    except Exception:
                         pass
 
             print(f"Volume {'up' if percent > 0 else 'down'} {abs(percent)}%")

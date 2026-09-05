@@ -69,7 +69,7 @@ def cleanup_process(process):
             if process.poll() is None:
                 process.kill()
             process.wait()
-        except Exception as e:
+        except Exception:
             pass
 
 
@@ -103,7 +103,6 @@ def monitor_app():
             )
             restart_monitor()
 
-        _start_time = time.time()
         print(f"\n🚀 Starting your app.py (attempt {restart_count + 1})...")
         print(f"📁 Running: {app_path}")
 

@@ -8,10 +8,16 @@ import (
 	"strings"
 	"time"
 
+			sentlehandlers "github.com/Lukas-Bohez/project-one/backend-go/internal/handlers"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/api/handlers"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/chat"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/config"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/db"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/ugc"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -86,6 +92,26 @@ func main() {
 	if answerRepo != nil {
 		mux.Handle("/api/v1/answers/percentage", handlers.AnswersPercentageHandler{Repo: answerRepo})
 		mux.Handle("/api/answers/percentage", handlers.AnswersPercentageHandler{Repo: answerRepo})
+	}
+	if mysqlDB != nil {
+		sentlehandlers.RegisterRoutes(mux)
+
+		gormDB, gerr := gorm.Open(mysql.Open(cfg.DB.DSN()), &gorm.Config{})
+		if gerr != nil {
+			log.Printf("gorm open failed, UGC/chat disabled: %v", gerr)
+		} else {
+			ugcHandler := ugc.NewHandler(gormDB, nil)
+			ugc.RegisterRoutes(mux, ugcHandler)
+
+			allowed := []string{}
+			if raw := os.Getenv("CORS_ALLOWED_ORIGINS"); raw != "" {
+				allowed = strings.Split(raw, ",")
+			}
+			hub := chat.NewHub(chat.HubConfig{AllowedOrigins: allowed})
+			go hub.Run()
+			mux.Handle("/api/v1/chat/ws", hub.ServeWS())
+			log.Printf("UGC API + chat hub enabled")
+		}
 	}
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

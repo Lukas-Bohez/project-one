@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/httpx"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
 )
 
@@ -22,7 +23,7 @@ func (h ThemeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	activeOnly := strings.EqualFold(r.URL.Query().Get("active_only"), "true")
 	themes, err := h.Repo.List(r.Context(), activeOnly)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpx.Error(w, r, http.StatusInternalServerError, "internal server error", err)
 		return
 	}
 

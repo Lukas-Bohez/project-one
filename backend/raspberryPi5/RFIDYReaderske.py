@@ -55,14 +55,14 @@ class HardcoreRFID:
         # No hardware initialization for Windows compatibility    def RC_522_Reset(self):
         try:
             self.Write_RC_522(self.CommandReg, self.PCD_RESETPHASE)
-        except Exception as e:
+        except Exception:
             pass
 
     def Write_RC_522(self, addr, val):
         try:
             if self.spi:
                 self.spi.xfer2([(addr << 1) & 0x7E, val])
-        except:
+        except Exception:
             pass
 
     def Read_RC_522(self, addr):
@@ -71,34 +71,34 @@ class HardcoreRFID:
                 val = self.spi.xfer2([((addr << 1) & 0x7E) | 0x80, 0])
                 return val[1]
             return 0
-        except:
+        except Exception:
             return 0
 
     def SetBitMask(self, reg, mask):
         try:
             tmp = self.Read_RC_522(reg)
             self.Write_RC_522(reg, tmp | mask)
-        except:
+        except Exception:
             pass
 
     def ClearBitMask(self, reg, mask):
         try:
             tmp = self.Read_RC_522(reg)
             self.Write_RC_522(reg, tmp & (~mask))
-        except:
+        except Exception:
             pass
 
     def AntennaOn(self):
         try:
             if not (self.Read_RC_522(self.TxControlReg) & 0x03):
                 self.SetBitMask(self.TxControlReg, 0x03)
-        except:
+        except Exception:
             pass
 
     def AntennaOff(self):
         try:
             self.ClearBitMask(self.TxControlReg, 0x03)
-        except:
+        except Exception:
             pass
 
     def ToCard(self, command, sendData):
@@ -156,7 +156,7 @@ class HardcoreRFID:
                             backData.append(self.Read_RC_522(self.FIFODataReg))
                 else:
                     status = "ERR"
-        except:
+        except Exception:
             status = "ERR"
 
         return status, backData, backLen
@@ -168,7 +168,7 @@ class HardcoreRFID:
             if status != "MI_OK" or backBits != 0x10:
                 status = "ERR"
             return status, backBits
-        except:
+        except Exception:
             return "ERR", 0
 
     def RC_522_Anticoll(self):
@@ -185,7 +185,7 @@ class HardcoreRFID:
                 if serNumCheck != backData[4]:
                     status = "ERR"
             return status, backData
-        except:
+        except Exception:
             return "ERR", []
 
     def RC_522_SelectTag(self, serNum):
@@ -197,7 +197,7 @@ class HardcoreRFID:
             if status == "MI_OK" and backLen == 0x18:
                 return 1
             return 0
-        except:
+        except Exception:
             return 0
 
     def RC_522_Auth(self, authMode, BlockAddr, Sectorkey, serNum):
@@ -205,7 +205,7 @@ class HardcoreRFID:
             buff = [authMode, BlockAddr] + Sectorkey[:6] + serNum[:4]
             status, _, _ = self.ToCard(self.PCD_AUTHENT, buff)
             return status
-        except:
+        except Exception:
             return "ERR"
 
     def RC_522_Read(self, blockAddr):
@@ -215,7 +215,7 @@ class HardcoreRFID:
             recvData += crc
             status, backData, _ = self.ToCard(self.PCD_TRANSCEIVE, recvData)
             return backData
-        except:
+        except Exception:
             return []
 
     def CalulateCRC(self, pIndata):
@@ -234,7 +234,7 @@ class HardcoreRFID:
                 i -= 1
             retData = [self.Read_RC_522(0x22), self.Read_RC_522(0x21)]
             return retData
-        except:
+        except Exception:
             return [0, 0]
 
     def uid_to_number(self, uid):
@@ -252,7 +252,7 @@ class HardcoreRFID:
                 number = (number << 8) + byte
 
             return number
-        except:
+        except Exception:
             return None
 
     def read_card(self):
@@ -271,7 +271,7 @@ class HardcoreRFID:
                     uid_number = self.uid_to_number(uid)
                     return uid_number
             return None
-        except:
+        except Exception:
             return None
 
     def cleanup(self):
