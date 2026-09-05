@@ -813,6 +813,11 @@ body {
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
+.action-btn .btn-description,
+.sell-btn .btn-description {
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
+  border-radius: 4px;
+}
 .action-btn:disabled .btn-cost,
 .action-btn:disabled .btn-description,
 .action-btn:disabled .btn-title,
@@ -1129,6 +1134,14 @@ body {
   font-size: 0.8rem;
   opacity: 0.8;
   font-style: italic;
+}
+#arcade-games-container .btn-description {
+  opacity: 1;
+  color: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
+  border-radius: 4px;
+  padding: 3px 6px;
+  margin: 0 -6px -3px;
 }
 .upgrade-grid {
   display: flex;
