@@ -503,6 +503,13 @@ body{
   .qts-hero-stat{padding:.65rem .85rem;min-width:75px}
   .qts-nav__search kbd{display:none}
   .qts-nav__search span{display:none}
+  /* Collapse labeled nav links (Portfolio / Support) and the theme button
+     down to icons on mobile so the bar never overflows; aria-labels keep
+     them accessible. The icon-only GitHub/LinkedIn/Email links have no
+     <span>, so this only affects the labeled ones. */
+  .qts-nav__link span,.qts-theme-btn span{display:none}
+  .qts-nav__link{padding:.4rem .45rem}
+  .qts-theme-btn{padding:.4rem .5rem}
   .qts-featured{padding:1.25rem}
   .qts-palette{max-width:100%;margin:0 .5rem;border-radius:var(--radius-md)}
   .qts-palette-overlay{padding-top:2rem;align-items:flex-start}

@@ -165,7 +165,10 @@
 html,
 body {
   max-width: 100%;
-  overflow-x: hidden;
+  /* clip (not hidden): prevents a horizontal scrollbar on mobile without
+     turning <body> into a scroll container, which would break position:sticky
+     on every page header that relies on it. */
+  overflow-x: clip;
 }
 
 html {
