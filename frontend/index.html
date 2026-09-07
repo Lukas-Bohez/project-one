@@ -125,6 +125,7 @@ body{
   color:var(--text-primary);
   min-height:100vh;display:flex;flex-direction:column;
   line-height:1.6;-webkit-font-smoothing:antialiased;
+  padding-top:56px;
 }
 
 /* Hide legacy info button (replaced by command palette) */
@@ -161,11 +162,13 @@ body{
    NAV
    ═══════════════════════════════════════════════ */
 .qts-nav{
-  position:sticky;top:0;z-index:200;
+  position:fixed;top:0;left:0;right:0;z-index:200;
   background:var(--bg-surface);backdrop-filter:blur(16px);
   border-bottom:1px solid var(--border);
   padding:0 1.25rem;
+  transition:transform .3s ease;
 }
+.qts-nav--hidden{transform:translateY(-100%)}
 .qts-nav__inner{
   max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;
   min-height:56px;gap:1rem;
@@ -501,29 +504,35 @@ body{
   .qts-hero{padding:2.5rem 1rem 2rem;margin:1rem .75rem 1.5rem;border-radius:var(--radius-lg)}
   .qts-hero__stats{gap:.5rem;padding:0 .5rem 1rem}
   .qts-hero-stat{padding:.65rem .85rem;min-width:75px}
+  /* Collapse labeled nav links (Portfolio / Support) and the theme button
+     down to icons so the bar never overflows; aria-labels keep them
+     accessible. The icon-only GitHub/LinkedIn/Email links have no <span>,
+     so this only affects the labeled ones. */
   .qts-nav__search kbd{display:none}
   .qts-nav__search span{display:none}
-  /* Collapse labeled nav links (Portfolio / Support) and the theme button
-     down to icons on mobile so the bar never overflows; aria-labels keep
-     them accessible. The icon-only GitHub/LinkedIn/Email links have no
-     <span>, so this only affects the labeled ones. */
   .qts-nav__link span,.qts-theme-btn span{display:none}
-  .qts-nav__link{padding:.4rem .45rem}
-  .qts-theme-btn{padding:.4rem .5rem}
+  .qts-nav__link,.qts-theme-btn,.qts-nav__search{padding:.35rem .4rem;font-size:.8rem}
+  .qts-nav__actions{gap:.2rem}
   .qts-featured{padding:1.25rem}
   .qts-palette{max-width:100%;margin:0 .5rem;border-radius:var(--radius-md)}
   .qts-palette-overlay{padding-top:2rem;align-items:flex-start}
   .qts-cat-tab{padding:.4rem .8rem;font-size:.78rem}
   .qts-footer{padding:2rem 1rem 2.5rem}
 }
-@media(max-width:480px){
-  .qts-nav__inner{flex-wrap:wrap;min-height:auto;padding:.5rem 0}
-  .qts-nav__actions{width:100%;justify-content:space-between}
+@media(max-width:520px){
+  /* Hide search button on small screens — ⌘K shortcut still opens the palette */
+  .qts-nav__search{display:none}
+  .qts-nav__link,.qts-theme-btn{padding:.35rem .45rem}
   .qts-tile-grid{grid-template-columns:1fr}
   .qts-hero__ctas{flex-direction:column;align-items:center}
   .qts-hero__ctas .qts-btn{width:100%}
   .qts-featured__actions{flex-direction:column}
   .qts-featured__actions .qts-btn{width:100%}
+}
+@media(max-width:380px){
+  /* Ultra-narrow: drop the email icon to keep the row fitting; contact page still reachable from footer */
+  .qts-nav__link[aria-label="Email"]{display:none}
+  .qts-nav__actions{gap:.15rem}
 }
 </style>
 
@@ -1061,11 +1070,35 @@ body{
     });
   }
 
+  /* ── Nav hide-on-scroll (fixed header disappears down, reappears up) ── */
+  function setupNavHide() {
+    var nav = document.querySelector('.qts-nav');
+    if (!nav) return;
+    var lastScroll = 0;
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        requestAnimationFrame(function () {
+          var current = window.scrollY;
+          if (current > lastScroll && current > 80) {
+            nav.classList.add('qts-nav--hidden');
+          } else {
+            nav.classList.remove('qts-nav--hidden');
+          }
+          lastScroll = current;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  }
+
   /* ── Init ── */
   function init() {
     setupCategoryTabs();
     setupCommandPalette();
     setupBackToTop();
+    setupNavHide();
   }
 
   if (document.readyState === 'loading') {

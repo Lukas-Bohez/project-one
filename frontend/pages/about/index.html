@@ -48,9 +48,72 @@
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/legal.css" />
     <link rel="stylesheet" href="/css/footer.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="/js/themeManager.js" defer></script>
 
     <style>
+      /* ── Nav (matches homepage .qts-nav) ── */
+      .qts-nav {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+        background: var(--bg-surface); backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+        padding: 0 1.25rem;
+        transition: transform .3s ease;
+      }
+      .qts-nav--hidden { transform: translateY(-100%) }
+      .qts-nav__inner {
+        max-width: 1200px; margin: 0 auto; display: flex; align-items: center;
+        justify-content: space-between; min-height: 56px; gap: 1rem;
+      }
+      .qts-wordmark {
+        display: flex; align-items: center; gap: .5rem; text-decoration: none;
+        font-family: var(--ff-display, 'Space Grotesk', sans-serif);
+        font-weight: 700; font-size: 1.05rem;
+        color: var(--text-primary); transition: opacity var(--transition-fast, .15s);
+      }
+      .qts-wordmark:hover { opacity: .8 }
+      .qts-wordmark__icon { color: var(--spire-accent, #5B4FE0) }
+      .qts-nav__actions { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap }
+      .qts-nav__search {
+        display: flex; align-items: center; gap: .35rem; padding: .45rem .75rem;
+        border: 1px solid var(--border); border-radius: 8px;
+        background: var(--bg-elevated, #f1f3f8); color: var(--text-muted);
+        font-family: var(--ff-body, sans-serif);
+        font-size: .82rem; cursor: pointer; transition: all .15s;
+      }
+      .qts-nav__search:hover { border-color: var(--spire-accent, #5B4FE0); color: var(--text-primary) }
+      .qts-nav__search kbd {
+        font-family: var(--ff-mono, monospace); font-size: .7rem; background: var(--bg-surface);
+        border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px;
+        margin-left: .25rem; color: var(--text-muted);
+      }
+      .qts-nav__link {
+        display: flex; align-items: center; gap: .3rem; padding: .45rem .65rem;
+        border-radius: 8px; color: var(--text-muted);
+        text-decoration: none; font-size: .82rem; transition: all .15s;
+      }
+      .qts-nav__link:hover { color: var(--text-primary); background: var(--bg-elevated, #f1f3f8) }
+      .qts-theme-btn {
+        display: flex; align-items: center; gap: .3rem; padding: .45rem .65rem;
+        border: 1px solid var(--border); border-radius: 8px;
+        background: var(--bg-surface); color: var(--text-muted); font-family: var(--ff-body, sans-serif);
+        font-size: .82rem; cursor: pointer; transition: all .15s;
+      }
+      .qts-theme-btn:hover { background: var(--bg-elevated, #f1f3f8); color: var(--text-primary); border-color: var(--spire-accent, #5B4FE0) }
+      body { padding-top: 56px; }
+      @media(max-width:768px) {
+        .qts-nav__search kbd, .qts-nav__search span, .qts-nav__link span, .qts-theme-btn span { display: none }
+        .qts-nav__link, .qts-theme-btn, .qts-nav__search { padding: .35rem .4rem; font-size: .8rem }
+        .qts-nav__actions { gap: .2rem }
+      }
+      @media(max-width:520px) {
+        .qts-nav__search { display: none }
+        .qts-nav__link, .qts-theme-btn { padding: .35rem .45rem }
+      }
+      @media(max-width:380px) {
+        .qts-nav__link[aria-label="Email"] { display: none }
+      }
+
       .expertise-list {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -82,29 +145,39 @@
     <link rel="apple-touch-icon" href="/favicon.ico" />
   </head>
   <body>
-    <header class="c-header">
-      <a href="/" class="c-header__link">
-        <span class="c-header__title">Quiz The Spire</span>
-      </a>
-      <!-- BuyMeACoffee small button (renders inline where this script tag appears) -->
-      <script
-        defer
-        src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-        data-name="bmc-button"
-        data-slug="LukasBohez"
-        data-color="#2c6fb8"
-        data-emoji=""
-        data-font="Inter"
-        data-text="Buy me a coffee"
-        data-outline-color="#000000"
-        data-font-color="#ffffff"
-        data-coffee-color="#FFDD00"
-      ></script>
-    </header>
-
-    <button class="c-theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-      Light Mode
-    </button>
+    <nav class="qts-nav" aria-label="Site navigation">
+      <div class="qts-nav__inner">
+        <a href="/" class="qts-wordmark" aria-label="Quiz The Spire — back to top">
+          <span class="qts-wordmark__icon"><i class="fa-solid fa-crown"></i></span>
+          <span>Quiz The Spire</span>
+        </a>
+        <div class="qts-nav__actions">
+          <button class="qts-nav__search" id="cmdPaletteTrigger" aria-label="Search tools and pages (⌘K)">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+            <kbd>⌘K</kbd>
+          </button>
+          <a href="/LukasBohez/" class="qts-nav__link" aria-label="Portfolio">
+            <i class="fa-solid fa-briefcase"></i> <span>Portfolio</span>
+          </a>
+          <a href="/pages/support/" class="qts-nav__link" aria-label="Support chat">
+            <i class="fa-solid fa-headset"></i> <span>Support</span>
+          </a>
+          <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" class="qts-nav__link" aria-label="GitHub">
+            <i class="fa-brands fa-github"></i>
+          </a>
+          <a href="https://www.linkedin.com/in/lukas-bohez-3ba566271/" target="_blank" rel="noopener" class="qts-nav__link" aria-label="LinkedIn">
+            <i class="fa-brands fa-linkedin"></i>
+          </a>
+          <a href="mailto:lukasbohez@gmail.com" class="qts-nav__link" aria-label="Email">
+            <i class="fa-solid fa-envelope"></i>
+          </a>
+          <button id="theme-toggle" class="qts-theme-btn" type="button" aria-label="Toggle theme">
+            <i class="fa-solid fa-circle-half-stroke"></i> <span>Theme</span>
+          </button>
+        </div>
+      </div>
+    </nav>
 
     <main class="about-page">
       <a href="/" class="back-link"> ← Back to Home </a>
@@ -350,5 +423,24 @@
       };
     </script>
     <script src="/js/image-lightbox.js" defer></script>
+    <script>
+      /* Nav hide-on-scroll: fixed header disappears scrolling down, reappears scrolling up */
+      (function () {
+        var nav = document.querySelector('.qts-nav');
+        if (!nav) return;
+        var lastScroll = 0, ticking = false;
+        window.addEventListener('scroll', function () {
+          if (!ticking) {
+            requestAnimationFrame(function () {
+              var cur = window.scrollY;
+              if (cur > lastScroll && cur > 80) nav.classList.add('qts-nav--hidden');
+              else nav.classList.remove('qts-nav--hidden');
+              lastScroll = cur; ticking = false;
+            });
+            ticking = true;
+          }
+        }, { passive: true });
+      })();
+    </script>
   </body>
 </html>
