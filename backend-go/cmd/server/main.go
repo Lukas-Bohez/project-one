@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
-			sentlehandlers "github.com/Lukas-Bohez/project-one/backend-go/internal/handlers"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/api/handlers"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/chat"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/config"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/db"
+	sentlehandlers "github.com/Lukas-Bohez/project-one/backend-go/internal/handlers"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/quiz"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/ugc"
 
@@ -49,7 +50,22 @@ func main() {
 		mux.Handle("/healthz", handlers.HealthHandler{})
 	}
 	if questionRepo != nil {
-		mux.Handle("/api/v1/questions", handlers.QuestionHandler{Repo: questionRepo})
+		mux.Handle("/api/v1/questions", handlers.QuestionListCompatHandler{Repo: questionRepo})
+		// /api/v1/questions/ (trailing slash, no id) must serve the question
+		// list in the legacy bare-array shape — study.js calls .map() on the
+		// response. Deeper paths (/api/v1/questions/{id}/answers) go to the
+		// answers compat handler.
+		if answerRepo != nil {
+			questionsPrefix := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				rest := strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/v1/questions/"), "/")
+				if rest == "" {
+					handlers.QuestionListCompatHandler{Repo: questionRepo}.ServeHTTP(w, r)
+					return
+				}
+				handlers.QuestionsAnswersHandler{Repo: answerRepo}.ServeHTTP(w, r)
+			})
+			mux.Handle("/api/v1/questions/", questionsPrefix)
+		}
 		// Non-v1 alias for legacy frontend
 		mux.Handle("/api/questions", handlers.QuestionHandler{Repo: questionRepo})
 		mux.Handle("/api/questions/", handlers.QuestionHandler{Repo: questionRepo})
@@ -61,13 +77,28 @@ func main() {
 		mux.Handle("/api/v1/answers", handlers.AnswerHandler{Repo: answerRepo})
 		mux.Handle("/api/v1/answers/", handlers.AnswerByIDHandler{Repo: answerRepo})
 	}
-	// Compatibility: support legacy frontend path for answers under questions
-	if answerRepo != nil {
-		mux.Handle("/api/v1/questions/", handlers.QuestionsAnswersHandler{Repo: answerRepo})
-	}
+	// Note: the non-v1 alias /api/questions/ is registered above to the
+	// QuestionHandler; the /api/v1/questions/ prefix wrapper above handles the
+	// /api/v1/questions/{id}/answers compat path.
 	if themeRepo != nil {
-		mux.Handle("/api/v1/themes", handlers.ThemeHandler{Repo: themeRepo})
-		mux.Handle("/api/v1/themes/", handlers.ThemeQuestionCountHandler{Repo: themeRepo})
+		mux.Handle("/api/v1/themes", handlers.ThemeListCompatHandler{Repo: themeRepo})
+		// /api/v1/themes/ (trailing slash, no id) serves the theme list in the
+		// legacy bare-array shape; /api/v1/themes/{id}(/) a single theme
+		// (study.js fetches this); deeper paths ({id}/question_count,
+		// {id}/migrate-to) go to the multiplexed compat handler.
+		themesPrefix := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rest := strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/v1/themes/"), "/")
+			if rest == "" {
+				handlers.ThemeListCompatHandler{Repo: themeRepo}.ServeHTTP(w, r)
+				return
+			}
+			if !strings.Contains(rest, "/") {
+				handlers.ThemeByIDHandler{Repo: themeRepo}.ServeHTTP(w, r)
+				return
+			}
+			handlers.ThemeQuestionCountHandler{Repo: themeRepo}.ServeHTTP(w, r)
+		})
+		mux.Handle("/api/v1/themes/", themesPrefix)
 	}
 	// Articles/stories/ban-ip compatibility for legacy admin UI
 	mux.Handle("/api/v1/articles", handlers.ArticlesHandler{})
@@ -95,6 +126,15 @@ func main() {
 	}
 	if mysqlDB != nil {
 		sentlehandlers.RegisterRoutes(mux)
+
+		// Raw-WebSocket quiz hub (multiplayer quiz engine). The Socket.IO
+		// frontend is not wired to this yet — it stays on the Python backend
+		// until the client speaks plain WebSocket frames.
+		quizRepo := repository.NewQuizRepository(mysqlDB.DB)
+		quizHub := quiz.NewHub(quizRepo)
+		go quizHub.Run()
+		mux.Handle("/api/v1/quiz/ws", http.HandlerFunc(quizHub.ServeWS))
+		log.Printf("quiz WS hub enabled on /api/v1/quiz/ws")
 
 		gormDB, gerr := gorm.Open(mysql.Open(cfg.DB.DSN()), &gorm.Config{})
 		if gerr != nil {
