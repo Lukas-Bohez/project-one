@@ -1,50 +1,49 @@
-# config/quizthespire.service
+# configs/quizthespire.service
 #
-# DRAFT — this assumes a deploy layout that hasn't been confirmed:
-#   - a dedicated "quizthespire" system user/group
-#   - the binary living at /opt/quizthespire/bin/quizthespire-server
-#   - downloads written under /opt/quizthespire/downloads
-#   - nothing else already bound to the service's port
-# Swap in the real values before using this. If there's already a running
-# setup (existing user, existing service, a reverse proxy in front), tell
-# me what it looks like and this can be corrected to match instead of
-# guessed at.
+# systemd unit for the quizthespire.com Go backend.
+# Confirmed against the live Pi 5 deployment, September 2026.
 #
-# Install: copy to /etc/systemd/system/quizthespire.service, then
+# Install:
+#   sudo cp configs/quizthespire.service /etc/systemd/system/quizthespire.service
 #   sudo systemctl daemon-reload
 #   sudo systemctl enable --now quizthespire
+#   journalctl -u quizthespire -f
+#
+# Build (from the project directory):
+#   GOOS=linux GOARCH=arm64 go build -o bin/quizthespire-server ./cmd/server
+#
+# Environment: copy configs/quizthespire.env to /etc/default/quizthespire
+#   and edit the DB credentials before first start.
 
 [Unit]
 Description=quizthespire.com Go backend
-After=network-online.target
+After=network-online.target mysql.service
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=quizthespire
-Group=quizthespire
-WorkingDirectory=/opt/quizthespire
-ExecStart=/opt/quizthespire/bin/quizthespire-server
+User=student
+Group=student
+WorkingDirectory=/home/student/Project/project-one/backend-go
+ExecStart=/home/student/Project/project-one/backend-go/bin/quizthespire-server
 Restart=on-failure
 RestartSec=5s
 
-# Resource ceiling — placeholder. Size this against actual free RAM once
-# nginx/Caddy, any DB, and everything else on the Pi 5 are accounted for;
-# 8GB total does not mean 8GB available to this one service.
-MemoryMax=4G
-# Leaves roughly a core of headroom on a 4-core Pi 5 for the OS and
-# anything else running alongside this.
-CPUQuota=300%
+# Environment
+Environment=PORT=8081
+EnvironmentFile=-/etc/default/quizthespire
 
-# Sandboxing (ProtectSystem=full as requested — ProtectSystem=strict is
-# tighter still if you want to lock this down further later: it makes the
-# whole filesystem read-only except /dev, /proc, /sys, and whatever's
-# listed in ReadWritePaths below).
+# Resource ceiling — tuned for Pi 5 (8GB RAM, 4 cores).
+# Leaves headroom for Apache, MySQL, and the Python gamepad service.
+MemoryMax=2G
+CPUQuota=200%
+
+# Sandboxing
 NoNewPrivileges=true
 PrivateTmp=true
-ProtectSystem=full
-ProtectHome=true
-ReadWritePaths=/opt/quizthespire/downloads /var/log/quizthespire
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/student/Project/project-one/backend-go/logs /home/student/Project/project-one/data
 
 # Logging via journald — view with: journalctl -u quizthespire -f
 StandardOutput=journal
