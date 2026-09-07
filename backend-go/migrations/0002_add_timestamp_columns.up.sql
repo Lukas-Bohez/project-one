@@ -1,0 +1,18 @@
+-- Migration: add created_at/updated_at columns expected by the Go backend
+-- Run against the quizTheSpire database
+
+ALTER TABLE questions
+  ADD COLUMN created_at datetime DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE answers
+  ADD COLUMN created_at datetime DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE themes
+  ADD COLUMN created_at datetime DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE users
+  ADD COLUMN created_at datetime DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
