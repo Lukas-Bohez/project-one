@@ -7,8 +7,8 @@ class GameEngine {
   constructor() {
     this.state = this.getInitialState();
     this.isRunning = false;
-    this.tickRate = 20; // 20 FPS — calm, idle-friendly cadence
-    this.tickInterval = null;
+    this.tickRate = 20; // documented target FPS (rAF-driven, not setInterval)
+    this._rafId = null;
     this.lastUpdate = Date.now();
     this.gameStartTime = Date.now();
 
@@ -317,10 +317,8 @@ class GameEngine {
       console.log('ArcadeManager initialized');
     }
 
-    // Start the main game loop
-    this.tickInterval = setInterval(() => {
-      this.tick();
-    }, 1000 / this.tickRate);
+    // Start the main game loop (rAF: pauses when tab is backgrounded, no timer drift)
+    this._rafId = requestAnimationFrame(this._rafLoop.bind(this));
 
     // Hide already purchased unlocks and research (with slight delay to ensure DOM is ready)
     setTimeout(() => {
@@ -334,17 +332,24 @@ class GameEngine {
     if (!this.isRunning) return;
 
     this.isRunning = false;
-    if (this.tickInterval) {
-      clearInterval(this.tickInterval);
-      this.tickInterval = null;
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
     }
 
     console.log('Game stopped');
   }
 
+  _rafLoop(time) {
+    if (!this.isRunning) return;
+    this.tick();
+    this._rafId = requestAnimationFrame(this._rafLoop.bind(this));
+  }
+
   tick() {
     const now = Date.now();
-    const deltaTime = (now - this.lastUpdate) / 1000; // Convert to seconds
+    // Clamp deltaTime to prevent huge jumps after tab is backgrounded/throttled
+    const deltaTime = Math.min((now - this.lastUpdate) / 1000, 0.25); // cap at 250ms
     this.lastUpdate = now;
 
     // Update game time
