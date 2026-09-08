@@ -8,6 +8,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // In-memory cache as fallback
   const memoryCache = new Map();
+
+  // One-time cleanup of obsolete cache keys from earlier versions of this
+  // file. The pre-fix version stored questions with empty `answers` arrays
+  // (the old Python backend 404'd on /api/v1/answers) and re-served them via
+  // stale-while-revalidate, so they must be purged on upgrade.
+  try {
+    if (typeof Storage !== 'undefined' && localStorage) {
+      ['myApp_questionsCache_active', 'myApp_questionsCache_all', 'study_themes'].forEach((k) => {
+        if (localStorage.getItem(k) !== null) {
+          localStorage.removeItem(k);
+          console.log(`[Cache Migration] Removed obsolete key: ${k}`);
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('[Cache Migration] Failed to clean obsolete keys:', e.message);
+  }
   // #endregion
 
   // #region --- DOM Element References ---
@@ -186,7 +203,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!questionsResponse.ok) {
       throw new Error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
     }
-    const questions = await questionsResponse.json();
+    const rawQuestions = await questionsResponse.json();
+    // Defensively unwrap: backend may return a bare array (legacy) or a
+    // {count, questions} / {data} wrapper. study.js calls .map() on this.
+    const questions = Array.isArray(rawQuestions)
+      ? rawQuestions
+      : Array.isArray(rawQuestions && rawQuestions.questions)
+        ? rawQuestions.questions
+        : Array.isArray(rawQuestions && rawQuestions.data)
+          ? rawQuestions.data
+          : [];
 
     // Fetch themes
     const uniqueThemeIds = [...new Set(questions.map((q) => q.themeId).filter((id) => id))];
@@ -213,10 +239,17 @@ document.addEventListener('DOMContentLoaded', function () {
           const answersUrl = `${answersBaseEndpoint}?question_id=${encodeURIComponent(question.id)}`;
           const answersResponse = await withTimeout(fetch(answersUrl));
           const answersData = answersResponse.ok ? await answersResponse.json() : { answers: [] };
+          // Defensively unwrap: backend may return {answers:[...]} (Go/legacy)
+          // or a bare array. study.js reads .answers downstream.
+          const answersList = Array.isArray(answersData)
+            ? answersData
+            : Array.isArray(answersData && answersData.answers)
+              ? answersData.answers
+              : [];
 
           return {
             ...question,
-            answers: answersData.answers || [],
+            answers: answersList,
             theme: themeMap[question.themeId] || { name: 'Unknown Theme' },
           };
         } catch (error) {
@@ -234,7 +267,12 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   const fetchQuestions = async (activeOnly = false, forceRefresh = false) => {
-    const CACHE_KEY = `myApp_questionsCache_${activeOnly ? 'active' : 'all'}`;
+    // NOTE: the `_v2` suffix orphans any cache written by earlier versions of
+    // this file. The previous version stored questions with empty `answers`
+    // arrays (because the answers endpoint 404'd on the old Python backend),
+    // and the stale-while-revalidate flow kept re-serving that broken data.
+    // Bumping the key forces a clean fetch against the now-correct Go API.
+    const CACHE_KEY = `myApp_questionsCache_v2_${activeOnly ? 'active' : 'all'}`;
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes - good balance between freshness and performance
 
     // Check for cache bypass via URL parameter or force refresh flag
@@ -295,7 +333,9 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   const fetchThemes = async () => {
-    const CACHE_KEY = 'study_themes';
+    // Versioned key (see fetchQuestions for rationale) — orphans stale
+    // broken-era theme cache.
+    const CACHE_KEY = 'study_themes_v2';
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
     // Check for cache bypass
@@ -343,7 +383,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const response = await withTimeout(fetch(themesUrl));
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const themes = await response.json();
+    const rawThemes = await response.json();
+    // Defensively unwrap: bare array (legacy) or {count, themes} wrapper.
+    const themes = Array.isArray(rawThemes)
+      ? rawThemes
+      : Array.isArray(rawThemes && rawThemes.themes)
+        ? rawThemes.themes
+        : Array.isArray(rawThemes && rawThemes.data)
+          ? rawThemes.data
+          : [];
 
     // Calculate question counts from the allQuestions array instead of API
     // This is more reliable than calling the question_count endpoint
@@ -864,7 +912,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const themesResponse = await withTimeout(fetch(themesUrl));
       if (!themesResponse.ok) throw new Error(`HTTP error! status: ${themesResponse.status}`);
-      const themes = await themesResponse.json();
+      const rawThemes = await themesResponse.json();
+      // Defensively unwrap: bare array (legacy) or {count, themes} wrapper.
+      const themes = Array.isArray(rawThemes)
+        ? rawThemes
+        : Array.isArray(rawThemes && rawThemes.themes)
+          ? rawThemes.themes
+          : Array.isArray(rawThemes && rawThemes.data)
+            ? rawThemes.data
+            : [];
 
       // Calculate question counts from the allQuestions array
       const themesWithCounts = themes.map((theme) => {
