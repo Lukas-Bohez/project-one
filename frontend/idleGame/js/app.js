@@ -44,6 +44,15 @@ class IndustrialEmpireApp {
     // Set up action button listeners for all tabs
     this.setupActionListeners();
 
+    // Mute button
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+      muteBtn.addEventListener('click', () => {
+        const muted = this.gameEngine.toggleMute();
+        muteBtn.textContent = muted ? '🔇' : '🔊';
+      });
+    }
+
     console.log('Event listeners set up');
   }
 

@@ -28,6 +28,14 @@ class GameEngine {
     this.autoSaveInterval = 30000; // Auto-save every 30 seconds
     // Auto systems timers
     this.nextAutoSellFinishedAt = 0;
+
+    // Sound
+    this.muted = false;
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    return this.muted;
   }
 
   getInitialState() {
@@ -4213,12 +4221,16 @@ class GameEngine {
   flashElement(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
+      // Debounce: if already flashing, don't restart the animation — otherwise
+      // rapid calls (crafting loop, mining spam) cause visible blinking.
+      if (element.classList.contains('flash')) return;
       element.classList.add('flash');
       setTimeout(() => element.classList.remove('flash'), 500);
     }
   }
 
   playSound(type) {
+    if (this.muted) return;
     // Web Audio API micro-sounds — throttle to avoid audio spam in late game
     try {
       const now = Date.now();
@@ -4241,71 +4253,63 @@ class GameEngine {
       gain.connect(ctx.destination);
 
       const audioNow = ctx.currentTime;
-      gain.gain.setValueAtTime(0.08, audioNow);
+      gain.gain.setValueAtTime(0.03, audioNow);
 
       switch (type) {
         case 'mine':
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(220, audioNow);
-          osc.frequency.exponentialRampToValueAtTime(440, audioNow + 0.08);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.12);
+          osc.frequency.setValueAtTime(180, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(220, audioNow + 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.08);
           osc.start(audioNow);
-          osc.stop(audioNow + 0.12);
+          osc.stop(audioNow + 0.08);
           break;
         case 'sell':
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(523, audioNow);
-          osc.frequency.exponentialRampToValueAtTime(784, audioNow + 0.1);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.15);
+          osc.frequency.setValueAtTime(392, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(523, audioNow + 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.08);
           osc.start(audioNow);
-          osc.stop(audioNow + 0.15);
+          osc.stop(audioNow + 0.08);
           break;
         case 'hire':
         case 'research':
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(330, audioNow);
-          osc.frequency.exponentialRampToValueAtTime(660, audioNow + 0.06);
-          osc.frequency.exponentialRampToValueAtTime(880, audioNow + 0.12);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.18);
+          osc.frequency.setValueAtTime(262, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(392, audioNow + 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.1);
           osc.start(audioNow);
-          osc.stop(audioNow + 0.18);
+          osc.stop(audioNow + 0.1);
           break;
         case 'build':
-          // Chunky thud - low saw wave with quick decay
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(120, audioNow);
-          osc.frequency.exponentialRampToValueAtTime(80, audioNow + 0.15);
-          gain.gain.setValueAtTime(0.06, audioNow);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.2);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(100, audioNow);
+          osc.frequency.exponentialRampToValueAtTime(60, audioNow + 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.1);
           osc.start(audioNow);
-          osc.stop(audioNow + 0.2);
+          osc.stop(audioNow + 0.1);
           break;
         case 'transport':
-          // Whoosh - rising square wave
-          osc.type = 'square';
-          gain.gain.setValueAtTime(0.04, audioNow);
+          osc.type = 'sine';
           osc.frequency.setValueAtTime(200, audioNow);
-          osc.frequency.exponentialRampToValueAtTime(600, audioNow + 0.12);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.15);
+          osc.frequency.exponentialRampToValueAtTime(300, audioNow + 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.08);
           osc.start(audioNow);
-          osc.stop(audioNow + 0.15);
+          osc.stop(audioNow + 0.08);
           break;
         case 'prestige':
-          // Epic ascending triad
           osc.type = 'sine';
-          gain.gain.setValueAtTime(0.07, audioNow);
           osc.frequency.setValueAtTime(262, audioNow);
-          osc.frequency.setValueAtTime(330, audioNow + 0.1);
-          osc.frequency.setValueAtTime(392, audioNow + 0.2);
-          osc.frequency.setValueAtTime(523, audioNow + 0.3);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.5);
+          osc.frequency.setValueAtTime(330, audioNow + 0.08);
+          osc.frequency.setValueAtTime(392, audioNow + 0.16);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.25);
           osc.start(audioNow);
-          osc.stop(audioNow + 0.5);
+          osc.stop(audioNow + 0.25);
           break;
         default:
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(440, audioNow);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.1);
+          osc.frequency.setValueAtTime(330, audioNow);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.06);
           osc.start(audioNow);
           osc.stop(audioNow + 0.1);
       }

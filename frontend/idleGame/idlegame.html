@@ -11,7 +11,7 @@
     <meta name="owner" content="Lukas Bohez">
     <meta name="copyright" content="© 2026 Lukas Bohez. All rights reserved.">
     
-    <link rel="stylesheet" href="css/style.min.css?v=5">
+    <link rel="stylesheet" href="css/style.css?v=6">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/favicon.ico">
@@ -60,16 +60,18 @@
                     <span id="gold-amount" class="resource-value">0</span>
                 </div>
             </div>
+
+            <button id="mute-btn" class="mute-btn" title="Toggle sound" aria-label="Toggle sound">🔊</button>
         </header>
 
         <section id="campaign-panel" class="campaign-panel" aria-labelledby="campaign-title">
             <div class="campaign-panel__eyebrow">Campaign Brief</div>
             <div class="campaign-panel__layout">
                 <div class="campaign-panel__summary">
-                    <h2 id="campaign-title">Build a run that can survive its own success</h2>
+                    <h2 id="campaign-title">Build something that lasts</h2>
                     <p id="campaign-description">
-                        Start with raw commits, unlock the full production chain, automate the city,
-                        and then choose when to let the empire decay into a stronger rebirth.
+                        Mine by hand, then hire workers, then automate everything. Grow fast enough
+                        that when the decay hits, you're strong enough to rebuild better.
                     </p>
                     <div id="campaign-chips" class="campaign-panel__chips">
                         <span id="campaign-theme-chip" class="campaign-chip">Tech Empire · Chapter 1</span>
@@ -86,7 +88,7 @@
                         <div id="campaign-progress-bar" class="progress-bar" style="width: 0%"></div>
                     </div>
                     <p id="campaign-progress-note">
-                        The first goal is to turn manual clicks into a stable chain.
+                        Get your first worker clicking so you don't have to.
                     </p>
                 </div>
             </div>
@@ -1364,9 +1366,9 @@
     <script src="js/save/SaveManager.min.js?v=3"></script>
     <script src="js/ui/UIManager.min.js?v=3"></script>
     <script src="js/ui/UIThemeManager.min.js?v=3"></script>
-    <script src="js/game/GameEngine.min.js?v=3"></script>
+    <script src="js/game/GameEngine.js?v=4"></script>
     <script src="js/devMenu.min.js?v=3"></script>
-    <script src="js/app.min.js?v=3"></script>
+    <script src="js/app.js?v=4"></script>
 </body>
 </html>
 ```
