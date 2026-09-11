@@ -410,17 +410,29 @@ class GameEngine {
     // Sell all items in city at once (cap per tick to prevent visual/sound flood)
     const inv = this.state.cityInventory?.finished || {};
     let itemsSold = 0;
+    let totalGoldEarned = 0;
     const maxSellsPerTick = 50;
     for (const k in inv) {
       while (inv[k] > 0 && itemsSold < maxSellsPerTick) {
-        const success = this.sellOneFinished();
+        const goldBefore = this.state.resources.gold;
+        const success = this.sellOneFinished(null, true);
         if (!success) break;
+        totalGoldEarned += this.state.resources.gold - goldBefore;
         itemsSold++;
       }
     }
 
     if (itemsSold > 0) {
-      this.showNotification(`🤖 Sales Bot sold ${itemsSold} items!`);
+      // Single flash + sound for the whole batch, not per-item
+      this.flashElement('gold-amount');
+      this.playSound('sell');
+      if (totalGoldEarned >= 1000) {
+        this.showNotification(`🤖 Sales bot moved ${itemsSold} items — +${this.formatNumber(totalGoldEarned)} gold`);
+      } else if (itemsSold === 1) {
+        this.showNotification(`🤖 Sales bot sold 1 item`);
+      } else {
+        this.showNotification(`🤖 Sales bot sold ${itemsSold} items`);
+      }
     }
 
     this.nextAutoSellFinishedAt = now + interval;
@@ -2047,11 +2059,11 @@ class GameEngine {
     // Milestone celebrations
     const totalStone = this.state.stats.totalResourcesMined.stone;
     if (totalStone === 10) {
-      this.showNotification("🪨 10 stone mined! You're getting the hang of it!");
+      this.showNotification("🪨 10 stone mined — you're getting the hang of it!");
     } else if (totalStone === 100) {
-      this.showNotification('⛏️ 100 stone! A true miner!');
+      this.showNotification('⛏️ 100 stone! Not bad for a beginner.');
     } else if (totalStone === 1000) {
-      this.showNotification('💎 1000 stone! LEGENDARY MINER!');
+      this.showNotification('💎 1000 stone! Now that\'s a serious haul.');
       this.triggerScreenShake();
       this.spawnParticles(btn, '#ffd700', 15);
       this.spawnParticles(btn, '#64ffda', 15);
@@ -2513,7 +2525,7 @@ class GameEngine {
 
     this.playSound('sell');
     this.flashElement('gold-amount');
-    this.showNotification(`💰 Sold ${itemName} for ${finalValue} capital!`);
+    this.showNotification(`💰 Sold ${itemName} for ${finalValue} gold!`);
     return true;
   }
 
@@ -2572,7 +2584,7 @@ class GameEngine {
 
     this.playSound('sell');
     this.flashElement('gold-amount');
-    this.showNotification(`💰 Sold ${cityAmount}x ${itemName} for ${finalValue} capital!`);
+    this.showNotification(`💰 Sold ${cityAmount}x ${itemName} for ${finalValue} gold!`);
 
     // Big sell celebration - ka-ching!
     const goldEl = document.getElementById('gold-amount');
@@ -2987,7 +2999,7 @@ class GameEngine {
   }
 
   // Sell one finished good currently in city inventory (best value by default)
-  sellOneFinished(item = null) {
+  sellOneFinished(item = null, silent = false) {
     if (!this.newResourceManager) return false;
 
     // Get current theme item names
@@ -3074,16 +3086,20 @@ class GameEngine {
       this.state.resources.gold += finalValue;
       this.state.stats.totalGoldEarned += finalValue;
 
-      this.playSound('sell');
-      this.flashElement('gold-amount');
+      if (!silent) {
+        this.playSound('sell');
+        this.flashElement('gold-amount');
+      }
       return true;
     }
 
     // Use regular selling for non-crafted items
     const res = this.newResourceManager.sellOne(item);
     if (res.sold) {
-      this.playSound('sell');
-      this.flashElement('gold-amount');
+      if (!silent) {
+        this.playSound('sell');
+        this.flashElement('gold-amount');
+      }
       return true;
     }
     return false;
@@ -3766,20 +3782,20 @@ class GameEngine {
     // 2.1: Rebirth milestone notifications (1, 5, 10, 25, 50, 100)
     const milestones = [1, 5, 10, 25, 50, 100];
     if (milestones.includes(newRebirthCount)) {
-      let milestoneMessage = `🎉 REBIRTH MILESTONE #${newRebirthCount}! `;
+      let milestoneMessage = `🎉 Rebirth #${newRebirthCount} — `;
       const milestoneRewards = {
-        1: "You've mastered your first cycle!",
-        5: 'Five rebirths! The cycle accelerates!',
-        10: "TEN REBIRTHS! You're a legend in the making!",
-        25: 'Twenty-five! Your empire transcends time itself!',
-        50: '50 REBIRTHS! The fabric of reality bends to your will!',
-        100: '100 REBIRTHS! YOU ARE INFINITE! THE VOID BOWS BEFORE YOU!',
+        1: "first cycle complete!",
+        5: 'five cycles in — things are picking up.',
+        10: "ten rebirths — you're getting good at this.",
+        25: 'twenty-five. Your empire has seen a lot of lifetimes.',
+        50: 'fifty rebirths. The cycle is second nature now.',
+        100: "one hundred. You've transcended.",
       };
       milestoneMessage += milestoneRewards[newRebirthCount] || '';
       this.showNotification(milestoneMessage);
       console.log(`🎯 MILESTONE: Rebirth #${newRebirthCount} achieved!`);
     } else {
-      this.showNotification(`🔄 Rebirth #${newRebirthCount} - A new chapter begins...`);
+      this.showNotification(`🔄 Rebirth #${newRebirthCount} — fresh start, same ambition.`);
     }
     this.triggerScreenShake();
     this.triggerScreenFlash();
