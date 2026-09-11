@@ -132,6 +132,10 @@ func main() {
 		// until the client speaks plain WebSocket frames.
 		quizRepo := repository.NewQuizRepository(mysqlDB.DB)
 		quizHub := quiz.NewHub(quizRepo)
+		// Seed the standard quiz themes (idempotent — skips existing ones)
+		if err := quizRepo.EnsureThemes(); err != nil {
+			log.Printf("WARNING: failed to ensure quiz themes: %v", err)
+		}
 		go quizHub.Run()
 		mux.Handle("/api/v1/quiz/ws", http.HandlerFunc(quizHub.ServeWS))
 		log.Printf("quiz WS hub enabled on /api/v1/quiz/ws")

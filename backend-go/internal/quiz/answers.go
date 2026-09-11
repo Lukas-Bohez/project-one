@@ -3,40 +3,81 @@ package quiz
 import (
 	"encoding/json"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
 )
 
+// AnswerResult is sent back to a player after submitting an answer.
+type AnswerResult struct {
+	Success            bool   `json:"success"`
+	IsCorrect          bool   `json:"is_correct,omitempty"`
+	PointsEarned       int    `json:"points_earned,omitempty"`
+	MaxPoints          int    `json:"max_points,omitempty"`
+	CorrectAnswerIndex int    `json:"correct_answer_index,omitempty"`
+	CorrectAnswerText  string `json:"correct_answer_text,omitempty"`
+	Explanation        string `json:"explanation,omitempty"`
+	Error              string `json:"error,omitempty"`
+}
+
 // handleSubmitAnswer processes an answer submission.
+// Only accepts answers during the "quiz" phase (not during explanation).
 func (h *Hub) handleSubmitAnswer(c *client, data json.RawMessage) {
 	var req struct {
-		UserID      int64 `json:"userId"`
-		QuestionID  int64 `json:"questionId"`
-		AnswerIndex int   `json:"answerIndex"`
+		UserID     int64 `json:"userId"`
+		QuestionID int64 `json:"questionId"`
+		AnswerIdx  int   `json:"answerIndex"`
 	}
 	if err := json.Unmarshal(data, &req); err != nil {
 		c.sendEvent("answer_response", AnswerResult{Success: false, Error: "invalid data"})
 		return
 	}
 
-	question, err := h.repo.GetQuestionByID(req.QuestionID)
-	if err != nil || question == nil {
-		c.sendEvent("answer_response", AnswerResult{Success: false, Error: "question not found"})
+	ss := h.getSessionState(c.sessionID)
+	phase := ss.GetPhase()
+
+	// Only accept answers during quiz phase
+	if phase != PhaseQuiz {
+		c.sendEvent("answer_response", AnswerResult{
+			Success: false,
+			Error:   "Not accepting answers at this time",
+		})
 		return
 	}
 
-	// Check for duplicate
+	// Check for duplicate answer
 	existing, _ := h.repo.GetPlayerAnswer(c.sessionID, req.UserID, req.QuestionID)
 	if existing != nil {
-		c.sendEvent("answer_response", AnswerResult{Success: false, Error: "answer already submitted"})
+		c.sendEvent("answer_response", AnswerResult{
+			Success: false,
+			Error:   "Answer already submitted before",
+		})
 		return
 	}
 
-	// Check correctness
-	answers, err := h.repo.GetAnswersForQuestion(req.QuestionID)
-	if err != nil {
-		c.sendEvent("answer_response", AnswerResult{Success: false, Error: "could not load answers"})
+	question, err := h.repo.GetQuestionByID(req.QuestionID)
+	if err != nil || question == nil {
+		c.sendEvent("answer_response", AnswerResult{
+			Success: false,
+			Error:   "question not found",
+		})
 		return
+	}
+
+	answers, err := h.repo.GetAnswersForQuestion(req.QuestionID)
+	if err != nil || len(answers) == 0 {
+		c.sendEvent("answer_response", AnswerResult{
+			Success: false,
+			Error:   "no answers found for question",
+		})
+		return
+	}
+
+	// Map answer index to answer ID for storage
+	answerID := int64(-1)
+	if req.AnswerIdx >= 0 && req.AnswerIdx < len(answers) {
+		answerID = answers[req.AnswerIdx].ID
 	}
 
 	isCorrect := false
@@ -47,7 +88,7 @@ func (h *Hub) handleSubmitAnswer(c *client, data json.RawMessage) {
 			correctIndex = i
 			correctText = a.AnswerText
 		}
-		if i == req.AnswerIndex && a.IsCorrect {
+		if i == req.AnswerIdx && a.IsCorrect {
 			isCorrect = true
 		}
 	}
@@ -57,19 +98,23 @@ func (h *Hub) handleSubmitAnswer(c *client, data json.RawMessage) {
 		pointsEarned = question.Points
 	}
 
-	// Save
+	now := time.Now()
 	_, err = h.repo.CreatePlayerAnswer(repository.PlayerAnswer{
-		SessionID:    c.sessionID,
-		UserID:       req.UserID,
-		QuestionID:   req.QuestionID,
-		AnswerIndex:  req.AnswerIndex,
-		IsCorrect:    isCorrect,
+		SessionID:   c.sessionID,
+		UserID:      req.UserID,
+		QuestionID:  req.QuestionID,
+		AnswerID:    answerID,
+		IsCorrect:   isCorrect,
 		PointsEarned: pointsEarned,
-		TimeTaken:    15,
+		TimeTaken:   15,
+		CreatedAt:   now,
 	})
 	if err != nil {
 		log.Printf("failed to save answer: %v", err)
-		c.sendEvent("answer_response", AnswerResult{Success: false, Error: "failed to save answer"})
+		c.sendEvent("answer_response", AnswerResult{
+			Success: false,
+			Error:   "failed to save answer",
+		})
 		return
 	}
 
@@ -86,6 +131,7 @@ func (h *Hub) handleSubmitAnswer(c *client, data json.RawMessage) {
 	h.broadcastLeaderboard(c.sessionID)
 }
 
+// handleThemeSelected processes a theme vote during the voting phase.
 func (h *Hub) handleThemeSelected(c *client, data json.RawMessage) {
 	var req struct {
 		ThemeID int64 `json:"themeId"`
@@ -93,35 +139,29 @@ func (h *Hub) handleThemeSelected(c *client, data json.RawMessage) {
 	if err := json.Unmarshal(data, &req); err != nil {
 		return
 	}
+	if req.ThemeID <= 0 {
+		return
+	}
+
+	ss := h.getSessionState(c.sessionID)
+	phase := ss.GetPhase()
+	if phase != PhaseVoting {
+		return
+	}
+
 	h.repo.VoteForTheme(c.sessionID, req.ThemeID)
-	h.broadcastToSession(c.sessionID, "theme_selected", map[string]interface{}{
+	votes := ss.RecordVote(c.userID, req.ThemeID)
+
+	// Build votes map for JSON (theme ID as string key)
+	votesMap := make(map[string]interface{})
+	for k, v := range votes {
+		votesMap[strconv.FormatInt(k, 10)] = v
+	}
+
+	h.broadcastToSession(c.sessionID, "theme_votes_update", map[string]interface{}{
 		"session_id": c.sessionID,
-		"theme_id":   req.ThemeID,
+		"votes":      votesMap,
+		"timestamp":  time.Now().Unix(),
 	})
 }
 
-func (h *Hub) handleLeaderboardRequest(c *client, data json.RawMessage) {
-	h.sendLeaderboard(c, c.sessionID)
-}
-
-func (h *Hub) broadcastLeaderboard(sessionID int64) {
-	scores, err := h.repo.GetSessionScores(sessionID)
-	if err != nil {
-		return
-	}
-	h.broadcastToSession(sessionID, "leaderboard", map[string]interface{}{
-		"session_id":  sessionID,
-		"leaderboard": scores,
-	})
-}
-
-func (h *Hub) sendLeaderboard(c *client, sessionID int64) {
-	scores, err := h.repo.GetSessionScores(sessionID)
-	if err != nil {
-		return
-	}
-	c.sendEvent("leaderboard", map[string]interface{}{
-		"session_id":  sessionID,
-		"leaderboard": scores,
-	})
-}

@@ -9,10 +9,21 @@
 //	Client → Server: {"event": "submit_answer", "data": {"userId": 1, "questionId": 42, "answerIndex": 2}}
 //	Client → Server: {"event": "theme_selected", "data": {"themeId": 5}}
 //	Client → Server: {"event": "join", "data": {"room": "quiz_session_1"}}
+//	Client → Server: {"event": "leave", "data": {"room": "quiz_session_1"}}
+//	Client → Server: {"event": "request_leaderboard", "data": null}
+//	Client → Server: {"event": "leave_quiz_session", "data": null}
+//
 //	Server → Client: {"event": "join_session_success", "data": {"session_id": 1, ...}}
 //	Server → Client: {"event": "answer_response", "data": {"success": true, ...}}
-//	Server → Client: {"event": "question", "data": {...}}
-//	Server → Client: {"event": "leaderboard", "data": [{...}, ...]}
+//	Server → Client: {"event": "phase_started", "data": {"phase": "voting", ...}}
+//	Server → Client: {"event": "theme_selection", "data": {"themes": [...]}}
+//	Server → Client: {"event": "questionData", "data": {...}}
+//	Server → Client: {"event": "quiz_timer", "data": {"timeRemaining": 30, ...}}
+//	Server → Client: {"event": "quiz_timer_finished", "data": {...}}
+//	Server → Client: {"event": "theme_votes_update", "data": {"votes": {...}}}
+//	Server → Client: {"event": "leaderboard", "data": [...]}
+//	Server → Client: {"event": "player_joined", "data": {...}}
+//	Server → Client: {"event": "player_left", "data": {...}}
 package quiz
 
 import (
@@ -64,8 +75,13 @@ type Hub struct {
 	register   chan *client
 	unregister chan *client
 	broadcast  chan broadcast
-	mu         sync.RWMutex
-	repo       *repository.QuizRepository
+
+	// sessions maps session_id → SessionState
+	sessions      map[int64]*SessionState
+	sessionMu     sync.RWMutex
+
+	mu   sync.RWMutex
+	repo *repository.QuizRepository
 }
 
 type broadcast struct {
@@ -80,8 +96,22 @@ func NewHub(repo *repository.QuizRepository) *Hub {
 		register:   make(chan *client),
 		unregister: make(chan *client),
 		broadcast:  make(chan broadcast),
+		sessions:   make(map[int64]*SessionState),
 		repo:       repo,
 	}
+}
+
+// getSessionState returns or creates the in-memory state for a session.
+func (h *Hub) getSessionState(sessionID int64) *SessionState {
+	h.sessionMu.Lock()
+	defer h.sessionMu.Unlock()
+	if s, ok := h.sessions[sessionID]; ok {
+		return s
+	}
+	s := NewSessionState(sessionID)
+	s.hub = h
+	h.sessions[sessionID] = s
+	return s
 }
 
 // Run starts the hub's main loop.
@@ -96,6 +126,20 @@ func (h *Hub) Run() {
 			h.rooms[c.sessionID][c] = true
 			h.mu.Unlock()
 
+			// Track client in session state and broadcast player_joined
+			if c.sessionID > 0 {
+				ss := h.getSessionState(c.sessionID)
+				ss.AddClient(c)
+				isNew := ss.AddPlayer(c.userID, c.username)
+				if isNew {
+					h.broadcastToSession(c.sessionID, "player_joined", map[string]interface{}{
+						"userId":   c.userID,
+						"username": c.username,
+						"name":     c.username,
+					})
+				}
+			}
+
 		case c := <-h.unregister:
 			h.mu.Lock()
 			if room, ok := h.rooms[c.sessionID]; ok {
@@ -106,6 +150,18 @@ func (h *Hub) Run() {
 			}
 			h.mu.Unlock()
 			close(c.send)
+
+			// Track client removal in session state and broadcast player_left
+			if c.sessionID > 0 {
+				ss := h.getSessionState(c.sessionID)
+				ss.RemoveClient(c)
+				ss.RemovePlayer(c.userID)
+				h.broadcastToSession(c.sessionID, "player_left", map[string]interface{}{
+					"userId":   c.userID,
+					"username": c.username,
+					"name":     c.username,
+				})
+			}
 
 		case b := <-h.broadcast:
 			h.mu.RLock()

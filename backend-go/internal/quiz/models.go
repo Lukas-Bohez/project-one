@@ -12,17 +12,6 @@ func safeString(s *string) string {
 	return *s
 }
 
-// Phase represents the current state of a quiz session.
-type Phase string
-
-const (
-	PhaseVoting       Phase = "voting"
-	PhaseThemeDisplay Phase = "theme_display"
-	PhaseQuiz         Phase = "quiz"
-	PhaseExplanation  Phase = "explanation"
-	PhaseFinished     Phase = "finished"
-)
-
 // QuizSession represents an active quiz session.
 type QuizSession struct {
 	ID        int64     `json:"sessionId"`
@@ -71,14 +60,4 @@ type Answer struct {
 	AnswerText string `json:"answer_text"`
 }
 
-// AnswerResult is sent back to a player after submitting an answer.
-type AnswerResult struct {
-	Success            bool   `json:"success"`
-	IsCorrect          bool   `json:"is_correct,omitempty"`
-	PointsEarned       int    `json:"points_earned,omitempty"`
-	MaxPoints          int    `json:"max_points,omitempty"`
-	CorrectAnswerIndex int    `json:"correct_answer_index,omitempty"`
-	CorrectAnswerText  string `json:"correct_answer_text,omitempty"`
-	Explanation        string `json:"explanation,omitempty"`
-	Error              string `json:"error,omitempty"`
-}
+

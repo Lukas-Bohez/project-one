@@ -25,6 +25,10 @@
     <link rel="stylesheet" href="/css/pages/quiz/chat.css" />
     <link rel="stylesheet" href="/css/footer.css" />
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
+    <!-- Raw-WebSocket shim: lets the Socket.IO-written frontend talk to the
+         Go quiz hub (which speaks JSON frames over raw WS). Loaded before
+         the quiz scripts so window.createCompatibleSocket is defined first. -->
+    <script src="/js/pages/quiz/socket-shim.js" defer></script>
     <script
       async
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449"

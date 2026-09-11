@@ -34,7 +34,7 @@ type PlayerAnswer struct {
 	SessionID    int64
 	UserID       int64
 	QuestionID   int64
-	AnswerIndex  int
+	AnswerID     int64
 	IsCorrect    bool
 	PointsEarned int
 	TimeTaken    int
@@ -52,7 +52,7 @@ type PlayerScore struct {
 func (r *QuizRepository) GetActiveSessions() ([]QuizSession, error) {
 	rows, err := r.db.Query(`
 		SELECT id, name, themeId, phase, createdBy, is_active, created_at
-		FROM quiz_sessions WHERE is_active = true
+		FROM quizSessions WHERE is_active = true
 		ORDER BY created_at DESC LIMIT 10`)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (r *QuizRepository) GetSessionByID(id int64) (*QuizSession, error) {
 	var s QuizSession
 	err := r.db.QueryRow(`
 		SELECT id, name, themeId, phase, createdBy, is_active, created_at
-		FROM quiz_sessions WHERE id = ?`, id).Scan(
+		FROM quizSessions WHERE id = ?`, id).Scan(
 		&s.ID, &s.Name, &s.ThemeID, &s.Phase, &s.CreatedBy, &s.IsActive, &s.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
