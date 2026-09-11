@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // stale-while-revalidate, so they must be purged on upgrade.
   try {
     if (typeof Storage !== 'undefined' && localStorage) {
-      ['myApp_questionsCache_active', 'myApp_questionsCache_all', 'study_themes'].forEach((k) => {
+      ['myApp_questionsCache_active', 'myApp_questionsCache_all', 'myApp_questionsCache_v2_active', 'myApp_questionsCache_v2_all', 'study_themes'].forEach((k) => {
         if (localStorage.getItem(k) !== null) {
           localStorage.removeItem(k);
           console.log(`[Cache Migration] Removed obsolete key: ${k}`);
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // arrays (because the answers endpoint 404'd on the old Python backend),
     // and the stale-while-revalidate flow kept re-serving that broken data.
     // Bumping the key forces a clean fetch against the now-correct Go API.
-    const CACHE_KEY = `myApp_questionsCache_v2_${activeOnly ? 'active' : 'all'}`;
+    const CACHE_KEY = `myApp_questionsCache_v3_${activeOnly ? 'active' : 'all'}`;
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes - good balance between freshness and performance
 
     // Check for cache bypass via URL parameter or force refresh flag
