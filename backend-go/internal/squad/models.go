@@ -70,22 +70,6 @@ type SessionReport struct {
     SubmittedAt   time.Time      `json:"submittedAt"`
 }
 
-// MatchPreference represents a player's matching preferences for finding squads
-type MatchPreference struct {
-MinTrustScore  int      `json:"minTrustScore"`  // Minimum trust score required
-MaxTrustScore  int      `json:"maxTrustScore"`  // Maximum trust score (0 = no max)
-MinExperience  string   `json:"minExperience"`  // "new", "veteran", "any"
-Playstyle      string   `json:"playstyle"`      // "stealth", "speed", "loot", "any"
-VoiceChat      bool     `json:"voiceChat"`      // Require voice chat
-CasualOnly     bool     `json:"casualOnly"`     // Only casual squads
-SeriousOnly    bool     `json:"seriousOnly"`    // Only serious squads
-SquadSize      int      `json:"squadSize"`      // 4 or 6
-Regions        []string `json:"regions"`        // Preferred regions
-Platforms      []string `json:"platforms"`      // Preferred platforms
-ClanOnly       bool     `json:"clanOnly"`       // Only accept clan members
-VerifiedOnly   bool     `json:"verifiedOnly"`   // Only verified players
-}
-
 // ActivityEntry represents a player's recent squad activity for reputation
 type ActivityEntry struct {
 SquadID      string   `json:"squadId"`
@@ -169,7 +153,7 @@ const (
 type Squad struct {
 	ID              string       `json:"id"`
 	Name            string       `json:"name"`
-	Mission         string       `json:"mission"`
+	Mission         string       `json:"missionType"`
 	Planet          string       `json:"planet"`
 	Node            string       `json:"node"`
 	Difficulty      string       `json:"difficulty"`
@@ -321,8 +305,8 @@ Since      time.Time `json:"since"`
 WithSquad  bool      `json:"withSquad"`
 }
 
-// ActivityEntry represents a recent activity for a player (for trust/verification)
-type ActivityEntry struct {
+// ActivityRecord represents a recent activity for a player (for trust/verification)
+type ActivityRecord struct {
 MissionType string    `json:"missionType"`
 Planet      string    `json:"planet"`
 Difficulty  string    `json:"difficulty"`
@@ -340,7 +324,7 @@ MinMR      int    `json:"minMR"`       // minimum mastery rank preference
 // RecentActivity represents aggregated recent activity for a player
 type RecentActivity struct {
 PlayerID    string        `json:"playerId"`
-Activities  []ActivityEntry `json:"activities"`
+Activities  []ActivityRecord `json:"activities"`
 LastActive  time.Time     `json:"lastActive"`
 TotalMissions int         `json:"totalMissions"`
 }

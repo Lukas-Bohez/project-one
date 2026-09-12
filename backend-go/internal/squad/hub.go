@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -178,10 +179,20 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var player Player
-	if err := json.Unmarshal(msg.Data, &player); err != nil {
-		log.Printf("squad: invalid player data: %v", err)
-		conn.Close()
-		return
+
+	// The frontend sends the player wrapped as data = { "player": {...} }.
+	// Accept both the wrapped shape and a bare Player payload.
+	var wrap struct {
+		Player *Player `json:"player"`
+	}
+	if werr := json.Unmarshal(msg.Data, &wrap); werr == nil && wrap.Player != nil {
+		player = *wrap.Player
+	} else {
+		if err := json.Unmarshal(msg.Data, &player); err != nil {
+			log.Printf("squad: invalid player data: %v", err)
+			conn.Close()
+			return
+		}
 	}
 
 	// Security: Validate username
@@ -204,6 +215,13 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	player.LastActive = time.Now()
 	player.VerificationLevel = VerificationNone
 	player.TrustScore = 50.0
+
+	// The client does not send an id; generate a unique one server-side so
+	// every connection gets a distinct player identity. Without this, all
+	// players share id "" and collide in the clients/playerSquad maps.
+	if player.ID == "" {
+		player.ID = uuid.New().String()
+	}
 
 	c := &client{
 		hub:      h,
@@ -228,8 +246,11 @@ func (h *Hub) isAllowedOrigin(origin string) bool {
 	if origin == "http://localhost:8081" || origin == "https://localhost:8081" {
 		return true
 	}
-	// Allow the main domain
+	// Allow the main domain (with and without www)
 	if origin == "https://quizthespire.com" || origin == "http://quizthespire.com" {
+		return true
+	}
+	if origin == "https://www.quizthespire.com" || origin == "http://www.quizthespire.com" {
 		return true
 	}
 	return false

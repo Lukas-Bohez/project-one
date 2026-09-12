@@ -75,12 +75,13 @@ func (h *Hub) handleKickPlayer(c *client, data json.RawMessage) {
 // handleUpdateSquad allows the leader to update squad settings
 func (h *Hub) handleUpdateSquad(c *client, data json.RawMessage) {
 	var req struct {
-		Name       string   `json:"name"`
-		Mission    string   `json:"mission"`
-		Planet     string   `json:"planet"`
-		Difficulty string   `json:"difficulty"`
-		Region     string   `json:"region"`
-		Language   string   `json:"language"`
+		Name        string   `json:"name"`
+		Mission     string   `json:"mission"`
+		MissionType string   `json:"missionType"`
+		Planet      string   `json:"planet"`
+		Difficulty  string   `json:"difficulty"`
+		Region      string   `json:"region"`
+		Language    string   `json:"language"`
 		SquadSize  int      `json:"squadSize"`
 		Mode       string   `json:"mode"`
 		Tags       []string `json:"tags"`
@@ -109,6 +110,8 @@ func (h *Hub) handleUpdateSquad(c *client, data json.RawMessage) {
 	}
 	if req.Mission != "" {
 		squad.Mission = req.Mission
+	} else if req.MissionType != "" {
+		squad.Mission = req.MissionType
 	}
 	if req.Planet != "" {
 		squad.Planet = req.Planet

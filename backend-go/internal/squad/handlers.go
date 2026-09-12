@@ -21,6 +21,7 @@ func (h *Hub) handleEvent(c *client, msg *message) {
 	case "toggle_ready":
 		h.handleToggleReady(c, msg.Data)
 	case "send_chat":
+	case "chat_message":
 		h.handleChatMessage(c, msg.Data)
 	case "kick_player":
 		h.handleKickPlayer(c, msg.Data)
@@ -56,6 +57,7 @@ func (h *Hub) handleCreateSquad(c *client, data json.RawMessage) {
 	var req struct {
 		Name        string   `json:"name"`
 		Mission     string   `json:"mission"`
+		MissionType string   `json:"missionType"`
 		Planet      string   `json:"planet"`
 		Difficulty  string   `json:"difficulty"`
 		Region      string   `json:"region"`
@@ -70,6 +72,12 @@ func (h *Hub) handleCreateSquad(c *client, data json.RawMessage) {
 		return
 	}
 
+	// The frontend sends missionType; accept the legacy `mission` key too.
+	mission := req.Mission
+	if mission == "" {
+		mission = req.MissionType
+	}
+
 	h.mu.RLock()
 	if squadID, ok := h.playerSquad[c.player.ID]; ok {
 		h.mu.RUnlock()
@@ -81,7 +89,7 @@ func (h *Hub) handleCreateSquad(c *client, data json.RawMessage) {
 	squad := &Squad{
 		ID:         uuid.New().String(),
 		Name:       req.Name,
-		Mission:    req.Mission,
+		Mission:    mission,
 		Planet:     req.Planet,
 		Difficulty: req.Difficulty,
 		Region:     req.Region,

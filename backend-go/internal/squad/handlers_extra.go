@@ -383,8 +383,9 @@ squad.SessionReport = report
 
 // Update player reputation based on ratings received
 for playerID, rating := range req.PlayerRatings {
-if player, ok := h.clients[playerID]; ok {
+if cl, ok := h.clients[playerID]; ok {
 // Average the new rating with existing reputation
+player := cl.player
 oldRep := player.Reputation
 newRep := float64(oldRep)*0.7 + float64(rating)*0.3
 player.Reputation = int(newRep)
@@ -407,7 +408,7 @@ return
 }
 
 h.mu.RLock()
-squad, ok := h.squads[req.SquadID]
+_, ok := h.squads[req.SquadID]
 h.mu.RUnlock()
 if !ok {
 return
@@ -418,24 +419,6 @@ h.broadcastToSquad(req.SquadID, "eta_updated", map[string]interface{}{
 "playerName": c.player.Username,
 "eta":       req.ETA,
 }, "")
-}
-
-// HandleSetMatchPref handles setting a player's match preferences
-func (h *Hub) HandleSetMatchPref(c *client, data interface{}) {
-req := struct {
-MatchPref MatchPreference `json:"matchPref"`
-}{}
-if err := json.Unmarshal(data.([]byte), &req); err != nil {
-return
-}
-
-h.mu.Lock()
-c.player.MatchPref = req.MatchPref
-h.mu.Unlock()
-
-c.sendEvent("match_pref_set", map[string]interface{}{
-"matchPref": req.MatchPref,
-})
 }
 
 // HandleAddActivity handles adding an activity entry after a mission
@@ -519,18 +502,7 @@ return
 h.mu.Lock()
 defer h.mu.Unlock()
 
-// Create reputation entry
-entry := ReputationEntry{
-FromPlayerID: c.player.ID,
-ToPlayerID:   req.TargetID,
-Rating:       req.Rating,
-Comment:      req.Comment,
-Timestamp:    time.Now(),
-MissionType:  req.MissionType,
-}
-
 // Store in player's reputation (in production, this would go to a database)
-// For now, we just broadcast the vote
 if target, ok := h.clients[req.TargetID]; ok {
 target.sendEvent("player_voted", map[string]interface{}{
 "voterId":     c.player.ID,
@@ -559,7 +531,7 @@ return
 h.mu.RLock()
 defer h.mu.RUnlock()
 
-var target *Client
+var target *client
 if req.PlayerID != "" {
 target = h.clients[req.PlayerID]
 } else {
@@ -638,76 +610,72 @@ c.sendEvent("squad_history", map[string]interface{}{
 })
 }
 
-// HandleSetActivity sets a player's activity status (In Mission, In Factories, etc.)
+// HandleSetActivity sets a player's activity status (online / in_game / away)
 func (h *Hub) handleSetActivity(c *client, data json.RawMessage) {
 var req struct {
-Activity string `json:"activity"`
-Details  string `json:"details,omitempty"`
+Status string `json:"status"` // "online", "in_game", "away", "idle"
+Game   string `json:"game,omitempty"`
 }
-if err := json.Unmarshal(data.([]byte), &req); err != nil {
-return
-}
-
-h.mu.Lock()
-player, ok := h.clients[c.player.ID]
-h.mu.Unlock()
-if !ok {
-c.sendEvent("error", map[string]string{"message": "Player not found"})
-return
-}
-
-validActivities := map[string]bool{
-"online": true, "in_mission": true, "in_factory": true,
-"in_mg_mission": true, "in_roulette": true, "in_duviri": true,
-"in_venari": true, "in_ironbiru": true, "in_husun_althia": true,
-"in_orb_vallis": true, "in_narmer_shrine": true, "in_zariman": true,
-"in_whispers_in_the_wastes": true, "editing_turned_dlc": true,
-"in_eshop": true, "editing_loadout": true, "idle": true,
-}
-
-if req.Activity != "" {
-if !validActivities[req.Activity] {
-req.Activity = "idle"
-}
-player.Activity = req.Activity
-}
-if req.Details != "" {
-player.ActivityDetails = req.Details
-}
-player.LastActivityUpdate = time.Now()
-
-h.broadcastToHub(fmt.Sprintf("player_activity_updated", map[string]interface{}{
-"playerId":      player.ID,
-"playerUsername": player.Username,
-"activity":      player.Activity,
-"details":       player.ActivityDetails,
-"timestamp":     player.LastActivityUpdate.Unix(),
-}))
-}
-
-// HandleRecentPlayed updates a player's recently played status
-func (h *Hub) handleRecentPlayed(c *client, data json.RawMessage) {
-var req struct {
-RecentlyPlayed string `json:"recentlyPlayed"`
-}
-if err := json.Unmarshal(data.([]byte), &req); err != nil {
-return
-}
-
 if err := json.Unmarshal(data, &req); err != nil {
 return
 }
 
-c.player.RecentlyPlayed = req.RecentlyPlayed
-c.player.LastActivityUpdate = time.Now()
+if req.Status == "in_game" {
+c.player.OnlineStatus = OnlineStatusInGame
+} else if req.Status == "away" || req.Status == "idle" {
+c.player.OnlineStatus = OnlineStatusAway
+} else {
+c.player.OnlineStatus = OnlineStatusOnline
+}
+c.player.LastActive = time.Now()
+
+h.broadcastEvent("player_activity_updated", map[string]interface{}{
+"playerId":       c.player.ID,
+"playerUsername": c.player.Username,
+"status":         c.player.OnlineStatus,
+"game":           req.Game,
+"timestamp":      time.Now().Unix(),
+})
+}
+
+// HandleRecentPlayed records a player's most recent mission into their activity feed
+func (h *Hub) handleRecentPlayed(c *client, data json.RawMessage) {
+var req struct {
+MissionType string `json:"missionType"`
+Planet      string `json:"planet"`
+Difficulty  string `json:"difficulty"`
+}
+if err := json.Unmarshal(data, &req); err != nil {
+return
+}
+
+entry := ActivityEntry{
+SquadID:    "",
+SquadName:  "",
+Mission:    req.MissionType,
+Planet:     req.Planet,
+Difficulty: req.Difficulty,
+Success:    true,
+PlayedWith: []string{},
+PlayedAt:   time.Now(),
+}
+h.mu.Lock()
+c.player.RecentActivity = append(c.player.RecentActivity, entry)
+if len(c.player.RecentActivity) > 20 {
+c.player.RecentActivity = c.player.RecentActivity[:20]
+}
+c.player.LastActive = time.Now()
+h.mu.Unlock()
 
 h.broadcastEvent("player_recently_played", map[string]interface{}{
 "playerId":       c.player.ID,
 "playerUsername": c.player.Username,
-"recentlyPlayed": c.player.RecentlyPlayed,
-"timestamp":      c.player.LastActivityUpdate.Unix(),
+"missionType":    req.MissionType,
+"planet":         req.Planet,
+"difficulty":     req.Difficulty,
+"timestamp":      time.Now().Unix(),
 })
-log.Printf("squad: %s recently played: %s", c.player.Username, c.player.RecentlyPlayed)
+log.Printf("squad: %s recently played: %s/%s", c.player.Username, req.MissionType, req.Planet)
 }
 
 // HandleWantedPost creates or updates a wanted post (player requesting role/item/help)

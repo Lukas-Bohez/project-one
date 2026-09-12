@@ -36,6 +36,7 @@
       this.filterMission = document.getElementById('filterMission');
       this.filterPlanet = document.getElementById('filterPlanet');
       this.filterDifficulty = document.getElementById('filterDifficulty');
+      this.filterRegion = document.getElementById('filterRegion');
       this.filterOpenOnly = document.getElementById('filterOpenOnly');
       this.filterMode = document.getElementById('filterMode');
       this.filterSize = document.getElementById('filterSize');
@@ -387,13 +388,16 @@
     }
 
     onPlayerJoined(data) {
+      if (data.squad) { this.currentSquad = data.squad; }
       if (this.currentSquad) {
         this.renderSquadDetails(this.currentSquad);
-        this.addSystemMessage(data.username + ' joined the squad!');
+        const name = data.username || (data.player && data.player.username) || 'Someone';
+        this.addSystemMessage(name + ' joined the squad!');
       }
     }
 
     onPlayerLeft(data) {
+      if (data.squad) { this.currentSquad = data.squad; }
       if (this.currentSquad) {
         this.renderSquadDetails(this.currentSquad);
         this.addSystemMessage(data.username + ' left the squad.');
@@ -401,17 +405,20 @@
     }
 
     onPlayerKicked(data) {
+      if (data.squad) { this.currentSquad = data.squad; }
       if (this.currentSquad) {
         this.renderSquadDetails(this.currentSquad);
-        this.addSystemMessage(data.kickedUsername + ' was kicked from the squad.');
+        const name = data.kickedUsername || data.username || 'A player';
+        this.addSystemMessage(name + ' was kicked from the squad.');
       }
-      if (data.kickedUsername === this.player.username) {
+      if ((data.kickedUsername || data.username) === this.player.username) {
         this.onSquadLeft();
         this.showNotification('You were kicked from the squad', 'error');
       }
     }
 
     onReadyUpdate(data) {
+      if (data.squad) { this.currentSquad = data.squad; }
       if (this.currentSquad) {
         this.renderSquadDetails(this.currentSquad);
       }

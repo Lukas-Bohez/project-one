@@ -159,12 +159,15 @@ func main() {
 			log.Printf("UGC API + chat hub enabled")
 		}
 
-		// Squad finder hub (no database required - in-memory only)
-		squadHub := squad.NewHub()
-		go squadHub.Run()
-		mux.Handle("/api/v1/squad/ws", http.HandlerFunc(squadHub.ServeWS))
-		log.Printf("squad finder hub enabled on /api/v1/squad/ws")
-	}
+		}
+
+	// Squad finder hub (no database required - in-memory only).
+	// Registered outside the MySQL gate so the finder is always
+	// available even when the database is down.
+	squadHub := squad.NewHub()
+	go squadHub.Run()
+	mux.Handle("/api/v1/squad/ws", http.HandlerFunc(squadHub.ServeWS))
+	log.Printf("squad finder hub enabled on /api/v1/squad/ws")
 	// Static file serving for frontend pages (HTML, JS, CSS)
 	frontendDir := "/home/student/Project/project-one/frontend"
 	staticHandler := static.New(frontendDir)
