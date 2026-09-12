@@ -170,6 +170,36 @@ registered outside the `if mysqlDB != nil` gate in `cmd/server/main.go`.
 - **`isAllowedOrigin`** now also accepts `https://www.quizthespire.com`.
 - The squad finder starts even when MySQL is unavailable.
 
+## CHANGELOG (2026-09-12) — remember me & quick-match polish
+
+- **Auto-login / remember me**: the client persists the Tenno profile (name,
+  MR, platform, region, clan) in `localStorage` under `squad_finder_profile`
+  after a successful `join_finder`, and auto-connects with it on the next page
+  load (the Go hub honors a non-empty client `id`, and wipes squad membership
+  on disconnect, so replaying the profile is safe). A "Switch" button in the
+  status bar clears the saved profile and returns to the setup screen.
+  Reconnects now reuse the remembered profile instead of reading the (empty)
+  form, and no longer flash the setup panel mid-reconnect — the main panel
+  stays up with a "Reconnecting…" status, falling back to the prefilled setup
+  screen only when all attempts are exhausted.
+
+## CHANGELOG (2026-09-12) — hub deadlock fix (dropdowns empty, quick match stuck)
+
+- **Fixed a fatal re-entrant lock deadlock in `Hub.Run()`'s unregister path.**
+  The unregister case acquires `h.mu` and then called
+  `removePlayerFromSquad`, which locks `h.mu` again. Go mutexes are not
+  re-entrant, so the hub's single event-loop goroutine deadlocked the first
+  time any player disconnected (tab close, refresh, network drop). From that
+  point the hub processed nothing: `filter_options` was never sent (mission /
+  planet / difficulty / region dropdowns stayed empty with only "Select…"),
+  `find_match` never responded (Quick Match stuck on "Searching…"), and
+  `create_squad` was ignored. The unregister case now calls
+  `removePlayerFromSquadLocked` (lock already held). Rebuilt the server and
+  verified end-to-end: registration → squad_list/player_count →
+  filter_options (30 missions, 18 planets, 6 difficulties, 7 regions,
+  4 platforms, 10 languages) → squad_created, and the hub keeps serving
+  clients after disconnects.
+
 ## VERIFIED
 
 Full scripted flow passes over `wss://quizthespire.com/api/v1/squad/ws`:

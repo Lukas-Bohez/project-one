@@ -8,6 +8,8 @@
   --squad-accent: #f5a623;
   --squad-success: #4caf50;
   --squad-danger: #f44336;
+  --squad-error: #f44336;
+  --squad-gold: #f5a623;
   --squad-bg-dark: #0a0e17;
   --squad-bg-card: #141c2b;
   --squad-bg-elevated: #1a2438;
@@ -29,6 +31,8 @@
 /* Light mode */
 [data-theme='light'] {
   --squad-primary: #1565c0;
+  --squad-error: #c62828;
+  --squad-gold: #f57c00;
   --squad-primary-dark: #0d47a1;
   --squad-accent: #f57c00;
   --squad-success: #2e7d32;
@@ -83,6 +87,27 @@
   margin-left: auto;
   color: var(--squad-accent);
   font-weight: 600;
+}
+
+/* Switch player (clears the remembered profile) */
+.squad-status-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--squad-border);
+  background: transparent;
+  color: var(--squad-text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.squad-status-switch:hover {
+  color: var(--squad-primary);
+  border-color: var(--squad-primary);
 }
 
 /* Setup Panel */
@@ -332,8 +357,8 @@
 }
 
 .squad-btn--quick {
-  background: linear-gradient(135deg, var(--squad-accent), #d68910);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, #ef6c00, #e65100);
+  color: #ffffff;
   border: none;
   font-weight: 700;
 }
@@ -355,6 +380,30 @@
   font-size: 0.85rem;
   margin: 0 0 14px 0;
   line-height: 1.5;
+}
+
+.squad-form-row--single {
+  grid-template-columns: 1fr;
+}
+
+/* Note shown when 6-player squads make mission/planet/difficulty irrelevant */
+.squad-quick-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--squad-input-bg);
+  border: 1px dashed var(--squad-border);
+  color: var(--squad-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.squad-quick-note i {
+  color: var(--squad-primary);
+  margin-top: 2px;
 }
 
 .squad-btn--danger {
@@ -1689,7 +1738,7 @@
 
 /* Leave button */
 #leaveBtn {
-  background: linear-gradient(135deg, var(--squad-error), #c62828);
+  background: linear-gradient(135deg, var(--squad-error, #f44336), #c62828);
   color: white;
   border-radius: 10px;
   padding: 11px;

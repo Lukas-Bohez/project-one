@@ -14,8 +14,10 @@
       this.reconnectAttempts = 0;
       this.maxReconnectAttempts = 5;
       this.reconnectDelay = 3000;
+      this.activeProfile = null;
       this.initElements();
       this.initEventListeners();
+      this.initSavedProfile();
     }
 
     initElements() {
@@ -29,6 +31,7 @@
       this.playerForm = document.getElementById('playerForm');
       this.statusIndicator = document.getElementById('statusIndicator');
       this.statusText = document.getElementById('statusText');
+      this.switchPlayerBtn = document.getElementById('switchPlayerBtn');
       this.onlineCount = document.getElementById('onlineCount');
       this.squadListContainer = document.getElementById('squadListContainer');
       this.squadList = document.getElementById('squadList');
@@ -44,6 +47,8 @@
       this.quickPlanetSelect = document.getElementById('quickPlanetSelect');
       this.quickDifficultySelect = document.getElementById('quickDifficultySelect');
       this.quickRegionSelect = document.getElementById('quickRegionSelect');
+      this.quickSizeNote = document.getElementById('quickSizeNote');
+      this.quickRegionRow = document.getElementById('quickRegionRow');
       this.findingMatch = false;
       this.filterMission = document.getElementById('filterMission');
       this.filterPlanet = document.getElementById('filterPlanet');
@@ -96,11 +101,13 @@
 
     initEventListeners() {
       this.playerForm.addEventListener('submit', (e) => { e.preventDefault(); this.connect(); });
+      if (this.switchPlayerBtn) this.switchPlayerBtn.addEventListener('click', () => this.switchProfile());
       this.createSquadBtn.addEventListener('click', () => this.openCreateModal());
       if (this.quickMatchBtn) this.quickMatchBtn.addEventListener('click', () => this.openQuickMatchModal());
       if (this.closeQuickMatchBtn) this.closeQuickMatchBtn.addEventListener('click', () => this.closeQuickMatchModal());
       if (this.cancelQuickMatchBtn) this.cancelQuickMatchBtn.addEventListener('click', () => this.closeQuickMatchModal());
       if (this.confirmQuickMatchBtn) this.confirmQuickMatchBtn.addEventListener('click', () => this.confirmQuickMatch());
+      if (this.quickSizeSelect) this.quickSizeSelect.addEventListener('change', () => this.updateQuickSizeFields());
       this.closeModalBtn.addEventListener('click', () => this.closeCreateModal());
       this.cancelCreateBtn.addEventListener('click', () => this.closeCreateModal());
       this.confirmCreateBtn.addEventListener('click', () => this.createSquad());
@@ -123,26 +130,87 @@
       this.confirmKickBtn.addEventListener('click', () => this.confirmKick());
     }
 
-    connect() {
+    // ---- Remembered profile (auto-login / remember me) ----
+    loadSavedProfile() {
+      try {
+        const raw = localStorage.getItem('squad_finder_profile');
+        if (!raw) return null;
+        const p = JSON.parse(raw);
+        if (!p || !p.username || !this.isValidTennoName(p.username)) return null;
+        return p;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    saveProfile(profile) {
+      try {
+        localStorage.setItem('squad_finder_profile', JSON.stringify({
+          username: profile.username,
+          masteryRank: profile.masteryRank,
+          platform: profile.platform,
+          region: profile.region,
+          clanTag: profile.clanTag,
+          savedAt: Date.now()
+        }));
+      } catch (e) { /* storage unavailable (e.g. private mode) — auto-login just stays off */ }
+    }
+
+    clearSavedProfile() {
+      try { localStorage.removeItem('squad_finder_profile'); } catch (e) { /* ignore */ }
+    }
+
+    isValidTennoName(name) {
+      return typeof name === 'string' && name.length >= 2 && name.length <= 20 &&
+        /^[a-zA-Z0-9_\-\[\]]+$/.test(name);
+    }
+
+    initSavedProfile() {
+      const saved = this.loadSavedProfile();
+      if (!saved) return;
+      this.prefillForm(saved);
+      // Auto-login: skip the setup screen and reconnect with the remembered profile.
+      this.connect(saved);
+    }
+
+    prefillForm(profile) {
+      if (!profile) return;
+      this.playerNameInput.value = profile.username || '';
+      this.playerMRInput.value = profile.masteryRank != null ? profile.masteryRank : '';
+      this.playerPlatformSelect.value = profile.platform || 'PC';
+      this.playerRegionSelect.value = profile.region || 'EU';
+      if (this.playerClanInput) this.playerClanInput.value = profile.clanTag || '';
+    }
+
+    profileFromForm() {
       const name = this.playerNameInput.value.trim();
-      if (!name) { this.showNotification('Please enter your Tenno name', 'warning'); return; }
+      if (!name) { this.showNotification('Please enter your Tenno name', 'warning'); return null; }
       if (name.length < 2 || name.length > 20) {
         this.showNotification('Name must be 2-20 characters', 'warning');
-        return;
+        return null;
       }
       if (!/^[a-zA-Z0-9_\-\[\]]+$/.test(name)) {
         this.showNotification('Name can only contain letters, numbers, underscores, hyphens, and brackets', 'warning');
-        return;
+        return null;
       }
-
-      this.player = {
-        id: 'player_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11),
+      return {
         username: name,
-        masteryRank: parseInt(this.playerMRInput.value) || 1,
+        masteryRank: parseInt(this.playerMRInput.value, 10) || 1,
         platform: this.playerPlatformSelect.value,
         region: this.playerRegionSelect.value,
+        clanTag: this.playerClanInput ? this.playerClanInput.value.trim() : ''
+      };
+    }
+
+    buildPlayer(profile) {
+      return {
+        id: 'player_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11),
+        username: profile.username,
+        masteryRank: profile.masteryRank || 1,
+        platform: profile.platform || 'PC',
+        region: profile.region || 'EU',
         language: 'English',
-        clanTag: this.playerClanInput ? this.playerClanInput.value.trim() : '',
+        clanTag: profile.clanTag || '',
         verificationLevel: 'none',
         trustScore: 50,
         reputation: 0,
@@ -153,6 +221,13 @@
         reports: 0,
         banned: false
       };
+    }
+
+    connect(savedProfile) {
+      const profile = savedProfile || this.profileFromForm();
+      if (!profile) return;
+      this.activeProfile = profile;
+      this.player = this.buildPlayer(profile);
 
       this.setupPanel.style.display = 'none';
       this.mainPanel.style.display = 'block';
@@ -168,6 +243,8 @@
           this.reconnectAttempts = 0;
           this.send('join_finder', { player: this.player });
           this.send('get_filter_options', {});
+          if (this.switchPlayerBtn) this.switchPlayerBtn.style.display = 'inline-flex';
+          this.saveProfile(profile); // remember me — auto-login on the next visit
         };
         this.ws.onmessage = (event) => {
           try {
@@ -186,20 +263,40 @@
     }
 
     attemptReconnect() {
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      if (this.reconnectAttempts < this.maxReconnectAttempts && this.activeProfile) {
         this.reconnectAttempts++;
         const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
         this.updateStatus('reconnecting', 'Reconnecting in ' + (delay / 1000) + 's...');
         setTimeout(() => {
-          if (this.player) {
-            this.setupPanel.style.display = 'block';
-            this.mainPanel.style.display = 'none';
-            this.connect();
-          }
+          if (this.activeProfile) this.connect(this.activeProfile);
         }, delay);
       } else {
-        this.updateStatus('error', 'Connection failed. Please refresh.');
+        // Give up: drop back to the setup screen with the profile prefilled.
+        this.showSetup();
+        this.updateStatus('error', 'Connection failed — try again');
       }
+    }
+
+    showSetup() {
+      this.player = null;
+      if (this.activeProfile) this.prefillForm(this.activeProfile);
+      this.setupPanel.style.display = 'block';
+      this.mainPanel.style.display = 'none';
+      if (this.switchPlayerBtn) this.switchPlayerBtn.style.display = 'none';
+    }
+
+    switchProfile() {
+      if (this.activeProfile) this.prefillForm(this.activeProfile); // keep values editable
+      this.clearSavedProfile();
+      this.activeProfile = null;
+      if (this.ws) {
+        this.ws.onclose = null; // don't auto-reconnect while switching
+        try { this.ws.close(); } catch (e) { /* already closed */ }
+        this.ws = null;
+      }
+      this.currentSquad = null;
+      this.showSetup();
+      this.updateStatus('disconnected', 'Offline');
     }
 
     send(event, data) {
@@ -328,6 +425,7 @@
       this.populateQuickSelect(this.quickPlanetSelect, this.filterOptions.planets || []);
       this.populateQuickSelect(this.quickDifficultySelect, this.filterOptions.difficulties || []);
       this.populateQuickSelect(this.quickRegionSelect, this.filterOptions.regions || []);
+      this.updateQuickSizeFields();
       this.quickMatchModal.style.display = 'flex';
     }
 
@@ -340,17 +438,28 @@
       select.innerHTML = '<option value="">Any</option>' + options.map((o) => '<option>' + this.escapeHtml(o) + '</option>').join('');
     }
 
+    // 6-player squads always run the same fixed mission/planet/difficulty,
+    // so those filters are hidden and replaced with a "not relevant" note.
+    updateQuickSizeFields() {
+      const standard = this.quickSizeSelect && parseInt(this.quickSizeSelect.value, 10) === 6;
+      document.querySelectorAll('.squad-quick-optional').forEach((el) => { el.style.display = standard ? 'none' : ''; });
+      if (this.quickSizeNote) this.quickSizeNote.style.display = standard ? 'flex' : 'none';
+      if (this.quickRegionRow) this.quickRegionRow.classList.toggle('squad-form-row--single', !!standard);
+    }
+
     confirmQuickMatch() {
       if (this.findingMatch) return;
       if (this.currentSquad) { this.showNotification('You are already in a squad', 'warning'); return; }
       this.findingMatch = true;
       if (this.confirmQuickMatchBtn) { this.confirmQuickMatchBtn.disabled = true; }
+      const size = this.quickSizeSelect ? parseInt(this.quickSizeSelect.value, 10) || 6 : 6;
+      const standard = size === 6; // mission/planet/difficulty are fixed for 6-player squads
       this.send('find_match', {
         mode: this.quickModeSelect ? this.quickModeSelect.value : 'casual',
-        squadSize: this.quickSizeSelect ? parseInt(this.quickSizeSelect.value) || 6 : 6,
-        mission: this.quickMissionSelect ? this.quickMissionSelect.value : '',
-        planet: this.quickPlanetSelect ? this.quickPlanetSelect.value : '',
-        difficulty: this.quickDifficultySelect ? this.quickDifficultySelect.value : '',
+        squadSize: size,
+        mission: standard ? '' : (this.quickMissionSelect ? this.quickMissionSelect.value : ''),
+        planet: standard ? '' : (this.quickPlanetSelect ? this.quickPlanetSelect.value : ''),
+        difficulty: standard ? '' : (this.quickDifficultySelect ? this.quickDifficultySelect.value : ''),
         region: this.quickRegionSelect ? this.quickRegionSelect.value : ''
       });
       this.closeQuickMatchModal();

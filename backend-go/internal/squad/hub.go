@@ -122,7 +122,10 @@ func (h *Hub) Run() {
 			if _, ok := h.clients[c.player.ID]; ok {
 				delete(h.clients, c.player.ID)
 				close(c.send)
-				h.removePlayerFromSquad(c.player.ID)
+				// Lock is already held here; use the Locked variant.
+				// (removePlayerFromSquad would re-lock h.mu and deadlock
+				// the hub's event loop on the first disconnect.)
+				h.removePlayerFromSquadLocked(c.player.ID)
 			}
 			h.mu.Unlock()
 			log.Printf("squad: player %s disconnected", c.player.Username)

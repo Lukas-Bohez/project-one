@@ -55,6 +55,9 @@
         <span class="squad-status-indicator" id="statusIndicator"></span>
         <span class="squad-status-text" id="statusText">Connecting...</span>
         <span class="squad-online-count" id="onlineCount">0 online</span>
+        <button class="squad-status-switch" id="switchPlayerBtn" type="button" title="Connect as a different Tenno" style="display: none">
+          <i class="fa-solid fa-user-pen"></i> Switch
+        </button>
       </div>
 
       <!-- Setup Panel -->
@@ -404,17 +407,17 @@
             </div>
           </div>
           <div class="squad-form-row">
-            <div class="squad-form-group">
+            <div class="squad-form-group squad-quick-optional">
               <label for="quickMissionSelect">Mission Type</label>
               <select id="quickMissionSelect"></select>
             </div>
-            <div class="squad-form-group">
+            <div class="squad-form-group squad-quick-optional">
               <label for="quickPlanetSelect">Planet</label>
               <select id="quickPlanetSelect"></select>
             </div>
           </div>
-          <div class="squad-form-row">
-            <div class="squad-form-group">
+          <div class="squad-form-row" id="quickRegionRow">
+            <div class="squad-form-group squad-quick-optional">
               <label for="quickDifficultySelect">Difficulty</label>
               <select id="quickDifficultySelect"></select>
             </div>
@@ -423,6 +426,10 @@
               <select id="quickRegionSelect"></select>
             </div>
           </div>
+          <p class="squad-quick-note" id="quickSizeNote" style="display: none">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Mission Type, Planet and Difficulty are not relevant for 6-player squads.</span>
+          </p>
         </div>
         <div class="squad-modal-footer">
           <button class="squad-btn squad-btn--secondary" id="cancelQuickMatchBtn">Cancel</button>
