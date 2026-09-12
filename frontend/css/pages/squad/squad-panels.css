@@ -1,0 +1,367 @@
+/* Squad Finder Panel Styles - Part 2 */
+
+/* Main Layout */
+.squad-main {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: calc(100vh - 120px);
+}
+
+.squad-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--squad-bg-dark);
+  border-right: 1px solid var(--squad-border);
+}
+
+.squad-panel--center {
+  border-right: none;
+}
+
+.squad-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--squad-border);
+}
+
+.squad-panel-header h3 {
+  color: var(--squad-text);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Filters */
+.squad-filters {
+  padding: 12px;
+  border-bottom: 1px solid var(--squad-border);
+  background: var(--squad-bg-card);
+}
+
+.squad-filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.squad-filter-row select {
+  padding: 6px 10px;
+  background: var(--squad-bg-elevated);
+  border: 1px solid var(--squad-border);
+  border-radius: 6px;
+  color: var(--squad-text);
+  font-size: 0.8rem;
+}
+
+.squad-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--squad-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.squad-filter-checkbox input {
+  accent-color: var(--squad-primary);
+}
+
+/* Squad List */
+.squad-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.squad-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--squad-text-muted);
+  text-align: center;
+  padding: 20px;
+}
+
+.squad-empty i {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+/* Squad Card */
+.squad-card {
+  background: var(--squad-bg-card);
+  border: 1px solid var(--squad-border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.squad-card:hover {
+  border-color: var(--squad-primary);
+  box-shadow: 0 0 12px var(--squad-glow);
+}
+
+.squad-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.squad-card-name {
+  color: var(--squad-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.squad-card-slots {
+  font-size: 0.75rem;
+  color: var(--squad-accent);
+  font-weight: 600;
+}
+
+.squad-card-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.squad-card-tag {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  background: var(--squad-bg-elevated);
+  border-radius: 4px;
+  color: var(--squad-text-muted);
+}
+
+.squad-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--squad-text-muted);
+}
+
+.squad-card-status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.squad-card-status.open {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--squad-success);
+}
+
+.squad-card-status.full {
+  background: rgba(244, 67, 54, 0.2);
+  color: var(--squad-danger);
+}
+
+/* Current Squad Panel */
+.squad-current {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.squad-no-squad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--squad-text-muted);
+  text-align: center;
+}
+
+.squad-no-squad i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.squad-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.squad-details-header h3 {
+  color: var(--squad-text);
+  margin: 0;
+}
+
+.squad-details-status {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--squad-success);
+}
+
+.squad-details-status.full {
+  background: rgba(244, 67, 54, 0.2);
+  color: var(--squad-danger);
+}
+
+.squad-details-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.squad-details-leader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--squad-bg-elevated);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+}
+
+.squad-details-leader #leaderName {
+  color: var(--squad-text);
+  font-weight: 600;
+}
+
+.squad-tag {
+  padding: 4px 10px;
+  background: var(--squad-bg-elevated);
+  border: 1px solid var(--squad-border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--squad-text);
+}
+
+/* Players List */
+.squad-players {
+  margin-bottom: 16px;
+}
+
+.squad-players h4 {
+  color: var(--squad-text);
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.squad-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.squad-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--squad-bg-card);
+  border: 1px solid var(--squad-border);
+  border-radius: 8px;
+}
+
+.squad-player-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--squad-primary), var(--squad-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: white;
+}
+
+.squad-player-info {
+  flex: 1;
+}
+
+.squad-player-name {
+  color: var(--squad-text);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.squad-player-meta {
+  color: var(--squad-text-muted);
+  font-size: 0.75rem;
+}
+
+.squad-player-ready {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--squad-text-muted);
+}
+
+.squad-player-ready.ready {
+  background: var(--squad-success);
+  box-shadow: 0 0 6px var(--squad-success);
+}
+
+.squad-player-leader {
+  font-size: 0.7rem;
+  color: var(--squad-accent);
+  font-weight: 600;
+}
+
+/* Squad Actions */
+.squad-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.squad-actions .squad-btn {
+  flex: 1;
+}
+
+/* Squad card badges */
+.squad-card-mode {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 60px;
+}
+.squad-card-mode i {
+  font-size: 10px;
+}
+.squad-card-mode--casual {
+  color: var(--c-text-muted);
+}
+.squad-card-mode--serious {
+  color: var(--c-accent);
+}
+.squad-card-size {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.squad-card-size i {
+  font-size: 10px;
+  opacity: 0.7;
+}

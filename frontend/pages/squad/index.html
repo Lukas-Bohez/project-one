@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (function() {
+        var s = localStorage.getItem('spire-theme');
+        var p = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var t = s || (p ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Find your Warframe squad! Create or join 6-player groups for missions, with real-time chat to coordinate your team." />
+    <title>Warframe Squad Finder | Quiz The Spire</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/squad/squad.css" />
+    <link rel="stylesheet" href="/css/pages/squad/squad-panels.css" />
+    <link rel="stylesheet" href="/css/pages/squad/squad-chat.css" />
+    <link rel="stylesheet" href="/css/footer.css" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <meta property="og:title" content="Warframe Squad Finder | Quiz The Spire" />
+    <meta property="og:description" content="Find your Warframe squad! Create or join 6-player groups for missions." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://quizthespire.com/pages/squad/" />
+    <link rel="canonical" href="https://quizthespire.com/pages/squad/" />
+    <style>
+      .c-info-btn {
+        background: transparent;
+        border: 1px solid currentColor;
+        color: inherit;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 14px;
+        line-height: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="c-header">
+      <a href="/" class="c-header__link">
+        <h1 class="c-header__title gamepad">Quiz The Spire</h1>
+      </a>
+      <button id="infoBtn" class="c-info-btn" title="About Squad Finder">
+        <i class="fa-solid fa-circle-info"></i>
+      </button>
+    </header>
+
+    <main class="squad-app">
+      <!-- Connection Status -->
+      <div class="squad-status-bar" id="statusBar">
+        <span class="squad-status-indicator" id="statusIndicator"></span>
+        <span class="squad-status-text" id="statusText">Connecting...</span>
+        <span class="squad-online-count" id="onlineCount">0 online</span>
+      </div>
+
+      <!-- Setup Panel -->
+      <section class="squad-setup" id="setupPanel">
+        <div class="squad-setup-card">
+          <div class="squad-setup-header">
+            <div class="squad-setup-icon">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <h2 class="squad-setup-title">Warframe Squad Finder</h2>
+          </div>
+          <p class="squad-setup-desc">Find 5 other Tenno to tackle missions together!</p>
+          <div class="squad-welcome">
+            <div class="squad-welcome-icon">
+              <i class="fa-solid fa-hand-sparkles"></i>
+            </div>
+            <div class="squad-welcome-text">
+              <h4>Welcome, Tenno!</h4>
+              <p>Find your squad, coordinate missions, and help conquer the Origin System together.</p>
+            </div>
+          </div>
+
+
+          <div class="squad-security-notice">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Your safety matters. We verify players and track trust scores to keep the community secure. Never share personal information.</span>
+          </div>
+          <div class="squad-account-link">
+            <h4><i class="fa-solid fa-link"></i> Link Warframe Account</h4>
+            <p>Verify your account to build trust and unlock premium features.</p>
+            <ul class="squad-account-link-steps">
+              <li><i class="fa-solid fa-check"></i> Enter your exact in-game name</li>
+              <li><i class="fa-solid fa-check"></i> Complete verification via profile</li>
+              <li><i class="fa-solid fa-check"></i> Build reputation by completing missions</li>
+            </ul>
+          </div>
+
+          <form id="playerForm" autocomplete="off">
+            <div class="squad-form-group">
+              <label for="playerName">Tenno Name</label>
+              <input type="text" id="playerName" placeholder="Enter your in-game name" maxlength="20" required />
+            </div>
+
+            <div class="squad-form-row">
+              <div class="squad-form-group">
+                <label for="playerPlatform">Platform</label>
+                <select id="playerPlatform">
+                  <option value="PC">PC</option>
+                  <option value="PlayStation">PlayStation</option>
+                  <option value="Xbox">Xbox</option>
+                  <option value="Switch">Switch</option>
+                </select>
+              </div>
+
+              <div class="squad-form-group">
+                <label for="playerRegion">Region</label>
+                <select id="playerRegion">
+                  <option value="EU">EU</option>
+                  <option value="NA">NA</option>
+                  <option value="OC">OC</option>
+                  <option value="ASIA">Asia</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="squad-form-row">
+              <div class="squad-form-group">
+                <label for="playerMR">Mastery Rank (0-30)</label>
+                <input type="number" id="playerMR" placeholder="e.g. 10" min="0" max="30" />
+              </div>
+
+              <div class="squad-form-group">
+                <label for="playerClan">Clan Tag (optional)</label>
+                <input type="text" id="playerClan" placeholder="e.g. SPIRE" maxlength="10" />
+              </div>
+            </div>
+
+            <button type="submit" class="squad-btn squad-btn--primary" id="connectBtn">
+              <i class="fa-solid fa-link"></i> Connect
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Main Panel (shown after connection) -->
+      <section class="squad-main" id="mainPanel" style="display: none">
+        <div class="squad-layout">
+          <!-- Squad List -->
+          <div class="squad-list-panel">
+            <div class="squad-list-header">
+              <h3><i class="fa-solid fa-list"></i> Available Squads
+                <span class="squad-count-badge" id="squadCount">0</span>
+              </h3>
+              <div class="squad-filter-row">
+                <label for="filterMission">Mission</label>
+                <select id="filterMission">
+                  <option value="">All</option>
+                </select>
+              </div>
+              <div class="squad-filter-row">
+                <label for="filterPlanet">Planet</label>
+                <select id="filterPlanet">
+                  <option value="">All</option>
+                </select>
+              </div>
+              <div class="squad-filter-row">
+                <label for="filterDifficulty">Difficulty</label>
+                <select id="filterDifficulty">
+                  <option value="">All</option>
+                </select>
+              </div>
+              <div class="squad-filter-row">
+                <label for="filterRegion">Region</label>
+                <select id="filterRegion">
+                  <option value="">All</option>
+                </select>
+              </div>
+              <div class="squad-filter-row">
+                <label for="filterMode">Mode</label>
+                <select id="filterMode">
+                  <option value="">All</option>
+                  <option value="casual">Casual</option>
+                  <option value="serious">Serious</option>
+                </select>
+              </div>
+              <div class="squad-filter-row">
+                <label for="filterSize">Size</label>
+                <select id="filterSize">
+                  <option value="">All</option>
+                  <option value="4">4 Players</option>
+                  <option value="6">6 Players</option>
+                </select>
+              </div>
+              <div class="squad-filter-row">
+                <label class="squad-filter-checkbox">
+                  <input type="checkbox" id="filterOpenOnly" checked />
+                  Open Only
+                </label>
+              </div>
+            </div>
+            <div class="squad-list-scroll" id="squadListContainer">
+              <div class="squad-list" id="squadList">
+                <div class="squad-empty-state" id="squadEmptyState">
+                  <i class="fa-solid fa-users-slash"></i>
+                  <p>No squads available. Create one!</p>
+                </div>
+              </div>
+            </div>
+          <a class="squad-list-header" style="text-align: right; margin-top: 16px; display: block;">
+            <button class="squad-btn squad-btn--primary" id="createSquadBtn">
+              <i class="fa-solid fa-plus"></i> Create Squad
+            </button>
+          </a>
+        </div>
+
+        <!-- Squad Detail / Current Squad -->
+        <div class="squad-detail-panel" id="squadDetails" style="display: none">
+          <div class="squad-detail-header">
+            <div class="squad-detail-title" id="squadDetailTitle">
+              <h2 class="squad-detail-name" id="squadName"></h2>
+              <div class="squad-detail-meta" id="squadMeta"></div>
+            </div>
+            <button class="squad-btn squad-btn--secondary squad-close-btn" id="closeSquadBtn" title="Back to list">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+          </div>
+
+          <div class="squad-detail-content">
+            <!-- Squad Info -->
+            <div class="squad-info-block">
+              <div class="squad-info-row">
+                <i class="fa-solid fa-flag"></i>
+                <span><strong id="squadMission"></strong></span>
+              </div>
+              <div class="squad-info-row">
+                <i class="fa-solid fa-globe"></i>
+                <span><strong id="squadPlanet"></strong></span>
+              </div>
+              <div class="squad-info-row">
+                <i class="fa-solid fa-lock"></i>
+                <span><strong id="squadDifficulty"></strong></span>
+              </div>
+              <div class="squad-info-row">
+                <i class="fa-solid fa-language"></i>
+                <span><strong id="squadLanguage"></strong></span>
+              </div>
+              <div class="squad-info-row" id="squadStatusRow">
+                <i class="fa-solid fa-circle"></i>
+                <span>Status: <strong id="squadStatus">Searching...</strong></span>
+              </div>
+            </div>
+
+            <!-- Squad Leader -->
+            <div class="squad-leader-block" id="squadLeaderBlock">
+              <h4>Squad Leader</h4>
+              <div class="squad-leader-card">
+                <div class="squad-leader-avatar" id="leaderAvatar"></div>
+                <div class="squad-leader-info">
+                  <div class="squad-leader-name" id="leaderName"></div>
+                  <div class="squad-leader-meta" id="leaderMeta"></div>
+                  <div class="squad-leader-badges" id="leaderBadges"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Players -->
+            <div class="squad-players-block">
+              <h4>Squad Members
+                <span class="squad-count-badge squad-count-badge--small" id="playerCount">0/6</span>
+              </h4>
+              <div class="squad-players-list" id="playersList"></div>
+            </div>
+
+            <!-- Squad Actions (for leader only) -->
+            <div class="squad-actions-block" id="squadActions" style="display: none">
+              <h4>Squad Actions</h4>
+              <div class="squad-actions-row">
+                <button class="squad-btn squad-btn--secondary" id="updateSquadBtn">
+                  <i class="fa-solid fa-pen"></i> Update Settings
+                </button>
+                <button class="squad-btn squad-btn--danger" id="kickPlayerBtn">
+                  <i class="fa-solid fa-user-minus"></i> Kick Player
+                </button>
+              </div>
+            </div>
+
+            <!-- Player Actions -->
+            <div class="squad-player-actions">
+              <button class="squad-btn squad-btn--primary squad-ready-btn" id="readyBtn">
+                <i class="fa-solid fa-check-circle"></i> Mark Ready
+              </button>
+              <button class="squad-btn squad-btn--danger" id="leaveBtn">
+                <i class="fa-solid fa-right-from-bracket"></i> Leave Squad
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat -->
+          <div class="squad-chat" id="chatPanel">
+            <div class="squad-chat-header">
+              <h4><i class="fa-solid fa-comments"></i> Squad Chat</h4>
+            </div>
+            <div class="squad-chat-messages" id="chatMessages">
+              <div class="squad-chat-system">
+                <p>Welcome to the Squad Finder! Join or create a squad to start chatting.</p>
+              </div>
+            </div>
+            <div class="squad-chat-input">
+              <input type="text" id="chatInput" placeholder="Type a message..." maxlength="500" disabled />
+              <button class="squad-btn squad-btn--primary" id="sendChatBtn" disabled>
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Create Squad Modal -->
+    <div class="squad-modal" id="createSquadModal" style="display: none">
+      <div class="squad-modal-content">
+        <div class="squad-modal-header">
+          <h3>Create a Squad</h3>
+          <button class="squad-modal-close" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="squad-modal-body">
+          <div class="squad-form-group">
+            <label for="squadNameInput">Squad Name</label>
+            <input type="text" id="squadNameInput" placeholder="Enter squad name" maxlength="40" />
+          </div>
+          <div class="squad-form-row">
+            <div class="squad-form-group">
+              <label for="squadMissionSelect">Mission Type</label>
+              <select id="squadMissionSelect"></select>
+            </div>
+            <div class="squad-form-group">
+              <label for="squadPlanetSelect">Planet</label>
+              <select id="squadPlanetSelect"></select>
+            </div>
+          </div>
+          <div class="squad-form-row">
+            <div class="squad-form-group">
+              <label for="squadDifficultySelect">Difficulty</label>
+              <select id="squadDifficultySelect"></select>
+            </div>
+            <div class="squad-form-group">
+              <label for="squadRegionSelect">Region</label>
+              <select id="squadRegionSelect"></select>
+            </div>
+          </div>
+          <div class="squad-form-group">
+            <label for="squadLanguageSelect">Language</label>
+            <select id="squadLanguageSelect"></select>
+          </div>
+          <div class="squad-form-row">
+            <div class="squad-form-group">
+              <label for="squadSizeSelect">Squad Size</label>
+              <select id="squadSizeSelect">
+                <option value="6">6 Players (Standard)</option>
+                <option value="4">4 Players (Quick)</option>
+              </select>
+            </div>
+            <div class="squad-form-group">
+              <label for="squadModeSelect">Mode</label>
+              <select id="squadModeSelect">
+                <option value="casual">Casual</option>
+                <option value="serious">Serious</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="squad-modal-footer">
+          <button class="squad-btn squad-btn--secondary" id="cancelCreateBtn">Cancel</button>
+          <button class="squad-btn squad-btn--primary" id="confirmCreateBtn">
+            <i class="fa-solid fa-plus"></i> Create Squad
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div class="squad-modal" id="infoModal" style="display: none">
+      <div class="squad-modal-content">
+        <div class="squad-modal-header">
+          <h3>About Squad Finder</h3>
+          <button class="squad-modal-close" id="closeInfoModalBtn">&times;</button>
+        </div>
+        <div class="squad-modal-body">
+          <p>Find other Tenno to tackle Warframe missions together!</p>
+          <h4>How it works:</h4>
+          <ul class="squad-account-link-steps">
+            <li><i class="fa-solid fa-check"></i> Enter your Tenno name and connect</li>
+            <li><i class="fa-solid fa-check"></i> Browse available squads or create your own</li>
+            <li><i class="fa-solid fa-check"></i> Join a squad and chat with your team</li>
+            <li><i class="fa-solid fa-check"></i> Mark ready when prepared to start</li>
+          </ul>
+          <h4>Trust & Safety:</h4>
+          <p>Players build trust scores through verification and completing missions. Look for verified badges when choosing squads.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kick Modal -->
+    <div class="squad-modal" id="kickModal" style="display: none">
+      <div class="squad-modal-content">
+        <div class="squad-modal-header">
+          <h3>Kick Player</h3>
+          <button class="squad-modal-close" id="closeKickModalBtn">&times;</button>
+        </div>
+        <div class="squad-modal-body">
+          <p style="color: #f87171; margin-bottom: 12px;">⚠️ Kicking a player will remove them forcibly.</p>
+          <div class="squad-form-group">
+            <label for="kickPlayerSelect">Select Player</label>
+            <select id="kickPlayerSelect"></select>
+          </div>
+        </div>
+        <div class="squad-modal-footer">
+          <button class="squad-btn squad-btn--secondary" id="cancelKickBtn">Cancel</button>
+          <button class="squad-btn squad-btn--danger" id="confirmKickBtn">
+            <i class="fa-solid fa-user-minus"></i> Kick
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/pages/squad/squad-client.js"></script>
+  </body>
+</html>

@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/api/handlers"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/static"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/chat"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/config"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/db"
 	sentlehandlers "github.com/Lukas-Bohez/project-one/backend-go/internal/handlers"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/quiz"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/squad"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/ugc"
 
 	"gorm.io/driver/mysql"
@@ -156,7 +158,26 @@ func main() {
 			mux.Handle("/api/v1/chat/ws", hub.ServeWS())
 			log.Printf("UGC API + chat hub enabled")
 		}
+
+		// Squad finder hub (no database required - in-memory only)
+		squadHub := squad.NewHub()
+		go squadHub.Run()
+		mux.Handle("/api/v1/squad/ws", http.HandlerFunc(squadHub.ServeWS))
+		log.Printf("squad finder hub enabled on /api/v1/squad/ws")
 	}
+	// Static file serving for frontend pages (HTML, JS, CSS)
+	frontendDir := "/home/student/Project/project-one/frontend"
+	staticHandler := static.New(frontendDir)
+	// Serve /pages/squad/ as the squad finder page
+	mux.Handle("/pages/squad/", staticHandler)
+	mux.Handle("/pages/squad", staticHandler)
+	mux.Handle("/js/pages/squad/", staticHandler)
+	mux.Handle("/css/pages/squad/", staticHandler)
+	// Static file serving for general frontend
+	mux.Handle("/css/", staticHandler)
+	mux.Handle("/js/", staticHandler)
+	mux.Handle("/pages/", staticHandler)
+	mux.Handle("/favicon.ico", staticHandler)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = fmt.Fprint(w, `{"service":"quizthespire-go","status":"running"}`)

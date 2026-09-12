@@ -6,6 +6,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/coder/websocket v1.8.15
 	github.com/go-sql-driver/mysql v1.8.1
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.2

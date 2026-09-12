@@ -1,0 +1,121 @@
+# Warframe Squad Finder
+
+**Location**: `https://quizthespire.com/pages/squad/`
+
+## Project Structure
+
+```
+project-one/
+├── backend-go/
+│   └── internal/squad/
+│       ├── models.go          (180+ lines) - Data structures
+│       ├── hub.go            (190+ lines) - WebSocket hub
+│       ├── handlers.go       (~80 lines)  - Event routing
+│       ├── handlers_extra.go (280+ lines) - Extra handlers
+│       ├── handlers_squad.go (145 lines)  - Squad CRUD
+│       └── README.md         - Protocol documentation
+├── frontend/
+│   ├── pages/squad/
+│   │   └── index.html          (370+ lines) - Main UI
+│   ├── css/pages/squad/
+│   │   ├── squad.css           (500+ lines) - Core styles
+│   │   ├── squad-panels.css    (335 lines)  - Panel layouts
+│   │   └── squad-chat.css      (217 lines)  - Chat styles
+│   └── js/pages/squad/
+│       └── squad-client.js     (680+ lines) - WebSocket client
+└── cmd/server/main.go         (255 lines)  - Server entry point
+```
+
+---
+
+## QUICK START - How to Run
+
+```bash
+cd /home/student/Project/project-one/backend-go
+export PATH=/usr/local/go/bin:$PATH
+
+go build -o bin/quizthespire-server ./cmd/server
+
+# Run (serves on port 8081):
+PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' ./bin/quizthespire-server
+```
+
+---
+
+## BACKEND - WebSocket API
+
+### Connection
+- **URL**: `ws://your-host/api/v1/squad/ws`
+- **Protocol**: Standard WebSocket, messages are JSON `{event, data}`
+
+### Events to Send (Client → Server)
+
+| Event | Data Shape | Description |
+|-------|------------|-------------|
+| `join_finder` | `{player: Player}` | Register player when connecting |
+| `get_squad_list` | `{filters?: FilterState}` | Request filtered squad list |
+| `create_squad` | `{name, missionType, planet, difficulty, region, language, squadSize, mode, maxPlayers}` | Create a new squad |
+| `join_squad` | `{squadId: string}` | Join an existing squad |
+| `leave_squad` | `{squadId: string}` | Leave current squad |
+| `toggle_ready` | `{squadId: string}` | Toggle ready status |
+| `chat_message` | `{squadId, content: string}` | Send chat message |
+| `kick_player` | `{squadId, playerId}` | Kick a player (leader only) |
+| `update_squad` | `{squadId, name?, missionType?, planet?, difficulty?, region?, language?, squadSize?, mode?}` | Update squad settings |
+| `get_filter_options` | `{}` | Request available filter options |
+| `set_activity` | `{status: string, game?: string}` | Update online status |
+| `recent_played` | `{missionType?, planet?, difficulty?}` | Report recent mission |
+
+### Events Received (Server → Client)
+
+| Event | Data Shape | Description |
+|-------|------------|-------------|
+| `squad_list` | `{squads: Squad[]}` | List of available squads |
+| `squad_created` | `{squad: Squad}` | Squad created confirmation |
+| `squad_joined` | `{squad: Squad}` | Joined squad confirmation |
+| `squad_left` | `{}` | Left squad |
+| `player_joined` | `{player: Player}` | New player joined your squad |
+| `player_left` | `{playerId: string}` | Player left your squad |
+| `player_kicked` | `{kickedUsername: string}` | A player was kicked |
+| `ready_update` | `{squad: Squad}` | Ready status changed |
+| `squad_updated` | `{squad: Squad}` | Squad settings updated |
+| `chat_message` | `{message: {senderName, content, timestamp, type}}` | Chat message received |
+| `player_count` | `{online: int}` | Online player count updated |
+| `filter_options` | `{missions[], planets[], difficulties[], regions[], languages[]}` | Available filter options |
+| `kicked` | `{}` | You were kicked from a squad |
+| `error` | `{message: string}` | Error occurred |
+
+---
+
+## DATA MODELS
+
+### Player
+```json
+{
+  "id": "string",
+  "username": "string (2-20 chars, alphanumeric + _-[])",
+  "masteryRank": "int (0-30)",
+  "platform": "string (PC | PlayStation | Xbox | Switch)",
+  "region": "string (EU | NA | OC | ASIA)",
+  "language": "string (e.g. English)",
+  "clanTag": "string (optional, max 10)",
+  "verificationLevel": "string (none | pending | verified | premium)",
+  "trustScore": "int (0-100)",
+  "reputation": "int",
+  "totalMissions": "int",
+  "onlineStatus": "string (online | in_game | away | offline)",
+  "lastActive": "string (ISO date)",
+  "isPremium": "bool",
+  "reports": "int",
+  "banned": "bool",
+  "matchPref": "object (preferredMission, preferredPlanet, preferredDifficulty)",
+  "recentActivity": "array of recent activity entries"
+}
+```
+
+### Squad
+```json
+{
+  "id": "string",
+  "name": "string (custom lobby name, max 40)",
+  "missionType": "string (e.g. Survival, Defense, Capture, Interception, Excavation, Rally, Archwing, Orb, Sortie, Steel Path)",
+  "planet": "string (e.g. Earth, Venus, Mercury, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Sedna, Lua, Phobos, Eris, Stalker,clo...
