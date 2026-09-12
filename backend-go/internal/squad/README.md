@@ -64,6 +64,7 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
 | `get_filter_options` | `{}` | Request available filter options |
 | `set_activity` | `{status: string, game?: string}` | Update online status |
 | `recent_played` | `{missionType?, planet?, difficulty?}` | Report recent mission |
+| `find_match` | `{mode?, squadSize?, mission?, planet?, difficulty?, region?, language?}` | Quick Match: join random open squad or auto-create |
 
 ### Events Received (Server → Client)
 
@@ -82,6 +83,7 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
 | `player_count` | `{online: int}` | Online player count updated |
 | `filter_options` | `{missions[], planets[], difficulties[], regions[], languages[]}` | Available filter options |
 | `kicked` | `{}` | You were kicked from a squad |
+| `match_found` | `{squad: Squad, created: bool}` | Quick Match result (joined existing or auto-created) |
 | `error` | `{message: string}` | Error occurred |
 
 ---

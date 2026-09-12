@@ -33,6 +33,18 @@
       this.squadListContainer = document.getElementById('squadListContainer');
       this.squadList = document.getElementById('squadList');
       this.createSquadBtn = document.getElementById('createSquadBtn');
+      this.quickMatchBtn = document.getElementById('quickMatchBtn');
+      this.quickMatchModal = document.getElementById('quickMatchModal');
+      this.closeQuickMatchBtn = document.getElementById('closeQuickMatchBtn');
+      this.cancelQuickMatchBtn = document.getElementById('cancelQuickMatchBtn');
+      this.confirmQuickMatchBtn = document.getElementById('confirmQuickMatchBtn');
+      this.quickModeSelect = document.getElementById('quickModeSelect');
+      this.quickSizeSelect = document.getElementById('quickSizeSelect');
+      this.quickMissionSelect = document.getElementById('quickMissionSelect');
+      this.quickPlanetSelect = document.getElementById('quickPlanetSelect');
+      this.quickDifficultySelect = document.getElementById('quickDifficultySelect');
+      this.quickRegionSelect = document.getElementById('quickRegionSelect');
+      this.findingMatch = false;
       this.filterMission = document.getElementById('filterMission');
       this.filterPlanet = document.getElementById('filterPlanet');
       this.filterDifficulty = document.getElementById('filterDifficulty');
@@ -85,6 +97,10 @@
     initEventListeners() {
       this.playerForm.addEventListener('submit', (e) => { e.preventDefault(); this.connect(); });
       this.createSquadBtn.addEventListener('click', () => this.openCreateModal());
+      if (this.quickMatchBtn) this.quickMatchBtn.addEventListener('click', () => this.openQuickMatchModal());
+      if (this.closeQuickMatchBtn) this.closeQuickMatchBtn.addEventListener('click', () => this.closeQuickMatchModal());
+      if (this.cancelQuickMatchBtn) this.cancelQuickMatchBtn.addEventListener('click', () => this.closeQuickMatchModal());
+      if (this.confirmQuickMatchBtn) this.confirmQuickMatchBtn.addEventListener('click', () => this.confirmQuickMatch());
       this.closeModalBtn.addEventListener('click', () => this.closeCreateModal());
       this.cancelCreateBtn.addEventListener('click', () => this.closeCreateModal());
       this.confirmCreateBtn.addEventListener('click', () => this.createSquad());
@@ -209,6 +225,7 @@
         case 'player_count': this.onlineCount.textContent = (data.online || 0) + ' online'; break;
         case 'filter_options': this.onFilterOptions(data); break;
         case 'kicked': this.onKicked(); this.updateStatus('disconnected', 'Kicked'); break;
+        case 'match_found': this.onMatchFound(data); break;
         case 'error': this.showNotification(data && data.message ? data.message : 'An error occurred', 'error'); break;
         default: console.log('Unknown event:', event, data);
       }
@@ -304,6 +321,48 @@
       this.createSquadModal.style.display = 'none';
     }
 
+    openQuickMatchModal() {
+      if (this.currentSquad) { this.showNotification('You are already in a squad', 'warning'); return; }
+      if (!this.quickMatchModal) return;
+      this.populateQuickSelect(this.quickMissionSelect, this.filterOptions.missions || []);
+      this.populateQuickSelect(this.quickPlanetSelect, this.filterOptions.planets || []);
+      this.populateQuickSelect(this.quickDifficultySelect, this.filterOptions.difficulties || []);
+      this.populateQuickSelect(this.quickRegionSelect, this.filterOptions.regions || []);
+      this.quickMatchModal.style.display = 'flex';
+    }
+
+    closeQuickMatchModal() {
+      if (this.quickMatchModal) this.quickMatchModal.style.display = 'none';
+    }
+
+    populateQuickSelect(select, options) {
+      if (!select) return;
+      select.innerHTML = '<option value="">Any</option>' + options.map((o) => '<option>' + this.escapeHtml(o) + '</option>').join('');
+    }
+
+    confirmQuickMatch() {
+      if (this.findingMatch) return;
+      if (this.currentSquad) { this.showNotification('You are already in a squad', 'warning'); return; }
+      this.findingMatch = true;
+      if (this.confirmQuickMatchBtn) { this.confirmQuickMatchBtn.disabled = true; }
+      this.send('find_match', {
+        mode: this.quickModeSelect ? this.quickModeSelect.value : 'casual',
+        squadSize: this.quickSizeSelect ? parseInt(this.quickSizeSelect.value) || 6 : 6,
+        mission: this.quickMissionSelect ? this.quickMissionSelect.value : '',
+        planet: this.quickPlanetSelect ? this.quickPlanetSelect.value : '',
+        difficulty: this.quickDifficultySelect ? this.quickDifficultySelect.value : '',
+        region: this.quickRegionSelect ? this.quickRegionSelect.value : ''
+      });
+      this.closeQuickMatchModal();
+      this.showNotification('Searching for a squad...', 'info');
+      setTimeout(() => this.resetQuickMatchBtn(), 9000);
+    }
+
+    resetQuickMatchBtn() {
+      this.findingMatch = false;
+      if (this.confirmQuickMatchBtn) { this.confirmQuickMatchBtn.disabled = false; }
+    }
+
     populateSelect(select, options) {
       select.innerHTML = '<option value="">Select...</option>' + options.map((o) => '<option value="' + this.escapeHtml(o) + '">' + this.escapeHtml(o) + '</option>').join('');
     }
@@ -371,7 +430,20 @@
       this.addSystemMessage('Squad "' + data.name + '" created!')
     }
 
-    onSquadJoined(data) {
+    onMatchFound(data) {
+      this.resetQuickMatchBtn();
+      const squad = (data && data.squad) ? data.squad : data;
+      if (!squad || !squad.id) { this.showNotification('No match found, try again', 'warning'); return; }
+      this.currentSquad = squad;
+      this.squadDetails.style.display = 'block';
+      this.squadListContainer.style.display = 'none';
+      this.renderSquadDetails(squad);
+      this.enableChat();
+      if (data && data.created) { this.addSystemMessage('No open squad matched, started a new one for you!'); }
+      else { this.addSystemMessage('Quick match found! Welcome!'); }
+    }
+
+        onSquadJoined(data) {
       this.currentSquad = data;
       this.squadDetails.style.display = 'block';
       this.squadListContainer.style.display = 'none';

@@ -967,6 +967,193 @@ c.sendEvent("mission_plans", map[string]interface{}{
 })
 }
 
+// HandleFindMatch pairs the player with a random open squad matching their
+// preferences, or creates a new auto-named squad when nothing matches.
+func (h *Hub) HandleFindMatch(c *client, data json.RawMessage) {
+	var req struct {
+		Mode       string `json:"mode"`       // "casual" or "serious" ("" = any)
+		SquadSize  int    `json:"squadSize"`  // 4 or 6 (0 = any)
+		Mission    string `json:"mission"`    // "" or "Any" = any
+		MissionType string `json:"missionType"`
+		Planet     string `json:"planet"`     // "" or "Any" = any
+		Difficulty string `json:"difficulty"` // "" or "Any" = any
+		Region     string `json:"region"`     // "" or "Any" = any
+		Language   string `json:"language"`   // "" or "Any" = any
+	}
+	if err := json.Unmarshal(data, &req); err != nil {
+		c.sendEvent("error", map[string]string{"message": "Invalid matchmaking request"})
+		return
+	}
+
+	if req.SquadSize != 0 && req.SquadSize != 4 && req.SquadSize != MaxSquadSize {
+		req.SquadSize = 0
+	}
+	if req.Mode != "" && req.Mode != string(SquadModeCasual) && req.Mode != string(SquadModeSerious) {
+		req.Mode = ""
+	}
+	mission := req.Mission
+	if mission == "" {
+		mission = req.MissionType
+	}
+
+	matches := func(s *Squad) bool {
+		if s.Status != SquadStatusOpen {
+			return false
+		}
+		if len(s.Players) >= s.MaxPlayers {
+			return false
+		}
+		if req.Mode != "" && string(s.Mode) != "" && string(s.Mode) != req.Mode {
+			return false
+		}
+		if req.SquadSize != 0 && s.MaxPlayers != req.SquadSize {
+			return false
+		}
+		if mission != "" && mission != "Any" && s.Mission != "" && s.Mission != "Any" && s.Mission != mission {
+			return false
+		}
+		if req.Planet != "" && req.Planet != "Any" && s.Planet != "" && s.Planet != "Any" && s.Planet != req.Planet {
+			return false
+		}
+		if req.Difficulty != "" && req.Difficulty != "Any" && s.Difficulty != "" && s.Difficulty != "Any" && s.Difficulty != req.Difficulty {
+			return false
+		}
+		if req.Region != "" && req.Region != "Any" && s.Region != "" && s.Region != "Any" && s.Region != req.Region {
+			return false
+		}
+		if req.Language != "" && req.Language != "Any" && s.Language != "" && s.Language != "Any" && s.Language != req.Language {
+			return false
+		}
+		return true
+	}
+
+	// Already in a squad? Just tell the client where they are.
+	h.mu.RLock()
+	if squadID, ok := h.playerSquad[c.player.ID]; ok {
+		if squad, ok := h.squads[squadID]; ok {
+			h.mu.RUnlock()
+			c.sendEvent("match_found", map[string]interface{}{"squad": squad, "created": false})
+			return
+		}
+	}
+	candidates := make([]*Squad, 0)
+	for _, squad := range h.squads {
+		if matches(squad) {
+			candidates = append(candidates, squad)
+		}
+	}
+	h.mu.RUnlock()
+
+	if len(candidates) > 0 {
+		target := candidates[time.Now().UnixNano()%int64(len(candidates))]
+		h.mu.Lock()
+		squad, ok := h.squads[target.ID]
+		if !ok || squad.Status != SquadStatusOpen || len(squad.Players) >= squad.MaxPlayers {
+			h.mu.Unlock()
+			c.sendEvent("error", map[string]string{"message": "No matching squad available, try again"})
+			return
+		}
+		if existingID, ok := h.playerSquad[c.player.ID]; ok {
+			h.mu.Unlock()
+			c.sendEvent("error", map[string]string{"message": "Already in a squad", "squadId": existingID})
+			return
+		}
+		squad.Players = append(squad.Players, c.player)
+		h.playerSquad[c.player.ID] = squad.ID
+		if len(squad.Players) >= squad.MaxPlayers {
+			squad.Status = SquadStatusFull
+		}
+		h.mu.Unlock()
+
+		c.sendEvent("match_found", map[string]interface{}{"squad": squad, "created": false})
+
+		joinMsg := ChatMessage{
+			ID:         uuid.New().String(),
+			SquadID:    squad.ID,
+			SenderID:   "system",
+			SenderName: "System",
+			Content:    fmt.Sprintf("%s joined the squad!", c.player.Username),
+			Timestamp:  time.Now(),
+			Type:       "join",
+		}
+		h.broadcastToSquad(squad.ID, "player_joined", map[string]interface{}{
+			"player":  c.player,
+			"squad":   squad,
+			"message": joinMsg,
+		}, "")
+
+		h.broadcastSquadList()
+		log.Printf("squad: matchmaking paired %s with squad %s (%s)", c.player.Username, squad.Name, squad.ID)
+		return
+	}
+
+	// No open squad matched: auto-create one from the requested settings.
+	size := req.SquadSize
+	if size == 0 {
+		size = MaxSquadSize
+	}
+	maxPlayers := MaxSquadSize
+	if size == 4 {
+		maxPlayers = 4
+	}
+	mode := SquadMode(req.Mode)
+	if mode == "" {
+		mode = SquadModeCasual
+	}
+	squadMission := mission
+	if squadMission == "" {
+		squadMission = "Any"
+	}
+	squadPlanet := req.Planet
+	if squadPlanet == "" {
+		squadPlanet = "Any"
+	}
+	squadDifficulty := req.Difficulty
+	if squadDifficulty == "" {
+		squadDifficulty = "Any"
+	}
+	squadRegion := req.Region
+	if squadRegion == "" || squadRegion == "Any" {
+		squadRegion = c.player.Region
+	}
+	squadLanguage := req.Language
+	if squadLanguage == "" {
+		squadLanguage = "Any"
+	}
+
+	h.mu.Lock()
+	if existingID, ok := h.playerSquad[c.player.ID]; ok {
+		h.mu.Unlock()
+		c.sendEvent("error", map[string]string{"message": "Already in a squad", "squadId": existingID})
+		return
+	}
+	squad := &Squad{
+		ID:         uuid.New().String(),
+		Name:       fmt.Sprintf("%s's %s Squad", c.player.Username, squadMission),
+		Mission:    squadMission,
+		Planet:     squadPlanet,
+		Difficulty: squadDifficulty,
+		Region:     squadRegion,
+		Language:   squadLanguage,
+		Status:     SquadStatusOpen,
+		LeaderID:   c.player.ID,
+		LeaderName: c.player.Username,
+		Mode:       mode,
+		Players:    []*Player{c.player},
+		SquadSize:    size,
+		MaxPlayers:  maxPlayers,
+		CreatedAt:  time.Now(),
+		Tags:       []string{"quick-match"},
+	}
+	h.squads[squad.ID] = squad
+	h.playerSquad[c.player.ID] = squad.ID
+	h.mu.Unlock()
+
+	c.sendEvent("match_found", map[string]interface{}{"squad": squad, "created": true})
+	h.broadcastSquadList()
+	log.Printf("squad: matchmaking created squad %s (%s) for %s", squad.Name, squad.ID, c.player.Username)
+}
+
 // HandleSetMatchPref sets a player's match preferences
 func (h *Hub) HandleSetMatchPref(c *client, data json.RawMessage) {
 var req struct {

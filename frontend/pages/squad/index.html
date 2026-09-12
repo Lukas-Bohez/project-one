@@ -203,11 +203,14 @@
                 </div>
               </div>
             </div>
-          <a class="squad-list-header" style="text-align: right; margin-top: 16px; display: block;">
+          <div class="squad-list-header" style="text-align: right; margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="squad-btn squad-btn--quick" id="quickMatchBtn">
+              <i class="fa-solid fa-shuffle"></i> Quick Match
+            </button>
             <button class="squad-btn squad-btn--primary" id="createSquadBtn">
               <i class="fa-solid fa-plus"></i> Create Squad
             </button>
-          </a>
+          </div>
         </div>
 
         <!-- Squad Detail / Current Squad -->
@@ -370,6 +373,61 @@
           <button class="squad-btn squad-btn--secondary" id="cancelCreateBtn">Cancel</button>
           <button class="squad-btn squad-btn--primary" id="confirmCreateBtn">
             <i class="fa-solid fa-plus"></i> Create Squad
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Match Modal -->
+    <div class="squad-modal" id="quickMatchModal" style="display: none">
+      <div class="squad-modal-content">
+        <div class="squad-modal-header">
+          <h3><i class="fa-solid fa-shuffle"></i> Quick Match</h3>
+          <button class="squad-modal-close" id="closeQuickMatchBtn">&times;</button>
+        </div>
+        <div class="squad-modal-body">
+          <p class="squad-modal-desc">We will drop you into a random open squad that fits your settings — or start a new one for you if nothing fits.</p>
+          <div class="squad-form-row">
+            <div class="squad-form-group">
+              <label for="quickModeSelect">Mode</label>
+              <select id="quickModeSelect">
+                <option value="casual">Casual</option>
+                <option value="serious">Serious</option>
+              </select>
+            </div>
+            <div class="squad-form-group">
+              <label for="quickSizeSelect">Squad Size</label>
+              <select id="quickSizeSelect">
+                <option value="6">6 Players (Standard)</option>
+                <option value="4">4 Players (Quick)</option>
+              </select>
+            </div>
+          </div>
+          <div class="squad-form-row">
+            <div class="squad-form-group">
+              <label for="quickMissionSelect">Mission Type</label>
+              <select id="quickMissionSelect"></select>
+            </div>
+            <div class="squad-form-group">
+              <label for="quickPlanetSelect">Planet</label>
+              <select id="quickPlanetSelect"></select>
+            </div>
+          </div>
+          <div class="squad-form-row">
+            <div class="squad-form-group">
+              <label for="quickDifficultySelect">Difficulty</label>
+              <select id="quickDifficultySelect"></select>
+            </div>
+            <div class="squad-form-group">
+              <label for="quickRegionSelect">Region</label>
+              <select id="quickRegionSelect"></select>
+            </div>
+          </div>
+        </div>
+        <div class="squad-modal-footer">
+          <button class="squad-btn squad-btn--secondary" id="cancelQuickMatchBtn">Cancel</button>
+          <button class="squad-btn squad-btn--quick" id="confirmQuickMatchBtn">
+            <i class="fa-solid fa-shuffle"></i> Find Match
           </button>
         </div>
       </div>

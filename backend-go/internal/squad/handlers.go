@@ -47,6 +47,8 @@ case "set_activity":
 h.handleSetActivity(c, msg.Data)
 case "recent_played":
 h.handleRecentPlayed(c, msg.Data)
+case "find_match":
+h.HandleFindMatch(c, msg.Data)
 	default:
 		log.Printf("squad: unknown event: %s", msg.Event)
 	}

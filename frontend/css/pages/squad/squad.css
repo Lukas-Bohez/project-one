@@ -331,6 +331,32 @@
   color: var(--squad-primary);
 }
 
+.squad-btn--quick {
+  background: linear-gradient(135deg, var(--squad-accent), #d68910);
+  color: #1a1a1a;
+  border: none;
+  font-weight: 700;
+}
+
+.squad-btn--quick:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(245, 166, 35, 0.45);
+}
+
+.squad-btn--quick:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
+.squad-modal-desc {
+  color: var(--squad-text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 14px 0;
+  line-height: 1.5;
+}
+
 .squad-btn--danger {
   background: linear-gradient(135deg, var(--squad-danger), #d32f2f);
   color: white;
