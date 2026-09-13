@@ -179,6 +179,7 @@ func (h *Hub) Run() {
 func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	// Security: Validate origin
 	origin := r.Header.Get("Origin")
+	log.Printf("squad: WebSocket origin=%q X-Forwarded-For=%q RemoteAddr=%s", origin, r.Header.Get("X-Forwarded-For"), r.RemoteAddr)
 	if !h.isAllowedOrigin(origin) {
 		http.Error(w, "Origin not allowed", http.StatusForbidden)
 		return
