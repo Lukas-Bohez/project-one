@@ -1986,6 +1986,29 @@
   border-radius: 4px;
 }
 
+.squad-ver-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.squad-ver-badge--pending {
+  color: var(--squad-text-muted);
+  background: rgba(128, 128, 128, 0.12);
+}
+
+.squad-ver-badge--verified {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+}
+
+.squad-ver-badge--premium {
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.12);
+}
+
 .squad-player-meta {
   color: var(--squad-text-muted);
   font-size: 0.72rem;

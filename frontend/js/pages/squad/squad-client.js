@@ -685,13 +685,22 @@
       const initials = player.username.substring(0, 2).toUpperCase();
       const trustScore = player.trustScore || 50;
       const trustClass = this.getTrustClass(trustScore);
+      let verBadge = '';
+      const v = player.verificationLevel;
+      if (v === 'pending') {
+        verBadge = ' <span class="squad-ver-badge squad-ver-badge--pending" title="Verification pending"><i class="fa-solid fa-clock"></i> Pending</span>';
+      } else if (v === 'verified') {
+        verBadge = ' <span class="squad-ver-badge squad-ver-badge--verified" title="Verified account"><i class="fa-solid fa-circle-check"></i> Verified</span>';
+      } else if (v === 'premium') {
+        verBadge = ' <span class="squad-ver-badge squad-ver-badge--premium" title="Premium member"><i class="fa-solid fa-gem"></i> Premium</span>';
+      }
       return '<div class="squad-player">' +
         '<div class="squad-player-avatar">' + initials + '</div>' +
         '<div class="squad-player-info">' +
           '<div class="squad-player-name">' + this.escapeHtml(player.username) +
             (player.id === leaderId ? ' <span class="squad-leader-badge"><i class="fa-solid fa-crown"></i> Leader</span>' : '') +
             (isSelf ? ' <span class="squad-self-badge">You</span>' : '') +
-            ' ' + verBadge + '</div>' +
+            verBadge + '</div>' +
           '<div class="squad-player-meta">MR' + player.masteryRank + ' | ' + player.platform + ' | ' + player.region + '</div>' +
           '<div class="squad-trust ' + trustClass + '"><i class="fa-solid fa-shield"></i> ' + Math.round(trustScore) + '</div>' +
         '</div>' +
