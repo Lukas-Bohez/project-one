@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>
+    (function() {
+      var s = localStorage.getItem('spire-theme');
+      var p = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var t = s || (p ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-SSEBSTQM21');</script>
   <meta charset="UTF-8">
@@ -31,7 +39,7 @@
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous"></noscript>
   <link rel="stylesheet" href="avatar-studio.css">
 </head>
-<body class="theme-dark">
+<body>
 
 <a href="#main-content" class="av-skip-link">Skip to main content</a>
 

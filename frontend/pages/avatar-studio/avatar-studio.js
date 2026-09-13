@@ -20,12 +20,27 @@ function estimateDuration(text) {
   return Math.max(0.3, (w / 2.5 + text.toLowerCase().replace(/[^a-z]/g, '').length * 0.35 / 4.5) / 2);
 }
 
-/* ── THEME ── */
-function loadTheme() { try { AppState.theme = localStorage.getItem('av-theme') || 'dark'; } catch (e) { } }
+/* ── THEME (shared with all quizthespire.com pages) ── */
+function loadTheme() {
+  let t = null;
+  try { t = localStorage.getItem('spire-theme'); } catch (e) { }
+  if (t !== 'dark' && t !== 'light') { try { t = localStorage.getItem('av-theme'); } catch (e) { } }
+  if (t !== 'dark' && t !== 'light') {
+    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  AppState.theme = t === 'light' ? 'light' : 'dark';
+}
 function applyTheme() {
-  document.body.classList.toggle('theme-dark', AppState.theme === 'dark');
-  document.body.classList.toggle('theme-light', AppState.theme === 'light');
-  try { localStorage.setItem('av-theme', AppState.theme); } catch (e) { }
+  const t = AppState.theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  document.body.classList.toggle('theme-dark', t === 'dark');
+  document.body.classList.toggle('theme-light', t === 'light');
+  AppState.theme = t;
+  try {
+    localStorage.setItem('spire-theme', t);
+    localStorage.setItem('quiz-theme-preference', t);
+    localStorage.setItem('spire-theme-sync', String(Date.now()));
+  } catch (e) { /* private mode: theme still applies for this view */ }
 }
 
 /* ── VOICE ── */
@@ -110,6 +125,13 @@ function parseSrt(c) {
 async function init() {
   loadTheme(); applyTheme();
   document.getElementById('themeToggleBtn')?.addEventListener('click', () => { AppState.theme = AppState.theme === 'dark' ? 'light' : 'dark'; applyTheme(); });
+  // Site-wide sync: react when another quizthespire.com tab/page changes the theme.
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'spire-theme' && (e.newValue === 'dark' || e.newValue === 'light')) {
+      AppState.theme = e.newValue;
+      applyTheme();
+    }
+  });
 
   populateVoiceSelect();
 
