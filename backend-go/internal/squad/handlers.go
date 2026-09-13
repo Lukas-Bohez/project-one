@@ -4,13 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// handleEvent routes incoming WebSocket events to their handlers
+// handleEvent routes incoming WebSocket events to their handlers.
+// The recover() guard means a panicking handler only drops the offending
+// client's message instead of crashing the whole backend.
 func (h *Hub) handleEvent(c *client, msg *message) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("squad: recovered from panic in event %s: %v", msg.Event, r)
+			c.sendEvent("error", map[string]string{"message": "Could not process that request"})
+		}
+	}()
 	switch msg.Event {
 	case "create_squad":
 		h.handleCreateSquad(c, msg.Data)
@@ -31,24 +40,24 @@ func (h *Hub) handleEvent(c *client, msg *message) {
 		h.sendSquadList(c)
 	case "get_filter_options":
 		h.sendFilterOptions(c)
-case "set_role":
-h.HandleSetRole(c, msg.Data)
-case "set_drop_target":
-h.HandleSetDropTarget(c, msg.Data)
-case "start_session":
-h.HandleStartSession(c, msg.Data)
-case "end_session":
-h.HandleEndSession(c, msg.Data)
-case "submit_report":
-h.HandleSubmitReport(c, msg.Data)
-case "set_eta":
-h.HandleSetETA(c, msg.Data)
-case "set_activity":
-h.handleSetActivity(c, msg.Data)
-case "recent_played":
-h.handleRecentPlayed(c, msg.Data)
-case "find_match":
-h.HandleFindMatch(c, msg.Data)
+	case "set_role":
+		h.HandleSetRole(c, msg.Data)
+	case "set_drop_target":
+		h.HandleSetDropTarget(c, msg.Data)
+	case "start_session":
+		h.HandleStartSession(c, msg.Data)
+	case "end_session":
+		h.HandleEndSession(c, msg.Data)
+	case "submit_report":
+		h.HandleSubmitReport(c, msg.Data)
+	case "set_eta":
+		h.HandleSetETA(c, msg.Data)
+	case "set_activity":
+		h.handleSetActivity(c, msg.Data)
+	case "recent_played":
+		h.handleRecentPlayed(c, msg.Data)
+	case "find_match":
+		h.HandleFindMatch(c, msg.Data)
 	default:
 		log.Printf("squad: unknown event: %s", msg.Event)
 	}
@@ -66,7 +75,12 @@ func (h *Hub) handleCreateSquad(c *client, data json.RawMessage) {
 		Language    string   `json:"language"`
 		Tags        []string `json:"tags"`
 		SquadSize   int      `json:"squadSize"` // 4 or 6 players
-		Mode        string   `json:"mode"`     // "casual" or "serious"
+		Mode        string   `json:"mode"`      // "casual" or "serious"
+		Description string   `json:"description"`
+		Objective   string   `json:"objective"` // "clear", "farm", "other"
+		SteelPath   bool     `json:"steelPath"` // modifier toggles
+		Nightmare   bool     `json:"nightmare"`
+		VoidFissure bool     `json:"voidFissure"`
 	}
 
 	if err := json.Unmarshal(data, &req); err != nil {
@@ -88,6 +102,19 @@ func (h *Hub) handleCreateSquad(c *client, data json.RawMessage) {
 	}
 	h.mu.RUnlock()
 
+	// Security: clamp and sanitize the freeform description
+	description := SanitizeString(req.Description)
+	if len(description) > MaxDescriptionLen {
+		description = description[:MaxDescriptionLen]
+	}
+	// Objective: accept only known values
+	objective := strings.ToLower(strings.TrimSpace(req.Objective))
+	switch objective {
+	case "clear", "farm", "other":
+	default:
+		objective = ""
+	}
+
 	squad := &Squad{
 		ID:         uuid.New().String(),
 		Name:       req.Name,
@@ -99,17 +126,22 @@ func (h *Hub) handleCreateSquad(c *client, data json.RawMessage) {
 		Status:     SquadStatusOpen,
 		LeaderID:   c.player.ID,
 		LeaderName: c.player.Username,
-				Mode:       SquadMode(req.Mode),
+		Mode:       SquadMode(req.Mode),
 		Players:    []*Player{c.player},
-		SquadSize:    req.SquadSize,
-		MaxPlayers:  func() int {
+		SquadSize:  req.SquadSize,
+		MaxPlayers: func() int {
 			if req.SquadSize == 4 {
 				return 4
 			}
 			return 6
 		}(),
-		CreatedAt:  time.Now(),
-		Tags:       req.Tags,
+		CreatedAt:   time.Now(),
+		Tags:        req.Tags,
+		Description: description,
+		Objective:   objective,
+		SteelPath:   req.SteelPath,
+		Nightmare:   req.Nightmare,
+		VoidFissure: req.VoidFissure,
 	}
 
 	h.mu.Lock()

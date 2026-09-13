@@ -54,13 +54,14 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
 |-------|------------|-------------|
 | `join_finder` | `{player: Player}` | Register player when connecting |
 | `get_squad_list` | `{filters?: FilterState}` | Request filtered squad list |
-| `create_squad` | `{name, missionType, planet, difficulty, region, language, squadSize, mode, maxPlayers}` | Create a new squad |
+| `create_squad` | `{name, missionType, planet, difficulty, region, language, squadSize, mode, maxPlayers, description?, objective?, steelPath?, nightmare?, voidFissure?}` | Create a new squad. `description` is a freeform strategy/notes line (max 240 chars). `objective` is `clear`, `farm` or `other`. `steelPath`/`nightmare`/`voidFissure` are boolean modifiers that stack on top of the mission type. |
 | `join_squad` | `{squadId: string}` | Join an existing squad |
 | `leave_squad` | `{squadId: string}` | Leave current squad |
 | `toggle_ready` | `{squadId: string}` | Toggle ready status |
 | `chat_message` | `{squadId, content: string}` | Send chat message |
 | `kick_player` | `{squadId, playerId}` | Kick a player (leader only) |
-| `update_squad` | `{squadId, name?, missionType?, planet?, difficulty?, region?, language?, squadSize?, mode?}` | Update squad settings |
+| `update_squad` | `{squadId, name?, missionType?, planet?, difficulty?, region?, language?, squadSize?, mode?, description?, objective?, steelPath?, nightmare?, voidFissure?}` | Update squad settings. Modifier/objective fields use pointers: omit to leave unchanged, send `false`/`""` to clear. |
+| `set_role` | `{squadId, role}` | Set your role in the squad (`dps`, `support`, `buffer`, `shield`, `arcane`, `resource`, `efficiency`, `any`) |
 | `get_filter_options` | `{}` | Request available filter options |
 | `set_activity` | `{status: string, game?: string}` | Update online status |
 | `recent_played` | `{missionType?, planet?, difficulty?}` | Report recent mission |
@@ -81,9 +82,10 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
 | `squad_updated` | `{squad: Squad}` | Squad settings updated |
 | `chat_message` | `{message: {senderName, content, timestamp, type}}` | Chat message received |
 | `player_count` | `{online: int}` | Online player count updated |
-| `filter_options` | `{missions[], planets[], difficulties[], regions[], languages[]}` | Available filter options |
+| `filter_options` | `{missions[], planets[], difficulties[], regions[], languages[], objectives[], modifiers[], roles[]}` | Available filter options. `missions` holds pure gamemodes + special activities only (32 entries incl. "Any"). `modifiers` are the stacking toggles (Steel Path, Nightmare, Void Fissure). `objectives` = any/clear/farm/other. `roles` = dps/support/buffer/shield/arcane/resource/efficiency/any. |
 | `kicked` | `{}` | You were kicked from a squad |
 | `match_found` | `{squad: Squad, created: bool}` | Quick Match result (joined existing or auto-created) |
+| `role_updated` | `{playerId, role}` | A player's role changed in your squad (not sent back to the player who changed it) |
 | `error` | `{message: string}` | Error occurred |
 
 ---

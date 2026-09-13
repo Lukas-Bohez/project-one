@@ -12,10 +12,10 @@ import (
 type SquadStatus string
 
 const (
-	SquadStatusOpen    SquadStatus = "open"
-	SquadStatusFull    SquadStatus = "full"
-	SquadStatusInGame  SquadStatus = "in_game"
-	SquadStatusClosed  SquadStatus = "closed"
+	SquadStatusOpen   SquadStatus = "open"
+	SquadStatusFull   SquadStatus = "full"
+	SquadStatusInGame SquadStatus = "in_game"
+	SquadStatusClosed SquadStatus = "closed"
 )
 
 // MaxSquadSize is the maximum number of players in a squad
@@ -29,58 +29,66 @@ const (
 	SquadModeSerious SquadMode = "serious"
 )
 
-
 // PlayerRole represents a role in the squad
 type PlayerRole string
 
 const (
-    RoleDPS        PlayerRole = "dps"
-    RoleSupport    PlayerRole = "support"
-    RoleBuffer     PlayerRole = "buffer"
-    RoleShield     PlayerRole = "shield"
-    RoleArcane     PlayerRole = "arcane"
-    RoleResource   PlayerRole = "resource"
-    RoleEfficiency PlayerRole = "efficiency"
-    RoleAny        PlayerRole = "any"
+	RoleDPS        PlayerRole = "dps"
+	RoleSupport    PlayerRole = "support"
+	RoleBuffer     PlayerRole = "buffer"
+	RoleShield     PlayerRole = "shield"
+	RoleArcane     PlayerRole = "arcane"
+	RoleResource   PlayerRole = "resource"
+	RoleEfficiency PlayerRole = "efficiency"
+	RoleAny        PlayerRole = "any"
 )
 
 var AllRoles = []PlayerRole{RoleDPS, RoleSupport, RoleBuffer, RoleShield, RoleArcane, RoleResource, RoleEfficiency, RoleAny}
 
 // RoleDisplay returns display name for a role
 func (r PlayerRole) Display() string {
-    switch r {
-    case RoleDPS: return "DPS"
-    case RoleSupport: return "Support"
-    case RoleBuffer: return "Buffer"
-    case RoleShield: return "Shield"
-    case RoleArcane: return "Arcane"
-    case RoleResource: return "Resource"
-    case RoleEfficiency: return "Efficiency"
-    default: return "Any"
-    }
+	switch r {
+	case RoleDPS:
+		return "DPS"
+	case RoleSupport:
+		return "Support"
+	case RoleBuffer:
+		return "Buffer"
+	case RoleShield:
+		return "Shield"
+	case RoleArcane:
+		return "Arcane"
+	case RoleResource:
+		return "Resource"
+	case RoleEfficiency:
+		return "Efficiency"
+	default:
+		return "Any"
+	}
 }
 
 // SessionReport represents a post-mission report
 type SessionReport struct {
-    MissionTime   int            `json:"missionTime"`
-    Success       bool           `json:"success"`
-    DropsFound    []string       `json:"dropsFound"`
-    PlayerRatings map[string]int `json:"playerRatings"`
-    Notes         string         `json:"notes"`
-    SubmittedAt   time.Time      `json:"submittedAt"`
+	MissionTime   int            `json:"missionTime"`
+	Success       bool           `json:"success"`
+	DropsFound    []string       `json:"dropsFound"`
+	PlayerRatings map[string]int `json:"playerRatings"`
+	Notes         string         `json:"notes"`
+	SubmittedAt   time.Time      `json:"submittedAt"`
 }
 
 // ActivityEntry represents a player's recent squad activity for reputation
 type ActivityEntry struct {
-SquadID      string   `json:"squadId"`
-SquadName    string   `json:"squadName"`
-Mission      string   `json:"mission"`
-Planet       string   `json:"planet"`
-Difficulty   string   `json:"difficulty"`
-Success      bool     `json:"success"`
-PlayedWith   []string `json:"playedWith"`  // Player IDs
-PlayedAt     time.Time `json:"playedAt"`
+	SquadID    string    `json:"squadId"`
+	SquadName  string    `json:"squadName"`
+	Mission    string    `json:"mission"`
+	Planet     string    `json:"planet"`
+	Difficulty string    `json:"difficulty"`
+	Success    bool      `json:"success"`
+	PlayedWith []string  `json:"playedWith"` // Player IDs
+	PlayedAt   time.Time `json:"playedAt"`
 }
+
 // Security constants
 const (
 	MaxMessageLength    = 500
@@ -88,13 +96,14 @@ const (
 	MaxPlayerNameLength = 20
 	MinPlayerNameLength = 2
 	MaxChatHistory      = 100
+	MaxDescriptionLen   = 240
 	RateLimitMessages   = 5
 	RateLimitWindow     = 10 * time.Second
 )
 
 // Validation patterns
 var (
-	validUsernamePattern = regexp.MustCompile(`^[a-zA-Z0-9_\-\[\]]+$`)
+	validUsernamePattern  = regexp.MustCompile(`^[a-zA-Z0-9_\-\[\]]+$`)
 	validSquadNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_\-\s\[\]\(\)]+$`)
 )
 
@@ -151,66 +160,74 @@ const (
 
 // Squad represents a group of players looking to play together
 type Squad struct {
-	ID              string       `json:"id"`
-	Name            string       `json:"name"`
-	Mission         string       `json:"missionType"`
-	Planet          string       `json:"planet"`
-	Node            string       `json:"node"`
-	Difficulty      string       `json:"difficulty"`
-	Region          string       `json:"region"`
-	Language        string       `json:"language"`
-	Status          SquadStatus  `json:"status"`
-	LeaderID        string       `json:"leaderId"`
-	LeaderName      string       `json:"leaderName"`
-	LeaderTrust     float64      `json:"leaderTrust"`
-	Players         []*Player    `json:"players"`
-	MaxPlayers      int          `json:"maxPlayers"`
-	Mode           SquadMode   `json:"mode"` // "casual" or "serious"
-	SquadSize     int         `json:"squadSize"` // 4 or 6
-	CreatedAt       time.Time    `json:"createdAt"`
-	UpdatedAt       time.Time    `json:"updatedAt"`
-	Tags            []string     `json:"tags"`
-	Description     string       `json:"description"`
-	Requirements    string       `json:"requirements"`
-	VoiceChat       bool         `json:"voiceChat"`
-	Experience      string       `json:"experience"` // "new", "veteran", "any"
-	Playstyle       string       `json:"playstyle"`  // "stealth", "speed", "loot", "any"
-	Relics          []string     `json:"relics"`
+	ID           string      `json:"id"`
+	Name         string      `json:"name"`
+	Mission      string      `json:"missionType"`
+	Planet       string      `json:"planet"`
+	Node         string      `json:"node"`
+	Difficulty   string      `json:"difficulty"`
+	Region       string      `json:"region"`
+	Language     string      `json:"language"`
+	Status       SquadStatus `json:"status"`
+	LeaderID     string      `json:"leaderId"`
+	LeaderName   string      `json:"leaderName"`
+	LeaderTrust  float64     `json:"leaderTrust"`
+	Players      []*Player   `json:"players"`
+	MaxPlayers   int         `json:"maxPlayers"`
+	Mode         SquadMode   `json:"mode"`      // "casual" or "serious"
+	SquadSize    int         `json:"squadSize"` // 4 or 6
+	CreatedAt    time.Time   `json:"createdAt"`
+	UpdatedAt    time.Time   `json:"updatedAt"`
+	Tags         []string    `json:"tags"`
+	Description  string      `json:"description"` // freeform: "EDA Stella farm, Cyte-09 ad clear, need supports"
+	Requirements string      `json:"requirements"`
+	// Objective states what the run is for: "clear" (finish the mission),
+	// "farm" (grind loot/points) or "other". Empty = not stated.
+	Objective string `json:"objective,omitempty"`
+	// Mission modifiers. These are not mission types; they stack on top of
+	// the chosen mission (e.g. Survival + Steel Path + Void Fissure).
+	SteelPath   bool     `json:"steelPath,omitempty"`
+	Nightmare   bool     `json:"nightmare,omitempty"`
+	VoidFissure bool     `json:"voidFissure,omitempty"`
+	VoiceChat   bool     `json:"voiceChat"`
+	Experience  string   `json:"experience"` // "new", "veteran", "any"
+	Playstyle   string   `json:"playstyle"`  // "stealth", "speed", "loot", "any"
+	Relics      []string `json:"relics"`
 
-    // Role assignments: playerID -> role
-    Roles           map[string]PlayerRole `json:"roles,omitempty"`
-    // Drop targets: item name -> list of player IDs who want it
-    DropTargets     map[string][]string  `json:"dropTargets,omitempty"`
-    // Session tracking
-    SessionStarted  bool        `json:"sessionStarted"`
-    SessionStartedAt time.Time `json:"sessionStartedAt,omitempty"`
-    SessionEnded    bool        `json:"sessionEnded"`
-    SessionEndedAt  time.Time `json:"sessionEndedAt,omitempty"`
-    SessionDuration int         `json:"sessionDuration"` // minutes
-    SessionSuccess  bool        `json:"sessionSuccess"`
-    SessionReport   *SessionReport `json:"sessionReport,omitempty"`
-	ModRank         string       `json:"modRank"`
-	MissionTime     int          `json:"missionTime"` // estimated minutes
-	IsCrossPlatform bool         `json:"isCrossPlatform"`
-	IsRecruiting    bool         `json:"isRecruiting"`
-	Views           int          `json:"views"`
-	JoinRequests    int          `json:"joinRequests"`
+	// Role assignments: playerID -> role
+	Roles map[string]PlayerRole `json:"roles,omitempty"`
+	// Drop targets: item name -> list of player IDs who want it
+	DropTargets map[string][]string `json:"dropTargets,omitempty"`
+	// Session tracking
+	SessionStarted   bool           `json:"sessionStarted"`
+	SessionStartedAt time.Time      `json:"sessionStartedAt,omitempty"`
+	SessionEnded     bool           `json:"sessionEnded"`
+	SessionEndedAt   time.Time      `json:"sessionEndedAt,omitempty"`
+	SessionDuration  int            `json:"sessionDuration"` // minutes
+	SessionSuccess   bool           `json:"sessionSuccess"`
+	SessionReport    *SessionReport `json:"sessionReport,omitempty"`
+	ModRank          string         `json:"modRank"`
+	MissionTime      int            `json:"missionTime"` // estimated minutes
+	IsCrossPlatform  bool           `json:"isCrossPlatform"`
+	IsRecruiting     bool           `json:"isRecruiting"`
+	Views            int            `json:"views"`
+	JoinRequests     int            `json:"joinRequests"`
 }
 
 // SquadFilter represents filters for searching squads
 type SquadFilter struct {
-	Mission     string `json:"mission"`
-	Planet      string `json:"planet"`
-	Node        string `json:"node"`
-	Difficulty  string `json:"difficulty"`
-	Region      string `json:"region"`
-	Language    string `json:"language"`
-	HasSlots    bool   `json:"hasSlots"`
-	MinTrust    int    `json:"minTrust"`
-	Experience  string `json:"experience"`
-	Playstyle   string `json:"playstyle"`
-	VoiceChat   bool   `json:"voiceChat"`
-	CrossPlatform bool `json:"crossPlatform"`
+	Mission       string `json:"mission"`
+	Planet        string `json:"planet"`
+	Node          string `json:"node"`
+	Difficulty    string `json:"difficulty"`
+	Region        string `json:"region"`
+	Language      string `json:"language"`
+	HasSlots      bool   `json:"hasSlots"`
+	MinTrust      int    `json:"minTrust"`
+	Experience    string `json:"experience"`
+	Playstyle     string `json:"playstyle"`
+	VoiceChat     bool   `json:"voiceChat"`
+	CrossPlatform bool   `json:"crossPlatform"`
 }
 
 // Player represents a player in the squad finder
@@ -234,8 +251,8 @@ type Player struct {
 	IsPremium         bool                      `json:"isPremium"`
 	TrustScore        float64                   `json:"trustScore"`
 	Reports           int                       `json:"reports"`
-	MatchPref       MatchPreference  `json:"matchPref,omitempty"`
-	RecentActivity   []ActivityEntry   `json:"recentActivity,omitempty"`
+	MatchPref         MatchPreference           `json:"matchPref,omitempty"`
+	RecentActivity    []ActivityEntry           `json:"recentActivity,omitempty"`
 	Banned            bool                      `json:"banned"`
 	BanReason         string                    `json:"banReason,omitempty"`
 }
@@ -244,89 +261,89 @@ type Player struct {
 
 // MissionPlan represents a planned mission route/strategy to share with the squad
 type MissionPlan struct {
-ID          string       `json:"id"`
-Title       string       `json:"title"`       // e.g. "Rush Kuva Fortress", "Quick Steel Path"
-Description string       `json:"description"` // What the plan involves
-CreatedBy   string       `json:"createdBy"`   // Player ID who created it
-CreatedByName string     `json:"createdByName"`
-Steps       []PlanStep   `json:"steps"`       // Ordered list of actions
-EstimatedTime int        `json:"estimatedTime"` // minutes
-Difficulty   string      `json:"difficulty"`   // "easy", "medium", "hard"
-IsShared     bool        `json:"isShared"`     // Whether shared to squad
-CreatedAt    time.Time   `json:"createdAt"`
+	ID            string     `json:"id"`
+	Title         string     `json:"title"`       // e.g. "Rush Kuva Fortress", "Quick Steel Path"
+	Description   string     `json:"description"` // What the plan involves
+	CreatedBy     string     `json:"createdBy"`   // Player ID who created it
+	CreatedByName string     `json:"createdByName"`
+	Steps         []PlanStep `json:"steps"`         // Ordered list of actions
+	EstimatedTime int        `json:"estimatedTime"` // minutes
+	Difficulty    string     `json:"difficulty"`    // "easy", "medium", "hard"
+	IsShared      bool       `json:"isShared"`      // Whether shared to squad
+	CreatedAt     time.Time  `json:"createdAt"`
 }
 
 // PlanStep represents one step in a mission plan
 type PlanStep struct {
-Order    int    `json:"order"`
-Action   string `json:"action"`   // "drop at", "kill", "collect", "escape"
-Target   string `json:"target"`   // location, enemy type, item
-Details  string `json:"details"`  // additional info
-Optional bool   `json:"optional"`
+	Order    int    `json:"order"`
+	Action   string `json:"action"`  // "drop at", "kill", "collect", "escape"
+	Target   string `json:"target"`  // location, enemy type, item
+	Details  string `json:"details"` // additional info
+	Optional bool   `json:"optional"`
 }
 
 // WantedPost represents a player's request for a specific role/item/action
 type WantedPost struct {
-ID        string    `json:"id"`
-PlayerID  string    `json:"playerId"`
-PlayerName string   `json:"playerName"`
-Type      string    `json:"type"`  // "role", "item", "action", "help"
-Content   string    `json:"content"` // e.g. "Need Viper for survival", "Looking for Duviri paradox runs"
-Priority  string    `json:"priority"` // "urgent", "normal", "low"
-ExpiresAt time.Time `json:"expiresAt"`
-CreatedAt time.Time `json:"createdAt"`
-Responded bool      `json:"responded"`
-Response  string    `json:"response,omitempty"`
+	ID         string    `json:"id"`
+	PlayerID   string    `json:"playerId"`
+	PlayerName string    `json:"playerName"`
+	Type       string    `json:"type"`     // "role", "item", "action", "help"
+	Content    string    `json:"content"`  // e.g. "Need Viper for survival", "Looking for Duviri paradox runs"
+	Priority   string    `json:"priority"` // "urgent", "normal", "low"
+	ExpiresAt  time.Time `json:"expiresAt"`
+	CreatedAt  time.Time `json:"createdAt"`
+	Responded  bool      `json:"responded"`
+	Response   string    `json:"response,omitempty"`
 }
 
 // QuickAction represents a one-click intent to express what you're looking for
 type QuickAction struct {
-ID        string    `json:"id"`
-PlayerID  string    `json:"playerId"`
-PlayerName string   `json:"playerName"`
-Action    string    `json:"action"` // "looking_for_squad", "offering_help", "wanted_role", "skip_mission"
-Message   string    `json:"message"` // Custom message
-Mission   string    `json:"mission,omitempty"` // Specific mission if relevant
-Planet    string    `json:"planet,omitempty"`
-Duration  int       `json:"duration,omitempty"` // How long available (minutes)
-CreatedAt time.Time `json:"createdAt"`
-ExpiresAt time.Time `json:"expiresAt"`
+	ID         string    `json:"id"`
+	PlayerID   string    `json:"playerId"`
+	PlayerName string    `json:"playerName"`
+	Action     string    `json:"action"`            // "looking_for_squad", "offering_help", "wanted_role", "skip_mission"
+	Message    string    `json:"message"`           // Custom message
+	Mission    string    `json:"mission,omitempty"` // Specific mission if relevant
+	Planet     string    `json:"planet,omitempty"`
+	Duration   int       `json:"duration,omitempty"` // How long available (minutes)
+	CreatedAt  time.Time `json:"createdAt"`
+	ExpiresAt  time.Time `json:"expiresAt"`
 }
 
 // PlayingNow represents what a player is currently doing in Warframe
 type PlayingNow struct {
-PlayerID   string    `json:"playerId"`
-PlayerName string    `json:"playerName"`
-Mission    string    `json:"mission,omitempty"`
-Planet     string    `json:"planet,omitempty"`
-Node       string    `json:"node,omitempty"`
-Activity   string    `json:"activity,omitempty"` // "playing", "in_lobby", "afk"
-Since      time.Time `json:"since"`
-WithSquad  bool      `json:"withSquad"`
+	PlayerID   string    `json:"playerId"`
+	PlayerName string    `json:"playerName"`
+	Mission    string    `json:"mission,omitempty"`
+	Planet     string    `json:"planet,omitempty"`
+	Node       string    `json:"node,omitempty"`
+	Activity   string    `json:"activity,omitempty"` // "playing", "in_lobby", "afk"
+	Since      time.Time `json:"since"`
+	WithSquad  bool      `json:"withSquad"`
 }
 
 // ActivityRecord represents a recent activity for a player (for trust/verification)
 type ActivityRecord struct {
-MissionType string    `json:"missionType"`
-Planet      string    `json:"planet"`
-Difficulty  string    `json:"difficulty"`
-Completed   bool      `json:"completed"`
-Timestamp   time.Time `json:"timestamp"`
+	MissionType string    `json:"missionType"`
+	Planet      string    `json:"planet"`
+	Difficulty  string    `json:"difficulty"`
+	Completed   bool      `json:"completed"`
+	Timestamp   time.Time `json:"timestamp"`
 }
 
 // MatchPreference represents a player's preferences for finding matches
 type MatchPreference struct {
-Playstyle  string `json:"playstyle"`  // "casual", "serious", "learning", "any"
-SquadSize  int    `json:"squadSize"`   // 4 or 6 (0 = any)
-MinMR      int    `json:"minMR"`       // minimum mastery rank preference
+	Playstyle string `json:"playstyle"` // "casual", "serious", "learning", "any"
+	SquadSize int    `json:"squadSize"` // 4 or 6 (0 = any)
+	MinMR     int    `json:"minMR"`     // minimum mastery rank preference
 }
 
 // RecentActivity represents aggregated recent activity for a player
 type RecentActivity struct {
-PlayerID    string        `json:"playerId"`
-Activities  []ActivityRecord `json:"activities"`
-LastActive  time.Time     `json:"lastActive"`
-TotalMissions int         `json:"totalMissions"`
+	PlayerID      string           `json:"playerId"`
+	Activities    []ActivityRecord `json:"activities"`
+	LastActive    time.Time        `json:"lastActive"`
+	TotalMissions int              `json:"totalMissions"`
 }
 type ReputationEntry struct {
 	FromPlayerID string    `json:"fromPlayerId"`
@@ -364,28 +381,34 @@ func max(a, b float64) float64 {
 
 // ChatMessage represents a message sent in squad chat
 type ChatMessage struct {
-	ID        string    `json:"id"`
-	SquadID   string    `json:"squadId"`
-	SenderID  string    `json:"senderId"`
-	SenderName string   `json:"senderName"`
-	Content   string    `json:"content"`
-	Timestamp time.Time `json:"timestamp"`
-	Type      string    `json:"type"` // "message", "system", "join", "leave"
+	ID         string    `json:"id"`
+	SquadID    string    `json:"squadId"`
+	SenderID   string    `json:"senderId"`
+	SenderName string    `json:"senderName"`
+	Content    string    `json:"content"`
+	Timestamp  time.Time `json:"timestamp"`
+	Type       string    `json:"type"` // "message", "system", "join", "leave"
 }
 
-// Available missions in Warframe (alphabetical)
+// Available mission types in Warframe. Pure gamemodes and special activities
+// only. Modifiers (Steel Path, Nightmare, Void Fissure) are separate boolean
+// fields on the squad, not entries here.
 var AvailableMissions = []string{
 	"Any",
 	"Archon Hunt",
 	"Arbitration",
 	"Assassination",
+	"Cascade (Level Cap)",
 	"Capture",
 	"Circuit",
 	"Defense",
+	"Descendia",
 	"Disruption",
 	"Dragon Key Vaults",
 	"Duviri",
+	"EDA (Deep Archimedea)",
 	"Eidolon Hunt",
+	"ETA (Temporal Archimedea)",
 	"Excavation",
 	"Exterminate",
 	"Exploiter Orb",
@@ -394,16 +417,29 @@ var AvailableMissions = []string{
 	"Junction",
 	"Mobile Defense",
 	"Netracell",
-	"Nightmare",
 	"Open World",
+	"Perrita Rebellion",
 	"Profit-Taker",
 	"Quest",
 	"Rescue",
 	"Sabotage",
 	"Sanctuary Onslaught",
 	"Spy",
-	"Steel Path",
 	"Survival",
+}
+
+// Available objectives for a squad run
+var AvailableObjectives = []string{
+	"any",
+	"clear",
+	"farm",
+	"other",
+}
+
+// Available mission modifiers (stack on top of the mission type)
+var AvailableModifiers = []string{
+	"Steel Path",
+	"Nightmare",
 	"Void Fissure",
 }
 

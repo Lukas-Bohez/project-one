@@ -91,23 +91,23 @@ type Hub struct {
 
 	// ipConnections tracks how many concurrent connections each IP has
 	ipConnections map[string]int
-	ipMu         sync.RWMutex
+	ipMu          sync.RWMutex
 
 	// Wanted posts: players requesting roles/items/help
-	wantedPosts  map[string]*WantedPost
-	wantedMu     sync.RWMutex
+	wantedPosts map[string]*WantedPost
+	wantedMu    sync.RWMutex
 	// Quick actions: one-click intents
 	quickActions map[string]*QuickAction
 	quickMu      sync.RWMutex
 	// Playing now status
-	playingNow  map[string]*PlayingNow
-	playingMu   sync.RWMutex
+	playingNow map[string]*PlayingNow
+	playingMu  sync.RWMutex
 	// Mission plans shared by players
 	missionPlans map[string]*MissionPlan
 	planMu       sync.RWMutex
 	// Recent activity feed
 	recentActivity map[string]*RecentActivity
-	activityMu    sync.RWMutex
+	activityMu     sync.RWMutex
 }
 
 // NewHub creates a new squad finder hub

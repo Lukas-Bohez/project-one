@@ -3,6 +3,7 @@ package squad
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -82,9 +83,14 @@ func (h *Hub) handleUpdateSquad(c *client, data json.RawMessage) {
 		Difficulty  string   `json:"difficulty"`
 		Region      string   `json:"region"`
 		Language    string   `json:"language"`
-		SquadSize  int      `json:"squadSize"`
-		Mode       string   `json:"mode"`
-		Tags       []string `json:"tags"`
+		SquadSize   int      `json:"squadSize"`
+		Mode        string   `json:"mode"`
+		Tags        []string `json:"tags"`
+		Description string   `json:"description"`
+		Objective   *string  `json:"objective"`
+		SteelPath   *bool    `json:"steelPath"`
+		Nightmare   *bool    `json:"nightmare"`
+		VoidFissure *bool    `json:"voidFissure"`
 	}
 
 	if err := json.Unmarshal(data, &req); err != nil {
@@ -128,6 +134,31 @@ func (h *Hub) handleUpdateSquad(c *client, data json.RawMessage) {
 	if req.Language != "" {
 		squad.Language = req.Language
 	}
+	if req.Description != "" {
+		description := SanitizeString(req.Description)
+		if len(description) > MaxDescriptionLen {
+			description = description[:MaxDescriptionLen]
+		}
+		squad.Description = description
+	}
+	if req.Objective != nil {
+		objective := strings.ToLower(strings.TrimSpace(*req.Objective))
+		switch objective {
+		case "clear", "farm", "other":
+			squad.Objective = objective
+		default:
+			squad.Objective = ""
+		}
+	}
+	if req.SteelPath != nil {
+		squad.SteelPath = *req.SteelPath
+	}
+	if req.Nightmare != nil {
+		squad.Nightmare = *req.Nightmare
+	}
+	if req.VoidFissure != nil {
+		squad.VoidFissure = *req.VoidFissure
+	}
 	if req.SquadSize > 0 {
 		squad.SquadSize = req.SquadSize
 		squad.MaxPlayers = func() int {
@@ -145,5 +176,3 @@ func (h *Hub) handleUpdateSquad(c *client, data json.RawMessage) {
 	h.broadcastToSquad(squadID, "squad_updated", squad, "")
 	h.broadcastSquadList()
 }
-
-

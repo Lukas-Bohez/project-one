@@ -54,13 +54,14 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
 |-------|------------|-------------|
 | `join_finder` | `{player: Player}` | Register player when connecting |
 | `get_squad_list` | `{filters?: FilterState}` | Request filtered squad list |
-| `create_squad` | `{name, missionType, planet, difficulty, region, language, squadSize, mode, maxPlayers}` | Create a new squad |
+| `create_squad` | `{name, missionType, planet, difficulty, region, language, squadSize, mode, maxPlayers, description?, objective?, steelPath?, nightmare?, voidFissure?}` | Create a new squad. `description` is a freeform strategy/notes line (max 240 chars). `objective` is `clear`, `farm` or `other`. `steelPath`/`nightmare`/`voidFissure` are boolean modifiers that stack on top of the mission type. |
 | `join_squad` | `{squadId: string}` | Join an existing squad |
 | `leave_squad` | `{squadId: string}` | Leave current squad |
 | `toggle_ready` | `{squadId: string}` | Toggle ready status |
 | `chat_message` | `{squadId, content: string}` | Send chat message |
 | `kick_player` | `{squadId, playerId}` | Kick a player (leader only) |
-| `update_squad` | `{squadId, name?, missionType?, planet?, difficulty?, region?, language?, squadSize?, mode?}` | Update squad settings |
+| `update_squad` | `{squadId, name?, missionType?, planet?, difficulty?, region?, language?, squadSize?, mode?, description?, objective?, steelPath?, nightmare?, voidFissure?}` | Update squad settings. Modifier/objective fields use pointers: omit to leave unchanged, send `false`/`""` to clear. |
+| `set_role` | `{squadId, role}` | Set your role in the squad (`dps`, `support`, `buffer`, `shield`, `arcane`, `resource`, `efficiency`, `any`) |
 | `get_filter_options` | `{}` | Request available filter options |
 | `set_activity` | `{status: string, game?: string}` | Update online status |
 | `recent_played` | `{missionType?, planet?, difficulty?}` | Report recent mission |
@@ -81,9 +82,10 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
 | `squad_updated` | `{squad: Squad}` | Squad settings updated |
 | `chat_message` | `{message: {senderName, content, timestamp, type}}` | Chat message received |
 | `player_count` | `{online: int}` | Online player count updated |
-| `filter_options` | `{missions[], planets[], difficulties[], regions[], languages[]}` | Available filter options |
+| `filter_options` | `{missions[], planets[], difficulties[], regions[], languages[], objectives[], modifiers[], roles[]}` | Available filter options. `missions` holds pure gamemodes + special activities only (32 entries incl. "Any"). `modifiers` are the stacking toggles (Steel Path, Nightmare, Void Fissure) that used to be mixed into missions. `objectives` = any/clear/farm/other. `roles` = dps/support/buffer/shield/arcane/resource/efficiency/any. |
 | `kicked` | `{}` | You were kicked from a squad |
 | `match_found` | `{squad: Squad, created: bool}` | Quick Match result (joined existing or auto-created) |
+| `role_updated` | `{playerId, role}` | A player's role changed in your squad (not sent back to the player who changed it) |
 | `error` | `{message: string}` | Error occurred |
 
 ---
@@ -116,7 +118,7 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
 {
   "id": "string",
   "name": "string (custom lobby name, max 40)",
-  "missionType": "string (e.g. Survival, Defense, Capture, Interception, Excavation, Rally, Archwing, Orb, Sortie, Steel Path)",
+  "missionType": "string — pure gamemode or special activity (e.g. Survival, Defense, EDA (Deep Archimedea), Cascade (Level Cap), Perrita Rebellion). Modifiers are NOT listed here.",
   "planet": "string (e.g. Earth, Venus, Mercury, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Sedna, Lua, Phobos, Eris, Stalker,clo...
 ---
 
@@ -144,6 +146,20 @@ The squad finder is **in-memory only** and does NOT require MySQL — it is
 registered outside the `if mysqlDB != nil` gate in `cmd/server/main.go`.
 
 ---
+
+## CHANGELOG (2026-09-13) — community-requested overhaul (description, objective, modifiers, roles, new mission types)
+
+Based on feedback from the Warframe community (Reddit), the squad finder gets the features players actually asked for:
+
+- **Freeform description field** when creating a squad. Leaders can write exactly what the run needs: "EDA Stella farm, Cyte-09 ad clear, need supports". Shows on the squad card and in the detail panel. Max 240 chars, sanitized server-side.
+- **Objective selector** (Clear / Farm / Other) — tells people at a glance whether the run is to finish a mission or grind loot/points.
+- **Mission modifiers are now separate checkboxes**, not entries in the mission list. Steel Path, Nightmare and Void Fissure are tick-box toggles that stack on top of any mission type — fixing the confusion where they were mixed in with gamemodes like Spy and Exterminate.
+- **Role selection** per player (DPS, Support, Buffer, Shield, Arcane, Resource, Efficiency, Any). Pick your role once in a squad; it shows as a badge next to your name so leaders can see coverage at a glance — one-unique-Warframe-per-slot runs become possible to organize.
+- **New mission types added**: Cascade (Level Cap), Descendia, EDA (Deep Archimedea), ETA (Temporal Archimedea), Perrita Rebellion. These were missing entirely.
+- **Steel Path removed from the missions list** (it is a difficulty modifier, not a mission type) and **Void Fissure / Nightmare removed from missions** (they are modifiers now, not missions). All three remain selectable via the modifier checkboxes.
+- **Mission list is now pure gamemodes + special activities only** (32 entries incl. "Any"), sorted alphabetically.
+- **Fixed a critical backend crash**: `HandleSetRole`, `HandleSetDropTarget`, `HandleStartSession`, `HandleEndSession`, `HandleSubmitReport`, `HandleSetETA`, `HandleAddActivity`, `HandleVotePlayer`, `HandleGetPlayerStats`, `HandleGetSquadHistory` all asserted `data.([]byte)` on a `json.RawMessage` argument, panicking and killing the whole backend (restart counter hit 87). All ten handlers now take `json.RawMessage` directly. Added a `recover()` guard in `handleEvent` so a future panic only drops that one message instead of crashing the server.
+- **Docs updated**: `create_squad` and `filter_options` payloads document the new fields; mission count corrected to 32 entries.
 
 ## CHANGELOG (2026-09-12) — made playable
 
@@ -193,7 +209,7 @@ registered outside the `if mysqlDB != nil` gate in `cmd/server/main.go`.
   `create_squad` was ignored. The unregister case now calls
   `removePlayerFromSquadLocked` (lock already held). Rebuilt the server and
   verified end-to-end: registration → squad_list/player_count →
-  filter_options (31 missions, 18 planets, 6 difficulties, 7 regions,
+  filter_options (32 entries incl. Any, 18 planets, 6 difficulties, 7 regions,
   4 platforms, 10 languages) → squad_created, and the hub keeps serving
   clients after disconnects.
 
@@ -264,7 +280,7 @@ registered outside the `if mysqlDB != nil` gate in `cmd/server/main.go`.
 ## VERIFIED
 
 18/18 end-to-end assertions pass over `ws://localhost:8081/api/v1/squad/ws`:
-filter_options (31 missions, 18 planets, 6 difficulties, 7 regions,
+filter_options (32 entries incl. Any, 18 planets, 6 difficulties, 7 regions,
 4 platforms, 10 languages) → squad_list → player_count → create_squad
 (missionType / planet / difficulty / squadSize) → chat_message round-trip
 → find_match → leave_squad. Node syntax check on `squad-client.js` clean.

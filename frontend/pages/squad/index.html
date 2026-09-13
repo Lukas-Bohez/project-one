@@ -165,6 +165,15 @@
                 </select>
               </div>
               <div class="squad-filter-row">
+                <label for="filterObjective">Objective</label>
+                <select id="filterObjective">
+                  <option value="">All</option>
+                  <option value="clear">Clear</option>
+                  <option value="farm">Farm</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="squad-filter-row">
                 <label for="filterMode">Mode</label>
                 <select id="filterMode">
                   <option value="">All</option>
@@ -242,6 +251,12 @@
               </div>
             </div>
 
+            <!-- Description (freeform) -->
+            <div class="squad-desc-block" id="squadDescBlock" style="display: none">
+              <h4>Description</h4>
+              <p id="squadDescText"></p>
+            </div>
+
             <!-- Squad Leader -->
             <div class="squad-leader-block" id="squadLeaderBlock">
               <h4>Squad Leader</h4>
@@ -260,6 +275,19 @@
               <h4>Squad Members
                 <span class="squad-count-badge squad-count-badge--small" id="playerCount">0/6</span>
               </h4>
+              <div class="squad-role-row" id="squadRoleRow" style="display: none">
+                <label for="myRoleSelect">Your role</label>
+                <select id="myRoleSelect">
+                  <option value="any">Any</option>
+                  <option value="dps">DPS</option>
+                  <option value="support">Support</option>
+                  <option value="buffer">Buffer</option>
+                  <option value="shield">Shield</option>
+                  <option value="arcane">Arcane</option>
+                  <option value="resource">Resource</option>
+                  <option value="efficiency">Efficiency</option>
+                </select>
+              </div>
               <div class="squad-players-list" id="playersList"></div>
             </div>
 
@@ -360,6 +388,29 @@
               </select>
             </div>
           </div>
+          <div class="squad-form-row">
+            <div class="squad-form-group">
+              <label for="squadObjectiveSelect">Objective</label>
+              <select id="squadObjectiveSelect">
+                <option value="">Not stated</option>
+                <option value="clear">Clear</option>
+                <option value="farm">Farm</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="squad-form-group">
+              <label>Mission Modifiers</label>
+              <div class="squad-modifier-checks">
+                <label class="squad-filter-checkbox"><input type="checkbox" id="squadSteelPathChk" /> Steel Path</label>
+                <label class="squad-filter-checkbox"><input type="checkbox" id="squadNightmareChk" /> Nightmare</label>
+                <label class="squad-filter-checkbox"><input type="checkbox" id="squadVoidFissureChk" /> Void Fissure</label>
+              </div>
+            </div>
+          </div>
+          <div class="squad-form-group">
+            <label for="squadDescInput">Description <span class="squad-form-hint">strategy, roles needed, specific drops</span></label>
+            <textarea id="squadDescInput" maxlength="240" rows="2" placeholder="e.g. EDA Stella farm, Cyte-09 ad clear, need supports"></textarea>
+          </div>
         </div>
         <div class="squad-modal-footer">
           <button class="squad-btn squad-btn--secondary" id="cancelCreateBtn">Cancel</button>
@@ -452,9 +503,21 @@
             <h4><i class="fa-solid fa-plus"></i> Creating your own squad</h4>
             <ul class="squad-info-list">
               <li><i class="fa-solid fa-check"></i><span>Pick a name, mission type, planet, difficulty, region and language, choose a size and mode, then hit <strong>Create Squad</strong>.</span></li>
+              <li><i class="fa-solid fa-check"></i><span><strong>Mission type</strong> lists real gamemodes and special activities only: Survival, Disruption, EDA (Deep Archimedea), ETA (Temporal Archimedea), Cascade (Level Cap), Archon Hunt, Duviri, Perrita Rebellion, Descendia and more.</span></li>
+              <li><i class="fa-solid fa-check"></i><span><strong>Modifiers are separate checkboxes</strong>: tick Steel Path, Nightmare and/or Void Fissure on top of the mission instead of hunting for them in the mission list.</span></li>
+              <li><i class="fa-solid fa-check"></i><span><strong>Objective</strong> tells people what the run is for: Clear (finish it), Farm (grind loot/points) or Other.</span></li>
+              <li><i class="fa-solid fa-check"></i><span><strong>Description</strong> is a freeform line for everything else: "EDA Stella farm, Cyte-09 ad clear, need supports" - say exactly what you want.</span></li>
               <li><i class="fa-solid fa-check"></i><span><strong>Squad size:</strong> 4 Players (Quick) for classic squads, 6 Players (Standard) for full six-Tenno teams. 6-player squads always run one fixed mission / planet / difficulty, so those filters don't apply to them.</span></li>
               <li><i class="fa-solid fa-check"></i><span><strong>Mode:</strong> Casual for relaxed runs and learning, Serious for focused, efficient play.</span></li>
               <li><i class="fa-solid fa-check"></i><span>As <strong>leader</strong> (crown badge) you can Update Settings anytime or Kick Player if someone disrupts the squad.</span></li>
+            </ul>
+          </div>
+
+          <div class="squad-info-section">
+            <h4><i class="fa-solid fa-user-astronaut"></i> Roles</h4>
+            <ul class="squad-info-list">
+              <li><i class="fa-solid fa-check"></i><span>Once you're in a squad, pick your <strong>Your role</strong>: DPS, Support, Buffer, Shield, Arcane, Resource, Efficiency or Any.</span></li>
+              <li><i class="fa-solid fa-check"></i><span>Your role shows as a badge next to your name, so leaders can see at a glance if the squad covers what the run needs - one unique Warframe per slot runs start here.</span></li>
             </ul>
           </div>
 

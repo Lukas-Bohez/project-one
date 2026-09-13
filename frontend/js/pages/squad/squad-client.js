@@ -87,6 +87,16 @@
       this.squadLanguageSelect = document.getElementById('squadLanguageSelect');
       this.squadSizeSelect = document.getElementById('squadSizeSelect');
       this.squadModeSelect = document.getElementById('squadModeSelect');
+      this.squadDescInput = document.getElementById('squadDescInput');
+      this.squadObjectiveSelect = document.getElementById('squadObjectiveSelect');
+      this.squadSteelPathChk = document.getElementById('squadSteelPathChk');
+      this.squadNightmareChk = document.getElementById('squadNightmareChk');
+      this.squadVoidFissureChk = document.getElementById('squadVoidFissureChk');
+      this.filterObjective = document.getElementById('filterObjective');
+      this.squadDescBlock = document.getElementById('squadDescBlock');
+      this.squadDescText = document.getElementById('squadDescText');
+      this.squadRoleRow = document.getElementById('squadRoleRow');
+      this.myRoleSelect = document.getElementById('myRoleSelect');
       this.closeSquadBtn = document.getElementById('closeSquadBtn');
       this.squadActions = document.getElementById('squadActions');
       this.updateSquadBtn = document.getElementById('updateSquadBtn');
@@ -123,6 +133,8 @@
       this.filterOpenOnly.addEventListener('change', () => this.applyFilters());
       this.filterMode.addEventListener('change', () => this.applyFilters());
       this.filterSize.addEventListener('change', () => this.applyFilters());
+      if (this.filterObjective) this.filterObjective.addEventListener('change', () => this.applyFilters());
+      if (this.myRoleSelect) this.myRoleSelect.addEventListener('change', () => this.setMyRole());
       this.updateSquadBtn.addEventListener('click', () => this.openUpdateModal());
       this.kickPlayerBtn.addEventListener('click', () => this.openKickModal());
       this.closeKickModalBtn.addEventListener('click', () => this.closeKickModal());
@@ -316,6 +328,7 @@
         case 'player_left': this.onPlayerLeft(data); break;
         case 'player_kicked': this.onPlayerKicked(data); break;
         case 'ready_update': this.onReadyUpdate(data); break;
+        case 'role_updated': this.onRoleUpdated(data); break;
         case 'squad_updated': this.onSquadUpdated(data); break;
         case 'chat_message': this.onChatMessage(data); break;
         case 'player_count': this.onlineCount.textContent = (data.online || 0) + ' online'; break;
@@ -345,15 +358,23 @@
       const readyCount = players.filter((p) => p.isReady).length;
       const openSlot = squad.maxPlayers - players.length;
       const isFull = squad.status === 'full';
+      let badges = '';
+      if (squad.steelPath) badges += ' <span class="squad-mod-badge squad-mod-badge--sp" title="Steel Path">SP</span>';
+      if (squad.nightmare) badges += ' <span class="squad-mod-badge squad-mod-badge--nm" title="Nightmare">NM</span>';
+      if (squad.voidFissure) badges += ' <span class="squad-mod-badge squad-mod-badge--rf" title="Void Fissure">RF</span>';
+      let objChip = '';
+      if (squad.objective) objChip = ' <span class="squad-obj-badge">' + this.escapeHtml(squad.objective.charAt(0).toUpperCase() + squad.objective.slice(1)) + '</span>';
+      const descSnippet = squad.description ? '<div class="squad-card-desc" title="' + this.escapeHtml(squad.description) + '">' + this.escapeHtml(squad.description) + '</div>' : '';
       return '<div class="squad-card" data-squad-id="' + squad.id + '">' +
         '<div class="squad-card-header">' +
           '<h4 class="squad-card-name">' + this.escapeHtml(squad.name || 'Unnamed Squad') + '</h4>' +
           '<span class="squad-card-status ' + (isFull ? 'full' : 'open') + '">' + (isFull ? 'Full' : openSlot + ' slot' + (openSlot !== 1 ? 's' : '')) + '</span>' +
         '</div>' +
-        '<div class="squad-card-mission"><i class="fa-solid fa-flag"></i> ' + this.escapeHtml(squad.missionType || '') + '</div>' +
+        '<div class="squad-card-mission"><i class="fa-solid fa-flag"></i> ' + this.escapeHtml(squad.missionType || '') + badges + objChip + '</div>' +
         '<div class="squad-card-planet"><i class="fa-solid fa-globe"></i> ' + this.escapeHtml(squad.planet || '') + '</div>' +
         '<div class="squad-card-diff"><i class="fa-solid fa-lock"></i> ' + this.escapeHtml(squad.difficulty || '') + '</div>' +
         '<div class="squad-card-mode"><i class="fa-solid fa-gavel"></i> ' + (squad.mode === 'serious' ? 'Serious' : 'Casual') + '</div>' +
+        descSnippet +
         '<div class="squad-card-meta">' +
           '<span class="squad-card-size"><i class="fa-solid fa-user-group"></i> ' + players.length + '/' + squad.maxPlayers + ' ' + (squad.maxPlayers === 4 ? '4-player' : '6-player') + '</span>' +
           '<span class="squad-card-ready"><i class="fa-solid fa-check-circle"></i> ' + readyCount + ' ready</span>' +
@@ -371,6 +392,7 @@
         if (this.filterPlanet.value && s.planet !== this.filterPlanet.value) return false;
         if (this.filterDifficulty.value && s.difficulty !== this.filterDifficulty.value) return false;
         if (this.filterMode.value && s.mode !== this.filterMode.value) return false;
+        if (this.filterObjective && this.filterObjective.value && s.objective !== this.filterObjective.value) return false;
         if (this.filterSize.value) {
           const size = parseInt(this.filterSize.value);
           if (s.squadSize && s.squadSize !== size) return false;
@@ -390,6 +412,7 @@
         planet: this.filterPlanet.value,
         difficulty: this.filterDifficulty.value,
         mode: this.filterMode.value,
+        objective: this.filterObjective ? this.filterObjective.value : '',
         squadSize: this.filterSize.value ? parseInt(this.filterSize.value) : 0,
         openOnly: this.filterOpenOnly.checked
       };
@@ -409,6 +432,11 @@
       if (!this.squadModeSelect.options.length || this.squadModeSelect.options[0].text !== 'Casual') {
         this.squadModeSelect.innerHTML = '<option value="casual">Casual</option><option value="serious">Serious</option>';
       }
+      if (this.squadDescInput) this.squadDescInput.value = '';
+      if (this.squadObjectiveSelect) this.squadObjectiveSelect.value = '';
+      if (this.squadSteelPathChk) this.squadSteelPathChk.checked = false;
+      if (this.squadNightmareChk) this.squadNightmareChk.checked = false;
+      if (this.squadVoidFissureChk) this.squadVoidFissureChk.checked = false;
       this.createSquadModal.style.display = 'flex';
     }
 
@@ -481,12 +509,14 @@
       const difficulty = this.squadDifficultySelect.value;
       const region = this.squadRegionSelect.value;
       const language = this.squadLanguageSelect.value;
+      const description = this.squadDescInput ? this.squadDescInput.value.trim() : '';
 
       if (!name) { this.showNotification('Please enter a squad name', 'warning'); return; }
       if (!mission) { this.showNotification('Please select a mission type', 'warning'); return; }
       if (!planet) { this.showNotification('Please select a planet', 'warning'); return; }
       if (!difficulty) { this.showNotification('Please select a difficulty', 'warning'); return; }
       if (!region) { this.showNotification('Please select a region', 'warning'); return; }
+      if (description.length > 240) { this.showNotification('Description too long (max 240 chars)', 'warning'); return; }
 
       this.send('create_squad', {
         name: name,
@@ -497,7 +527,12 @@
         language: language || 'English',
         maxPlayers: parseInt(this.squadSizeSelect.value) || 6,
         mode: this.squadModeSelect.value || 'casual',
-        squadSize: parseInt(this.squadSizeSelect.value) || 6
+        squadSize: parseInt(this.squadSizeSelect.value) || 6,
+        description: description,
+        objective: this.squadObjectiveSelect ? this.squadObjectiveSelect.value : '',
+        steelPath: this.squadSteelPathChk ? this.squadSteelPathChk.checked : false,
+        nightmare: this.squadNightmareChk ? this.squadNightmareChk.checked : false,
+        voidFissure: this.squadVoidFissureChk ? this.squadVoidFissureChk.checked : false
       });
       this.closeCreateModal();
     }
@@ -641,8 +676,23 @@
       this.squadLanguage.textContent = squad.language || 'English';
       this.squadStatus.textContent = squad.status === 'full' ? 'Squad Full' : 'Searching...';
 
+      // Objective + modifier badges next to the player count
+      let metaBadges = '';
+      if (squad.objective) metaBadges += ' <span class="squad-obj-badge">' + this.escapeHtml(squad.objective.charAt(0).toUpperCase() + squad.objective.slice(1)) + '</span>';
+      if (squad.steelPath) metaBadges += ' <span class="squad-mod-badge squad-mod-badge--sp" title="Steel Path">SP</span>';
+      if (squad.nightmare) metaBadges += ' <span class="squad-mod-badge squad-mod-badge--nm" title="Nightmare">NM</span>';
+      if (squad.voidFissure) metaBadges += ' <span class="squad-mod-badge squad-mod-badge--rf" title="Void Fissure">RF</span>';
+
       this.squadMeta.innerHTML = '<span>' + (squad.players ? squad.players.length : 0) + '/' + squad.maxPlayers + ' players</span>' +
-        '<span class="squad-card-ready"><i class="fa-solid fa-check-circle"></i> ' + (squad.players ? squad.players.filter((p) => p.isReady).length : 0) + ' ready</span>';
+        '<span class="squad-card-ready"><i class="fa-solid fa-check-circle"></i> ' + (squad.players ? squad.players.filter((p) => p.isReady).length : 0) + ' ready</span>' + metaBadges;
+
+      // Freeform description from the leader
+      if (squad.description) {
+        this.squadDescText.textContent = squad.description;
+        this.squadDescBlock.style.display = 'block';
+      } else {
+        this.squadDescBlock.style.display = 'none';
+      }
 
       const leader = squad.players ? squad.players.find((p) => p.id === squad.leaderId) : null;
       if (leader) {
@@ -664,7 +714,15 @@
         ).join('');
       }
 
-      this.playersList.innerHTML = players.map((p) => this.renderPlayerCard(p, squad.leaderId, me && me.id === p.id)).join('');
+      // Role picker: everyone picks their own role once in a squad
+      if (this.squadRoleRow && this.myRoleSelect) {
+        this.squadRoleRow.style.display = 'flex';
+        const roles = squad.roles || {};
+        this.myRoleSelect.value = roles[this.player.id] || 'any';
+      }
+
+      const roles = squad.roles || {};
+      this.playersList.innerHTML = players.map((p) => this.renderPlayerCard(p, squad.leaderId, me && me.id === p.id, roles[p.id])).join('');
 
       this.readyBtn.style.display = squad.status !== 'full' ? 'inline-flex' : 'none';
       this.leaveBtn.style.display = 'inline-flex';
@@ -681,7 +739,7 @@
       this.enableChat();
     }
 
-    renderPlayerCard(player, leaderId, isSelf) {
+    renderPlayerCard(player, leaderId, isSelf, role) {
       const initials = player.username.substring(0, 2).toUpperCase();
       const trustScore = player.trustScore || 50;
       const trustClass = this.getTrustClass(trustScore);
@@ -694,18 +752,51 @@
       } else if (v === 'premium') {
         verBadge = ' <span class="squad-ver-badge squad-ver-badge--premium" title="Premium member"><i class="fa-solid fa-gem"></i> Premium</span>';
       }
+      let roleBadge = '';
+      if (role && role !== 'any') {
+        const label = role.charAt(0).toUpperCase() + role.slice(1);
+        roleBadge = ' <span class="squad-role-badge" title="Role">' + this.escapeHtml(label) + '</span>';
+      }
       return '<div class="squad-player">' +
         '<div class="squad-player-avatar">' + initials + '</div>' +
         '<div class="squad-player-info">' +
           '<div class="squad-player-name">' + this.escapeHtml(player.username) +
             (player.id === leaderId ? ' <span class="squad-leader-badge"><i class="fa-solid fa-crown"></i> Leader</span>' : '') +
             (isSelf ? ' <span class="squad-self-badge">You</span>' : '') +
-            verBadge + '</div>' +
+            roleBadge + verBadge + '</div>' +
           '<div class="squad-player-meta">MR' + player.masteryRank + ' | ' + player.platform + ' | ' + player.region + '</div>' +
           '<div class="squad-trust ' + trustClass + '"><i class="fa-solid fa-shield"></i> ' + Math.round(trustScore) + '</div>' +
         '</div>' +
         '<div class="squad-player-ready ' + (player.isReady ? 'ready' : '') + '" title="' + (player.isReady ? 'Ready' : 'Not ready') + '"></div>' +
       '</div>';
+    }
+
+    setMyRole() {
+      if (!this.currentSquad || !this.myRoleSelect) return;
+      const role = this.myRoleSelect.value;
+      // The server broadcasts role_updated to everyone except the sender,
+      // so apply our own role locally too.
+      if (!this.currentSquad.roles) this.currentSquad.roles = {};
+      this.currentSquad.roles[this.player.id] = role;
+      const players = this.currentSquad.players || [];
+      const roles = this.currentSquad.roles;
+      this.playersList.innerHTML = players.map((x) => this.renderPlayerCard(x, this.currentSquad.leaderId, this.player.id === x.id, roles[x.id])).join('');
+      this.send('set_role', { squadId: this.currentSquad.id, role: role });
+    }
+
+    onRoleUpdated(data) {
+      if (!this.currentSquad) return;
+      if (!this.currentSquad.roles) this.currentSquad.roles = {};
+      if (data && data.playerId) {
+        this.currentSquad.roles[data.playerId] = data.role;
+        const players = this.currentSquad.players || [];
+        const p = players.find((x) => x.id === data.playerId);
+        if (p) {
+          const me = players.find((x) => x.id === this.player.id);
+          const roles = this.currentSquad.roles;
+          this.playersList.innerHTML = players.map((x) => this.renderPlayerCard(x, this.currentSquad.leaderId, me && me.id === x.id, roles[x.id])).join('');
+        }
+      }
     }
 
     enableChat() {
@@ -817,6 +908,11 @@
         this.squadDifficultySelect.value = this.currentSquad.difficulty || '';
         this.squadRegionSelect.value = this.currentSquad.region || '';
         this.squadLanguageSelect.value = this.currentSquad.language || '';
+        if (this.squadDescInput) this.squadDescInput.value = this.currentSquad.description || '';
+        if (this.squadObjectiveSelect) this.squadObjectiveSelect.value = this.currentSquad.objective || '';
+        if (this.squadSteelPathChk) this.squadSteelPathChk.checked = !!this.currentSquad.steelPath;
+        if (this.squadNightmareChk) this.squadNightmareChk.checked = !!this.currentSquad.nightmare;
+        if (this.squadVoidFissureChk) this.squadVoidFissureChk.checked = !!this.currentSquad.voidFissure;
       }
       this.createSquadModal.style.display = 'flex';
       this.confirmCreateBtn.textContent = 'Update Squad';
@@ -827,6 +923,8 @@
       if (!this.currentSquad) return;
       const name = this.squadNameInput.value.trim();
       if (!name) { this.showNotification('Please enter a squad name', 'warning'); return; }
+      const description = this.squadDescInput ? this.squadDescInput.value.trim() : '';
+      if (description.length > 240) { this.showNotification('Description too long (max 240 chars)', 'warning'); return; }
       this.send('update_squad', {
         squadId: this.currentSquad.id,
         name: name,
@@ -836,7 +934,12 @@
         region: this.squadRegionSelect.value,
         language: this.squadLanguageSelect.value,
         squadSize: parseInt(this.squadSizeSelect.value) || 6,
-        mode: this.squadModeSelect.value || 'casual'
+        mode: this.squadModeSelect.value || 'casual',
+        description: description,
+        objective: this.squadObjectiveSelect ? this.squadObjectiveSelect.value : '',
+        steelPath: this.squadSteelPathChk ? this.squadSteelPathChk.checked : false,
+        nightmare: this.squadNightmareChk ? this.squadNightmareChk.checked : false,
+        voidFissure: this.squadVoidFissureChk ? this.squadVoidFissureChk.checked : false
       });
       this.closeCreateModal();
       this.confirmCreateBtn.textContent = 'Create Squad';
