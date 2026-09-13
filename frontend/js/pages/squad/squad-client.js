@@ -153,7 +153,7 @@
           clanTag: profile.clanTag,
           savedAt: Date.now()
         }));
-      } catch (e) { /* storage unavailable (e.g. private mode) — auto-login just stays off */ }
+      } catch (e) { /* storage unavailable (e.g. private mode). Auto-login stays off. */ }
     }
 
     clearSavedProfile() {
@@ -243,7 +243,7 @@
           this.send('join_finder', { player: this.player });
           this.send('get_filter_options', {});
           if (this.switchPlayerBtn) this.switchPlayerBtn.style.display = 'inline-flex';
-          this.saveProfile(profile); // remember me — auto-login on the next visit
+          this.saveProfile(profile); // remember me. Auto-login on the next visit.
         };
         this.ws.onmessage = (event) => {
           try {
@@ -272,7 +272,7 @@
       } else {
         // Give up: drop back to the setup screen with the profile prefilled.
         this.showSetup();
-        this.updateStatus('error', 'Connection failed — try again');
+        this.updateStatus('error', 'Connection failed. Try again.');
       }
     }
 
