@@ -213,6 +213,7 @@
   background: var(--squad-bg-card);
   border-bottom: 1px solid var(--squad-border);
   font-size: 0.85rem;
+  margin-top: 16px;
 }
 
 .squad-status-indicator {
@@ -702,7 +703,7 @@
 
 #infoModal .squad-modal-body {
   max-height: 72vh;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 .squad-btn--danger {
@@ -1450,7 +1451,7 @@
   background: var(--squad-bg-elevated);
   border: 1px solid var(--squad-border);
   border-radius: 12px;
-  margin-bottom: 24px;
+  margin: 16px 0 24px 0;
   font-size: 0.85rem;
 }
 
