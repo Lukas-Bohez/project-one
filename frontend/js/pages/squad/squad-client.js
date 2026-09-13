@@ -345,15 +345,15 @@
       const readyCount = players.filter((p) => p.isReady).length;
       const openSlot = squad.maxPlayers - players.length;
       const isFull = squad.status === 'full';
-      return '<div class="squad-card" data-squad-id="' + s.id + '">' +
+      return '<div class="squad-card" data-squad-id="' + squad.id + '">' +
         '<div class="squad-card-header">' +
-          '<h4 class="squad-card-name">' + this.escapeHtml(s.name || 'Unnamed Squad') + '</h4>' +
+          '<h4 class="squad-card-name">' + this.escapeHtml(squad.name || 'Unnamed Squad') + '</h4>' +
           '<span class="squad-card-status ' + (isFull ? 'full' : 'open') + '">' + (isFull ? 'Full' : openSlot + ' slot' + (openSlot !== 1 ? 's' : '')) + '</span>' +
         '</div>' +
-        '<div class="squad-card-mission"><i class="fa-solid fa-flag"></i> ' + this.escapeHtml(s.missionType || '') + '</div>' +
-        '<div class="squad-card-planet"><i class="fa-solid fa-globe"></i> ' + this.escapeHtml(s.planet || '') + '</div>' +
-        '<div class="squad-card-diff"><i class="fa-solid fa-lock"></i> ' + this.escapeHtml(s.difficulty || '') + '</div>' +
-        '<div class="squad-card-mode"><i class="fa-solid fa-gavel"></i> ' + (s.mode === 'serious' ? 'Serious' : 'Casual') + '</div>' +
+        '<div class="squad-card-mission"><i class="fa-solid fa-flag"></i> ' + this.escapeHtml(squad.missionType || '') + '</div>' +
+        '<div class="squad-card-planet"><i class="fa-solid fa-globe"></i> ' + this.escapeHtml(squad.planet || '') + '</div>' +
+        '<div class="squad-card-diff"><i class="fa-solid fa-lock"></i> ' + this.escapeHtml(squad.difficulty || '') + '</div>' +
+        '<div class="squad-card-mode"><i class="fa-solid fa-gavel"></i> ' + (squad.mode === 'serious' ? 'Serious' : 'Casual') + '</div>' +
         '<div class="squad-card-meta">' +
           '<span class="squad-card-size"><i class="fa-solid fa-user-group"></i> ' + players.length + '/' + squad.maxPlayers + ' ' + (squad.maxPlayers === 4 ? '4-player' : '6-player') + '</span>' +
           '<span class="squad-card-ready"><i class="fa-solid fa-check-circle"></i> ' + readyCount + ' ready</span>' +
