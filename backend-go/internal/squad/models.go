@@ -2,11 +2,43 @@ package squad
 
 import (
 	"crypto/subtle"
+	"encoding/json"
+	"os"
 	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/google/uuid"
 )
+
+// ---------------------------------------------------------------------------
+// Games & Categories (user-generated content)
+// ---------------------------------------------------------------------------
+
+// Game represents a supported game. Games can be seeded (system) or
+// user-created. Each game owns its own set of categories.
+type Game struct {
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Slug        string     `json:"slug"`
+	Description string     `json:"description"`
+	Icon        string     `json:"icon"`
+	Categories  []Category `json:"categories"`
+	IsCustom    bool       `json:"isCustom"`
+	CreatedBy   string     `json:"createdBy"`
+	CreatedAt   time.Time  `json:"createdAt"`
+}
+
+// Category is an activity/mission type within a game.
+type Category struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Icon      string    `json:"icon"`
+	IsCustom  bool      `json:"isCustom"`
+	CreatedBy string    `json:"createdBy"`
+	CreatedAt time.Time `json:"createdAt"`
+}
 
 // SquadStatus represents the current state of a squad
 type SquadStatus string
@@ -162,6 +194,8 @@ const (
 type Squad struct {
 	ID           string      `json:"id"`
 	Name         string      `json:"name"`
+	GameID       string      `json:"gameId"`      // which game this squad is for
+	CategoryID   string      `json:"categoryId"`  // activity/category within the game
 	Mission      string      `json:"missionType"`
 	Planet       string      `json:"planet"`
 	Node         string      `json:"node"`
@@ -568,3 +602,165 @@ const (
 	BanDuration30Days  = 720
 	BanDurationPerm    = -1
 )
+
+// ---------------------------------------------------------------------------
+// Persistence (JSON file for user-generated content)
+// ---------------------------------------------------------------------------
+
+const storeFile = "/home/student/Project/project-one/backend-go/internal/squad/store.json"
+
+// Store holds mutable state that survives restarts.
+type Store struct {
+	Games      map[string]*Game     `json:"games"`
+	CustomCats map[string]*Category `json:"customCats"`
+}
+
+func loadStore() *Store {
+	s := &Store{
+		Games:      make(map[string]*Game),
+		CustomCats: make(map[string]*Category),
+	}
+	data, err := os.ReadFile(storeFile)
+	if err != nil {
+		return s
+	}
+	_ = json.Unmarshal(data, s)
+	return s
+}
+
+func (s *Store) save() {
+	data, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		return
+	}
+	_ = os.WriteFile(storeFile, data, 0644)
+}
+
+func newID() string {
+	return uuid.New().String()
+}
+
+// seedGames returns the default games and their categories.
+func seedGames() []*Game {
+	now := time.Now()
+	return []*Game{
+		{
+			ID:          "game_warframe",
+			Name:        "Warframe",
+			Slug:        "warframe",
+			Description: "Find squads for missions, farms, and endgame content across the Origin System.",
+			Icon:        "🪐",
+			IsCustom:    false,
+			CreatedBy:   "system",
+			CreatedAt:   now,
+			Categories: []Category{
+				{ID: "cat_wf_survival", Name: "Survival", Icon: "⏳", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_disruption", Name: "Disruption", Icon: "🔮", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_excavation", Name: "Excavation", Icon: "⛏️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_defense", Name: "Defense", Icon: "🛡️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_spy", Name: "Spy", Icon: "🕵️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_rescue", Name: "Rescue", Icon: "🚨", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_capture", Name: "Capture", Icon: "🎯", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_exterminate", Name: "Exterminate", Icon: "💀", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_assassination", Name: "Assassination", Icon: "🗡️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_mobile_defense", Name: "Mobile Defense", Icon: "🚂", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_interception", Name: "Interception", Icon: "📡", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_sabotage", Name: "Sabotage", Icon: "💣", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_void_fissure", Name: "Void Fissure", Icon: "🌀", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_arbitration", Name: "Arbitration", Icon: "⚖️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_steel_path", Name: "Steel Path", Icon: "🔥", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_nightmare", Name: "Nightmare", Icon: "😱", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_archon_hunt", Name: "Archon Hunt", Icon: "👹", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_duviri", Name: "Duviri", Icon: "🌿", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_sanctuary", Name: "Sanctuary Onslaught", Icon: "🏛️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_profit_taker", Name: "Profit-Taker", Icon: "💰", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_exploiter", Name: "Exploiter Orb", Icon: "🤖", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_eidolon", Name: "Eidolon Hunt", Icon: "🦌", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_dragon_key", Name: "Dragon Key Vaults", Icon: "🐉", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_cascade", Name: "Cascade (Level Cap)", Icon: "🌊", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_descendia", Name: "Descendia", Icon: "🏔️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_eda", Name: "EDA (Deep Archimedea)", Icon: "🔬", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_eta", Name: "ETA (Temporal Archimedea)", Icon: "⏱️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_perrita", Name: "Perrita Rebellion", Icon: "⚔️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_circuit", Name: "Circuit", Icon: "🔄", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_netracell", Name: "Netracell", Icon: "🧬", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_open_world", Name: "Open World", Icon: "🌍", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_junction", Name: "Junction", Icon: "🔀", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_quest", Name: "Quest", Icon: "📜", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_wf_salvage", Name: "Infested Salvage", Icon: "🦠", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+			},
+		},
+		{
+			ID:          "game_destiny2",
+			Name:        "Destiny 2",
+			Slug:        "destiny2",
+			Description: "LFG for raids, dungeons, Nightfalls, Crucible, and Gambit.",
+			Icon:        "🛡️",
+			IsCustom:    false,
+			CreatedBy:   "system",
+			CreatedAt:   now,
+			Categories: []Category{
+				{ID: "cat_d2_raid", Name: "Raid", Icon: "⚔️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_d2_dungeon", Name: "Dungeon", Icon: "🏰", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_d2_nightfall", Name: "Nightfall", Icon: "🌙", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_d2_crucible", Name: "Crucible", Icon: "🏟️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_d2_gambit", Name: "Gambit", Icon: "🎲", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_d2_story", Name: "Story Mission", Icon: "📖", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_d2_exotic", Name: "Exotic Quest", Icon: "✨", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_d2_seasonal", Name: "Seasonal Activity", Icon: "🌟", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+			},
+		},
+		{
+			ID:          "game_valorant",
+			Name:        "Valorant",
+			Slug:        "valorant",
+			Description: "Find teammates for competitive, unrated, and custom games.",
+			Icon:        "🎯",
+			IsCustom:    false,
+			CreatedBy:   "system",
+			CreatedAt:   now,
+			Categories: []Category{
+				{ID: "cat_val_competitive", Name: "Competitive", Icon: "🏆", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_val_unrated", Name: "Unrated", Icon: "🎮", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_val_spikerush", Name: "Spike Rush", Icon: "⚡", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_val_deathmatch", Name: "Deathmatch", Icon: "💀", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_val_custom", Name: "Custom Game", Icon: "🔧", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_val_swiftplay", Name: "Swiftplay", Icon: "🏃", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+			},
+		},
+		{
+			ID:          "game_lethal_company",
+			Name:        "Lethal Company",
+			Slug:        "lethal-company",
+			Description: "Suit up with crews to scrap moons and survive the horrors within.",
+			Icon:        "🏭",
+			IsCustom:    false,
+			CreatedBy:   "system",
+			CreatedAt:   now,
+			Categories: []Category{
+				{ID: "cat_lc_experimentation", Name: "Experimentation", Icon: "🧪", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_lc_assurance", Name: "Assurance", Icon: "🏜️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_lc_vow", Name: "Vow", Icon: "🌿", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_lc_artic", Name: "Rend / Dine / Titan", Icon: "❄️", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_lc_quota", Name: "Quota Grind", Icon: "📊", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+			},
+		},
+		{
+			ID:          "game_deep_rock",
+			Name:        "Deep Rock Galactic",
+			Slug:        "deep-rock-galactic",
+			Description: "Rock and Stone! Find dwarves for mining missions deep underground.",
+			Icon:        "⛏️",
+			IsCustom:    false,
+			CreatedBy:   "system",
+			CreatedAt:   now,
+			Categories: []Category{
+				{ID: "cat_drg_mining", Name: "Mining Expedition", Icon: "💎", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_drg_egg", Name: "Egg Hunt", Icon: "🥚", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_drg_salvage", Name: "Salvage Operation", Icon: "🔧", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_drg_elimination", Name: "Elimination", Icon: "💀", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+				{ID: "cat_drg_point", Name: "Point Extraction", Icon: "📦", IsCustom: false, CreatedBy: "system", CreatedAt: now},
+			},
+		},
+	}
+}

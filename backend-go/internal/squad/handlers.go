@@ -58,15 +58,45 @@ func (h *Hub) handleEvent(c *client, msg *message) {
 		h.handleRecentPlayed(c, msg.Data)
 	case "find_match":
 		h.HandleFindMatch(c, msg.Data)
+	case "get_games":
+		h.handleGetGames(c, msg.Data)
+	case "add_game":
+		h.handleAddGame(c, msg.Data)
+	case "add_category":
+		h.handleAddCategory(c, msg.Data)
 	default:
 		log.Printf("squad: unknown event: %s", msg.Event)
 	}
+}
+
+// gameResp is the wire shape for a game sent to clients.
+type gameResp struct {
+	ID          string      `json:"id"`
+	Name        string      `json:"name"`
+	Slug        string      `json:"slug"`
+	Description string      `json:"description"`
+	Icon        string      `json:"icon"`
+	IsCustom    bool        `json:"isCustom"`
+	CreatedBy   string      `json:"createdBy"`
+	CreatedAt   string      `json:"createdAt"`
+	Categories  []categoryResp `json:"categories"`
+}
+
+// categoryResp is the wire shape for a category sent to clients.
+type categoryResp struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Icon      string `json:"icon"`
+	IsCustom  bool   `json:"isCustom"`
+	CreatedBy string `json:"createdBy"`
 }
 
 // handleCreateSquad creates a new squad
 func (h *Hub) handleCreateSquad(c *client, data json.RawMessage) {
 	var req struct {
 		Name        string   `json:"name"`
+		GameID      string   `json:"gameId"`
+		CategoryID  string   `json:"categoryId"`
 		Mission     string   `json:"mission"`
 		MissionType string   `json:"missionType"`
 		Planet      string   `json:"planet"`
@@ -118,6 +148,8 @@ func (h *Hub) handleCreateSquad(c *client, data json.RawMessage) {
 	squad := &Squad{
 		ID:         uuid.New().String(),
 		Name:       req.Name,
+		GameID:     req.GameID,
+		CategoryID: req.CategoryID,
 		Mission:    mission,
 		Planet:     req.Planet,
 		Difficulty: req.Difficulty,
@@ -220,4 +252,179 @@ func (h *Hub) handleJoinSquad(c *client, data json.RawMessage) {
 
 	h.broadcastSquadList()
 	log.Printf("squad: %s joined squad %s", c.player.Username, squad.ID)
+}
+
+// handleGetGames responds with the full list of games and their categories.
+func (h *Hub) handleGetGames(c *client, data json.RawMessage) {
+_ = data
+games := h.GetGames()
+result := make([]gameResp, 0, len(games))
+for _, g := range games {
+cr := make([]categoryResp, 0, len(g.Categories))
+for _, cat := range g.Categories {
+cr = append(cr, categoryResp{
+ID:        cat.ID,
+Name:      cat.Name,
+Icon:      cat.Icon,
+IsCustom:  cat.IsCustom,
+CreatedBy: cat.CreatedBy,
+})
+}
+result = append(result, gameResp{
+ID:          g.ID,
+Name:        g.Name,
+Slug:        g.Slug,
+Description: g.Description,
+Icon:        g.Icon,
+IsCustom:    g.IsCustom,
+CreatedBy:   g.CreatedBy,
+CreatedAt:   g.CreatedAt.Format(time.RFC3339),
+Categories:  cr,
+})
+}
+c.sendEvent("games_list", map[string]interface{}{"games": result})
+}
+
+// handleAddGame creates a new user-defined game.
+func (h *Hub) handleAddGame(c *client, data json.RawMessage) {
+defer func() {
+if r := recover(); r != nil {
+log.Printf("squad: recovered from panic in add_game: %v", r)
+c.sendEvent("error", map[string]string{"message": "Could not create game"})
+}
+}()
+var req struct {
+Name        string `json:"name"`
+Slug        string `json:"slug"`
+Description string `json:"description"`
+Icon        string `json:"icon"`
+}
+if err := json.Unmarshal(data, &req); err != nil {
+c.sendEvent("error", map[string]string{"message": "Invalid game data"})
+return
+}
+name := strings.TrimSpace(req.Name)
+if name == "" || len(name) > 60 {
+c.sendEvent("error", map[string]string{"message": "Game name must be 1-60 characters"})
+return
+}
+desc := strings.TrimSpace(req.Description)
+if len(desc) > 300 {
+desc = desc[:300]
+}
+icon := strings.TrimSpace(req.Icon)
+if icon == "" {
+icon = "🎮"
+}
+if len(icon) > 4 {
+icon = icon[:4]
+}
+
+g := h.AddGame(name, req.Slug, desc, icon, c.player.Username)
+if g == nil {
+c.sendEvent("error", map[string]string{"message": "Could not create game"})
+return
+}
+cr := make([]categoryResp, 0, len(g.Categories))
+for _, cat := range g.Categories {
+cr = append(cr, categoryResp{
+ID:        cat.ID,
+Name:      cat.Name,
+Icon:      cat.Icon,
+IsCustom:  cat.IsCustom,
+CreatedBy: cat.CreatedBy,
+})
+}
+c.sendEvent("game_created", map[string]interface{}{
+"game": gameResp{
+ID:          g.ID,
+Name:        g.Name,
+Slug:        g.Slug,
+Description: g.Description,
+Icon:        g.Icon,
+IsCustom:    g.IsCustom,
+CreatedBy:   g.CreatedBy,
+CreatedAt:   g.CreatedAt.Format(time.RFC3339),
+Categories:  cr,
+},
+})
+h.broadcastEvent("games_update", map[string]interface{}{
+"action": "added_game",
+"game": gameResp{
+ID:          g.ID,
+Name:        g.Name,
+Slug:        g.Slug,
+Description: g.Description,
+Icon:        g.Icon,
+IsCustom:    g.IsCustom,
+CreatedBy:   g.CreatedBy,
+CreatedAt:   g.CreatedAt.Format(time.RFC3339),
+Categories:  cr,
+},
+})
+log.Printf("squad: %s created game %s", c.player.Username, g.Name)
+}
+
+// handleAddCategory adds a new category to an existing game.
+func (h *Hub) handleAddCategory(c *client, data json.RawMessage) {
+defer func() {
+if r := recover(); r != nil {
+log.Printf("squad: recovered from panic in add_category: %v", r)
+c.sendEvent("error", map[string]string{"message": "Could not add category"})
+}
+}()
+var req struct {
+GameID  string `json:"gameId"`
+Name    string `json:"name"`
+Icon    string `json:"icon"`
+}
+if err := json.Unmarshal(data, &req); err != nil {
+c.sendEvent("error", map[string]string{"message": "Invalid category data"})
+return
+}
+name := strings.TrimSpace(req.Name)
+if name == "" || len(name) > 50 {
+c.sendEvent("error", map[string]string{"message": "Category name must be 1-50 characters"})
+return
+}
+gameID := strings.TrimSpace(req.GameID)
+if gameID == "" {
+c.sendEvent("error", map[string]string{"message": "Must specify a game"})
+return
+}
+icon := strings.TrimSpace(req.Icon)
+if icon == "" {
+icon = "🎯"
+}
+if len(icon) > 4 {
+icon = icon[:4]
+}
+
+cat := h.AddCategory(gameID, name, icon, c.player.Username)
+if cat == nil {
+c.sendEvent("error", map[string]string{"message": "Game not found or could not add category"})
+return
+}
+c.sendEvent("category_added", map[string]interface{}{
+"category": categoryResp{
+ID:        cat.ID,
+Name:      cat.Name,
+Icon:      cat.Icon,
+IsCustom:  cat.IsCustom,
+CreatedBy: cat.CreatedBy,
+},
+"gameId": gameID,
+})
+h.broadcastEvent("games_update", map[string]interface{}{
+"action":    "added_category",
+"gameId":    gameID,
+"category": categoryResp{
+ID:        cat.ID,
+Name:      cat.Name,
+Icon:      cat.Icon,
+IsCustom:  cat.IsCustom,
+CreatedBy: cat.CreatedBy,
+},
+})
+log.Printf("squad: %s added category %s to game %s", c.player.Username, cat.Name, gameID)
 }

@@ -53,6 +53,57 @@
   --squad-trust-high: #2e7d32;
   --squad-trust-medium: #f57c00;
   --squad-trust-low: #c62828;
+  /* Toggle / pill controls */
+  --squad-toggle-bg: #1a2438;
+  --squad-toggle-bg-light: #f0f0f0;
+  --squad-toggle-active: var(--squad-primary);
+  --squad-toggle-active-light: #1565c0;
+  --squad-toggle-text: #8899aa;
+  --squad-toggle-text-light: #9e9e9e;
+  --squad-toggle-text-active: #ffffff;
+  /* Modifier pill colors */
+  --squad-mod-sp: #8d6e63;
+  --squad-mod-nm: #7b1fa2;
+  --squad-mod-rf: #00838f;
+}
+
+/* Light mode */
+[data-theme='light'] {
+  --squad-primary: #1565c0;
+  --squad-error: #c62828;
+  --squad-gold: #f57c00;
+  --squad-primary-dark: #0d47a1;
+  --squad-accent: #f57c00;
+  --squad-success: #2e7d32;
+  --squad-danger: #c62828;
+  --squad-bg-dark: #f5f5f5;
+  --squad-bg-card: #ffffff;
+  --squad-bg-elevated: #fafafa;
+  --squad-border: #e0e0e0;
+  --squad-text: #212121;
+  --squad-text-muted: #757575;
+  --squad-glow: rgba(21, 101, 192, 0.2);
+  --squad-shadow: rgba(0, 0, 0, 0.1);
+  --squad-input-bg: #ffffff;
+  --squad-input-border: #e0e0e0;
+  --squad-card-hover: #f5f5f5;
+  --squad-verified: #2e7d32;
+  --squad-premium: #f57c00;
+  --squad-trust-high: #2e7d32;
+  --squad-trust-medium: #f57c00;
+  --squad-trust-low: #c62828;
+  /* Toggle / pill controls */
+  --squad-toggle-bg: #e8e8e8;
+  --squad-toggle-bg-light: #ffffff;
+  --squad-toggle-active: #1565c0;
+  --squad-toggle-active-light: #0d47a1;
+  --squad-toggle-text: #757575;
+  --squad-toggle-text-light: #bdbdbd;
+  --squad-toggle-text-active: #ffffff;
+  /* Modifier pill colors */
+  --squad-mod-sp: #6d4c41;
+  --squad-mod-nm: #4a148c;
+  --squad-mod-rf: #006064;
 }
 
 /* ============================================================
@@ -1389,48 +1440,156 @@
   flex-shrink: 0;
 }
 
-/* Smooth form styling */
-.squad-form-group {
-  margin-bottom: 16px;
-}
+/* ============================================================
+   TOGGLE & CHECKBOX CONTROLS
+   ============================================================ */
 
-.squad-form-group label {
-  display: block;
-  color: var(--squad-text);
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 7px;
-}
-
-.squad-form-group input,
-.squad-form-group select {
-  width: 100%;
-  padding: 11px 14px;
-  background: var(--squad-bg-elevated);
-  border: 1px solid var(--squad-border);
+/* Pill toggle (used for Open Only filter) */
+.squad-pill-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--squad-toggle-bg);
   border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--squad-border);
+}
+
+.squad-pill-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.squad-pill-toggle-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--squad-toggle-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.squad-pill-toggle input:checked + .squad-pill-toggle-label {
+  background: var(--squad-toggle-active);
+  color: var(--squad-toggle-text-active);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.squad-pill-toggle-label:hover {
   color: var(--squad-text);
-  font-size: 0.9rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.squad-form-group input::placeholder {
-  color: var(--squad-text-muted);
+.squad-pill-toggle input:checked + .squad-pill-toggle-label:hover {
+  color: var(--squad-toggle-text-active);
+}
+
+/* Segmented modifier toggle */
+.squad-modifier-toggle {
+  display: inline-flex;
+  background: var(--squad-toggle-bg);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--squad-border);
+}
+
+.squad-modifier-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.squad-modifier-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--squad-toggle-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.squad-modifier-pill i {
+  font-size: 0.7rem;
   opacity: 0.6;
+  transition: opacity 0.2s ease;
 }
 
-.squad-form-group input:focus,
-.squad-form-group select:focus {
-  outline: none;
-  border-color: var(--squad-primary);
-  box-shadow: 0 0 0 3px var(--squad-glow);
+.squad-modifier-toggle input:checked + .squad-modifier-pill {
+  color: var(--squad-toggle-text-active);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-.squad-form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.squad-modifier-toggle input:checked + .squad-modifier-pill i {
+  opacity: 1;
 }
+
+.squad-modifier-toggle input#squadSteelPathChk:checked + .squad-modifier-pill {
+  background: var(--squad-mod-sp);
+}
+
+.squad-modifier-toggle input#squadNightmareChk:checked + .squad-modifier-pill {
+  background: var(--squad-mod-nm);
+}
+
+.squad-modifier-toggle input#squadVoidFissureChk:checked + .squad-modifier-pill {
+  background: var(--squad-mod-rf);
+}
+
+.squad-modifier-pill:hover {
+  color: var(--squad-text);
+}
+
+.squad-modifier-toggle input:checked + .squad-modifier-pill:hover {
+  color: #fff;
+}
+
+/* ============================================================
+   MODIFIER BADGES (shown on squad cards)
+   ============================================================ */
+.squad-mod-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.squad-mod-badge--sp {
+  background: rgba(141, 110, 99, 0.2);
+  color: var(--squad-mod-sp);
+  border: 1px solid rgba(141, 110, 99, 0.3);
+}
+
+.squad-mod-badge--nm {
+  background: rgba(123, 31, 162, 0.2);
+  color: var(--squad-mod-nm);
+  border: 1px solid rgba(123, 31, 162, 0.3);
+}
+
+.squad-mod-badge--rf {
+  background: rgba(0, 131, 143, 0.2);
+  color: var(--squad-mod-rf);
+  border: 1px solid rgba(0, 131, 143, 0.3);
+}
+
 
 /* Primary button - more inviting */
 .squad-btn--primary {
@@ -1474,80 +1633,6 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--squad-text-muted);
-  flex-shrink: 0;
-}
-
-.squad-status-indicator.connected {
-  background: var(--squad-success);
-  box-shadow: 0 0 8px var(--squad-success);
-}
-
-.squad-status-text {
-  color: var(--squad-text);
-  flex: 1;
-}
-
-.squad-online-count {
-  color: var(--squad-text-muted);
-  font-size: 0.8rem;
-}
-
-/* Main layout - more spacious */
-.squad-main {
-  padding: 24px 0;
-}
-
-.squad-layout {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
-  align-items: start;
-}
-
-/* Squad list panel */
-.squad-list-panel {
-  background: var(--squad-bg-card);
-  border: 1px solid var(--squad-border);
-  border-radius: 16px;
-  padding: 20px;
-  position: sticky;
-  top: 20px;
-}
-
-.squad-list-header h3 {
-  color: var(--squad-text);
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0 0 16px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.squad-list-header h3 i {
-  color: var(--squad-primary);
-}
-
-.squad-count-badge {
-  background: var(--squad-primary);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 20px;
-  margin-left: auto;
-}
-
-.squad-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.squad-filter-row label {
-  color: var(--squad-text-muted);
   font-size: 0.78rem;
   font-weight: 600;
   flex-shrink: 0;
@@ -1563,17 +1648,30 @@
   font-size: 0.8rem;
 }
 
+.squad-filter-row--full {
+  grid-template-columns: 1fr;
+}
+
+/* Generic checkbox label (for filter rows that use checkboxes) */
 .squad-filter-checkbox {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   color: var(--squad-text-muted);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   cursor: pointer;
+  padding: 4px 0;
 }
 
 .squad-filter-checkbox input {
   accent-color: var(--squad-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.squad-filter-checkbox:hover {
+  color: var(--squad-text);
 }
 
 .squad-empty {
@@ -2470,38 +2568,6 @@
 .squad-card-size i {
   font-size: 10px;
   opacity: 0.7;
-}
-
-/* ═══════════════════════════════════════════════
-   MISSION MODIFIERS / OBJECTIVE / ROLE BADGES
-   ═══════════════════════════════════════════════ */
-.squad-mod-badge {
-  display: inline-block;
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  line-height: 1.2;
-  vertical-align: middle;
-  letter-spacing: 0.4px;
-}
-
-.squad-mod-badge--sp {
-  color: #7dd3fc;
-  background: rgba(125, 211, 252, 0.14);
-  border: 1px solid rgba(125, 211, 252, 0.3);
-}
-
-.squad-mod-badge--nm {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.14);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-}
-
-.squad-mod-badge--rf {
-  color: #c4b5fd;
-  background: rgba(196, 181, 253, 0.14);
-  border: 1px solid rgba(196, 181, 253, 0.3);
 }
 
 .squad-obj-badge {

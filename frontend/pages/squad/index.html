@@ -189,10 +189,10 @@
                   <option value="6">6 Players</option>
                 </select>
               </div>
-              <div class="squad-filter-row">
-                <label class="squad-filter-checkbox">
+              <div class="squad-form-row squad-filter-row--full">
+                <label class="squad-pill-toggle">
                   <input type="checkbox" id="filterOpenOnly" checked />
-                  Open Only
+                  <span class="squad-pill-toggle-label">Open Only</span>
                 </label>
               </div>
             </div>
@@ -400,10 +400,13 @@
             </div>
             <div class="squad-form-group">
               <label>Mission Modifiers</label>
-              <div class="squad-modifier-checks">
-                <label class="squad-filter-checkbox"><input type="checkbox" id="squadSteelPathChk" /> Steel Path</label>
-                <label class="squad-filter-checkbox"><input type="checkbox" id="squadNightmareChk" /> Nightmare</label>
-                <label class="squad-filter-checkbox"><input type="checkbox" id="squadVoidFissureChk" /> Void Fissure</label>
+              <div class="squad-modifier-toggle">
+                <input type="checkbox" id="squadSteelPathChk" />
+                <label for="squadSteelPathChk" class="squad-modifier-pill"><i class="fa-solid fa-chevron-up"></i>Steel Path</label>
+                <input type="checkbox" id="squadNightmareChk" />
+                <label for="squadNightmareChk" class="squad-modifier-pill"><i class="fa-solid fa-skull"></i>Nightmare</label>
+                <input type="checkbox" id="squadVoidFissureChk" />
+                <label for="squadVoidFissureChk" class="squad-modifier-pill"><i class="fa-solid fa-wifi"></i>Void Fissure</label>
               </div>
             </div>
           </div>

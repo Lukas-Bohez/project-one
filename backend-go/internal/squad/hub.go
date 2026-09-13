@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -108,11 +109,27 @@ type Hub struct {
 	// Recent activity feed
 	recentActivity map[string]*RecentActivity
 	activityMu     sync.RWMutex
+
+	// Games & categories (seeded + user-generated)
+	games   map[string]*Game
+	gameMu  sync.RWMutex
+	store   *Store
 }
 
 // NewHub creates a new squad finder hub
 func NewHub() *Hub {
+	store := loadStore()
+	games := make(map[string]*Game)
+	for _, g := range seedGames() {
+		games[g.ID] = g
+	}
+	// Overlay any user-created games from the store
+	for id, g := range store.Games {
+		games[id] = g
+	}
 	return &Hub{
+		games: games,
+		store: store,
 		clients:        make(map[string]*client),
 		squads:         make(map[string]*Squad),
 		playerSquad:    make(map[string]string),
@@ -438,6 +455,78 @@ func (c *client) sendEvent(event string, data interface{}) {
 	case c.send <- raw:
 	default:
 	}
+}
+
+// GetGames returns all games (seeded + user-created) with their categories.
+func (h *Hub) GetGames() []*Game {
+	h.gameMu.RLock()
+	defer h.gameMu.RUnlock()
+	result := make([]*Game, 0, len(h.games))
+	for _, g := range h.games {
+		result = append(result, g)
+	}
+	return result
+}
+
+// GetGame returns a single game by ID (or slug).
+func (h *Hub) GetGame(idOrSlug string) *Game {
+	h.gameMu.RLock()
+	defer h.gameMu.RUnlock()
+	if g, ok := h.games[idOrSlug]; ok {
+		return g
+	}
+	for _, g := range h.games {
+		if g.Slug == idOrSlug {
+			return g
+		}
+	}
+	return nil
+}
+
+// AddCategory adds a user-created category to a game and persists it.
+func (h *Hub) AddCategory(gameID string, name, icon, createdBy string) *Category {
+	h.gameMu.Lock()
+	defer h.gameMu.Unlock()
+	g, ok := h.games[gameID]
+	if !ok {
+		return nil
+	}
+	cat := Category{
+		ID:        "cat_custom_" + newID(),
+		Name:      SanitizeString(name),
+		Icon:      icon,
+		IsCustom:  true,
+		CreatedBy: createdBy,
+		CreatedAt: time.Now(),
+	}
+	g.Categories = append(g.Categories, cat)
+	h.store.CustomCats[cat.ID] = &cat
+	h.store.save()
+	return &cat
+}
+
+// AddGame adds a user-created game and persists it.
+func (h *Hub) AddGame(name, slug, description, icon, createdBy string) *Game {
+	h.gameMu.Lock()
+	defer h.gameMu.Unlock()
+	if slug == "" {
+		slug = strings.ToLower(strings.ReplaceAll(name, " ", "-"))
+	}
+	g := &Game{
+		ID:          "game_custom_" + newID(),
+		Name:        SanitizeString(name),
+		Slug:        slug,
+		Description: SanitizeString(description),
+		Icon:        icon,
+		Categories:  []Category{},
+		IsCustom:    true,
+		CreatedBy:   createdBy,
+		CreatedAt:   time.Now(),
+	}
+	h.games[g.ID] = g
+	h.store.Games[g.ID] = g
+	h.store.save()
+	return g
 }
 
 // sendSquadList sends the current list of open squads to a client
