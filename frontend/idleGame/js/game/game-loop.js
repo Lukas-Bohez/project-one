@@ -7,7 +7,7 @@
  *
  * This solves a DIFFERENT problem than offline-progress.js: this is
  * about a tab that's open but backgrounded (rAF throttles, then fires
- * with a huge `dt` when the tab regains focus) — offline-progress is
+ * with a huge `dt` when the tab regains focus) - offline-progress is
  * about the game having been fully closed. Both matter; don't conflate
  * them.
  */
@@ -27,7 +27,7 @@ export function createGameLoop({ update, render, tickRateHz = 20, maxFrameMs = 2
     // tab after 10 minutes would try to run ~12,000 ticks in one frame
     // and freeze the page (the "spiral of death"). offline-progress.js
     // is what should account for genuinely long gaps, via the saved
-    // timestamp — this clamp just protects the live loop.
+    // timestamp - this clamp just protects the live loop.
     const rawDelta = time - lastTime;
     const delta = Math.min(rawDelta, maxFrameMs);
     lastTime = time;
@@ -72,7 +72,7 @@ export function createGameLoop({ update, render, tickRateHz = 20, maxFrameMs = 2
  * Manual QA checklist (timing logic isn't meaningfully unit-testable
  * without mocking rAF):
  *  - Throttle CPU in DevTools (Performance panel > CPU 6x slowdown) and
- *    confirm currency still increases at the correct rate — just choppier
+ *    confirm currency still increases at the correct rate - just choppier
  *    rendering, not a wrong rate.
  *  - Switch tabs for 30s, switch back, confirm no visible "catch-up burst".
  *  - Add a temporary console.assert(dt <= tickMs/1000) inside `update` and

@@ -1,5 +1,5 @@
 /*
- * socket-shim.js — raw-WebSocket shim that exposes a Socket.IO-like API.
+ * socket-shim.js - raw-WebSocket shim that exposes a Socket.IO-like API.
  *
  * Why this exists:
  *   The quiz frontend (quizlogic.js, chat.js) was written against the

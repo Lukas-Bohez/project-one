@@ -5,11 +5,11 @@
  * a "Ledger & Brass" token direction (tycoon/ledger vernacular, rather
  * than the cream+serif or near-black+neon defaults). Swap the custom
  * properties at the top for your existing palette if you already have
- * one — the @container structure underneath doesn't depend on the exact
+ * one - the @container structure underneath doesn't depend on the exact
  * colors.
  *
  * `color-mix()` needs a fairly modern browser (Chrome 111+ / Firefox
- * 113+ / Safari 16.4+) — fine for a project already using container
+ * 113+ / Safari 16.4+) - fine for a project already using container
  * queries, which have similar support requirements.
  *
  * Companion markup shape assumed:
@@ -47,7 +47,7 @@
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Numbers that change every tick should never jiggle the layout — lock
+/* Numbers that change every tick should never jiggle the layout - lock
    every digit to the same width. This is the one rule in this file
    that's non-negotiable for an idle game's currency displays. */
 .tabular {
@@ -118,7 +118,7 @@
 
 /* Narrow (default): stacked, no description. Fits a phone or a sidebar. */
 
-/* >= 280px container width: go horizontal — icon, text, buy button in a row. */
+/* >= 280px container width: go horizontal - icon, text, buy button in a row. */
 @container upgrade-card (min-width: 280px) {
   .upgrade-card {
     flex-direction: row;

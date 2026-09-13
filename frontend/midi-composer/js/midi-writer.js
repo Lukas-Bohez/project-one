@@ -1,7 +1,7 @@
 'use strict';
 
 /* ═══════════════════════════════════════════
-   MIDI WRITER — Binary Builder, Parser,
+   MIDI WRITER - Binary Builder, Parser,
    Watermark, Chord Detection, Expansion
    FL Studio / Ableton / Logic compatible SMF.
    by Lukas Bohez (Oroka Conner)
@@ -185,7 +185,7 @@ window.verifyWatermark = function(bytes){
       if(tname==='_MC_WM'&&texts.some(tx=>tx.includes('MIDIComposer by Lukas Bohez')))
         return{found:true,trackName:tname};
     }
-    return{found:false,reason:'No watermark found — not created with MIDIComposer'};
+    return{found:false,reason:'No watermark found - not created with MIDIComposer'};
   }catch(e){return{found:false,reason:'Could not read file: '+e.message};}
 };
 

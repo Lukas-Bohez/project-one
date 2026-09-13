@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DOS Arcade Bridge — Test Harness</title>
+<title>DOS Arcade Bridge - Test Harness</title>
 <style>
   :root {
     --bg: #0b0d0a;
@@ -132,15 +132,15 @@
     <span id="clock"></span>
   </div>
   <div class="body-pad">
-    <h1>DOS Arcade Bridge — Test Harness</h1>
-    <p class="sub">Fires simulated events at <code>window.dosGameBridge</code> against a mock Industrial Empire state, for all four Retro Arcade games. No WASM build required — this validates the bridge logic and rate limiter on its own. See masterprompt §8.</p>
+    <h1>DOS Arcade Bridge - Test Harness</h1>
+    <p class="sub">Fires simulated events at <code>window.dosGameBridge</code> against a mock Industrial Empire state, for all four Retro Arcade games. No WASM build required - this validates the bridge logic and rate limiter on its own. See masterprompt §8.</p>
 
     <h2>DOOM <span class="tag">existing WASM target (doomgeneric)</span></h2>
     <div class="btn-grid">
-      <button data-event="doom:kill" data-payload='{"monsterTypeId":3}'>Kill — tier1 (fodder)</button>
-      <button data-event="doom:kill" data-payload='{"monsterTypeId":9}'>Kill — tier2 (medium)</button>
-      <button data-event="doom:kill" data-payload='{"monsterTypeId":16}'>Kill — tier3 (heavy)</button>
-      <button data-event="doom:kill" data-payload='{"monsterTypeId":20}'>Kill — tier4 (boss)</button>
+      <button data-event="doom:kill" data-payload='{"monsterTypeId":3}'>Kill - tier1 (fodder)</button>
+      <button data-event="doom:kill" data-payload='{"monsterTypeId":9}'>Kill - tier2 (medium)</button>
+      <button data-event="doom:kill" data-payload='{"monsterTypeId":16}'>Kill - tier3 (heavy)</button>
+      <button data-event="doom:kill" data-payload='{"monsterTypeId":20}'>Kill - tier4 (boss)</button>
       <button data-event="doom:level:complete" data-payload='{"levelNumber":1}'>Level complete (E1M1)</button>
       <button class="spam" data-spam="doom:kill" data-payload='{"monsterTypeId":3}'>⚡ Spam ×20 (tests cooldown)</button>
     </div>
@@ -157,8 +157,8 @@
     <h2>Prince of Persia <span class="tag">new WASM port (SDLPoP)</span></h2>
     <div class="btn-grid">
       <button data-event="pop:mine:tick" data-payload='{}'>Room transition (mine tick)</button>
-      <button data-event="pop:pickup:gold" data-payload='{"amount":5}'>Pickup — gold (5)</button>
-      <button data-event="pop:pickup:potion" data-payload='{}'>Pickup — potion</button>
+      <button data-event="pop:pickup:gold" data-payload='{"amount":5}'>Pickup - gold (5)</button>
+      <button data-event="pop:pickup:potion" data-payload='{}'>Pickup - potion</button>
       <button data-event="pop:level:complete" data-payload='{"levelNumber":1}'>Level complete (L1)</button>
       <button class="spam" data-spam="pop:mine:tick" data-payload='{}'>⚡ Spam ×20 (tests cooldown)</button>
     </div>
@@ -178,14 +178,14 @@
       </div>
       <div>
         <h2>Mock Industrial Empire state</h2>
-        <div id="state"><div class="empty">Empty — fire an event.</div></div>
+        <div id="state"><div class="empty">Empty - fire an event.</div></div>
       </div>
     </div>
   </div>
 </div>
 
 <!--
-  Loads the real bridge file — this harness tests the actual bridge logic
+  Loads the real bridge file - this harness tests the actual bridge logic
   your Cline implementation ships, not a separate copy of it. Keep this
   file next to dos-arcade-bridge.js.
 -->
@@ -224,7 +224,7 @@
     const hasWorkers = Object.keys(mockState.workers).length > 0;
     const hasResources = Object.keys(mockState.resources).length > 0;
     if (!hasWorkers && !hasResources) {
-      stateEl.innerHTML = '<div class="empty">Empty — fire an event.</div>';
+      stateEl.innerHTML = '<div class="empty">Empty - fire an event.</div>';
       return;
     }
     let html = '';

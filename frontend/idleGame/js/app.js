@@ -191,7 +191,7 @@ class IndustrialEmpireApp {
     if (matsContainer) {
       const entries = Object.entries(materials);
       if (entries.length === 0) {
-        matsContainer.innerHTML = '<div class="resource-row"><span class="resource-type">Open a game to start gathering!</span><span class="resource-count" style="color:#94a3b8;">—</span></div>';
+        matsContainer.innerHTML = '<div class="resource-row"><span class="resource-type">Open a game to start gathering!</span><span class="resource-count" style="color:#94a3b8;">-</span></div>';
       } else {
         const labels = { stone: '🪨 Stone', coal: '🪨 Coal', iron: '⚙️ Iron', silver: '🥈 Silver', gold: '🪙 Gold', workers: '👷 Workers hired' };
         matsContainer.innerHTML = entries

@@ -1,5 +1,5 @@
 /*---------------------------------------/*
- # SETTINGS — Canonical design tokens (visual-deai pass)
+ # SETTINGS - Canonical design tokens (visual-deai pass)
    Consolidates the two conflicting token systems:
    - Old styles.css used --primary-color / --bg-60:30:10 / --font-body: Inter
    - Old index.html used --spire-* / --bg / --ff-body: IBM Plex Sans
@@ -1178,7 +1178,7 @@ body:not([data-theme]) .spire-bg-light {
   color: white !important;
 }
 
-/* Accent button hover — keep text and icon visible */
+/* Accent button hover - keep text and icon visible */
 .accent-blue:hover,
 .c-btn--accent:hover {
   background: #1d4ed8;

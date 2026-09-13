@@ -435,7 +435,7 @@ class GameEngine {
       this.flashElement('gold-amount');
       this.playSound('sell');
       if (totalGoldEarned >= 1000) {
-        this.showNotification(`🤖 Sales bot moved ${itemsSold} items — +${this.formatNumber(totalGoldEarned)} gold`);
+        this.showNotification(`🤖 Sales bot moved ${itemsSold} items - +${this.formatNumber(totalGoldEarned)} gold`);
       } else if (itemsSold === 1) {
         this.showNotification(`🤖 Sales bot sold 1 item`);
       } else {
@@ -1857,7 +1857,7 @@ class GameEngine {
       'Build a run with purpose instead of treating every reset like a dead end.';
     let progressLabel = 'Legacy progress';
     let progressValue = Math.min(1, rebirths / 10);
-    let progressNote = 'Every rebirth builds on the last — your legacy grows, your tools sharpen, and the next run always starts stronger.';
+    let progressNote = 'Every rebirth builds on the last - your legacy grows, your tools sharpen, and the next run always starts stronger.';
     let nextGoal = `Push toward Rebirth ${rebirths + 1}`;
     let nextReward = 'Permanent upgrades make the next loop stronger than the last.';
 
@@ -1885,7 +1885,7 @@ class GameEngine {
       progressLabel = 'Automation progress';
       progressValue = Math.min(1, (completedResearch / 4) * 0.65 + (citySystemsCount / 3) * 0.35);
       progressNote =
-        'Machines and departments carry the weight now. You set the direction — the empire moves on its own.';
+        'Machines and departments carry the weight now. You set the direction - the empire moves on its own.';
       nextGoal = !this.state.research?.automation
         ? 'Research Automation'
         : !this.state.city?.salesDepartment
@@ -2067,7 +2067,7 @@ class GameEngine {
     // Milestone celebrations
     const totalStone = this.state.stats.totalResourcesMined.stone;
     if (totalStone === 10) {
-      this.showNotification("🪨 10 stone mined — you're getting the hang of it!");
+      this.showNotification("🪨 10 stone mined - you're getting the hang of it!");
     } else if (totalStone === 100) {
       this.showNotification('⛏️ 100 stone! Not bad for a beginner.');
     } else if (totalStone === 1000) {
@@ -3790,11 +3790,11 @@ class GameEngine {
     // 2.1: Rebirth milestone notifications (1, 5, 10, 25, 50, 100)
     const milestones = [1, 5, 10, 25, 50, 100];
     if (milestones.includes(newRebirthCount)) {
-      let milestoneMessage = `🎉 Rebirth #${newRebirthCount} — `;
+      let milestoneMessage = `🎉 Rebirth #${newRebirthCount} - `;
       const milestoneRewards = {
         1: "first cycle complete!",
-        5: 'five cycles in — things are picking up.',
-        10: "ten rebirths — you're getting good at this.",
+        5: 'five cycles in - things are picking up.',
+        10: "ten rebirths - you're getting good at this.",
         25: 'twenty-five. Your empire has seen a lot of lifetimes.',
         50: 'fifty rebirths. The cycle is second nature now.',
         100: "one hundred. You've transcended.",
@@ -3803,7 +3803,7 @@ class GameEngine {
       this.showNotification(milestoneMessage);
       console.log(`🎯 MILESTONE: Rebirth #${newRebirthCount} achieved!`);
     } else {
-      this.showNotification(`🔄 Rebirth #${newRebirthCount} — fresh start, same ambition.`);
+      this.showNotification(`🔄 Rebirth #${newRebirthCount} - fresh start, same ambition.`);
     }
     this.triggerScreenShake();
     this.triggerScreenFlash();
@@ -4221,7 +4221,7 @@ class GameEngine {
   flashElement(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
-      // Debounce: if already flashing, don't restart the animation — otherwise
+      // Debounce: if already flashing, don't restart the animation - otherwise
       // rapid calls (crafting loop, mining spam) cause visible blinking.
       if (element.classList.contains('flash')) return;
       element.classList.add('flash');
@@ -4231,7 +4231,7 @@ class GameEngine {
 
   playSound(type) {
     if (this.muted) return;
-    // Web Audio API micro-sounds — throttle to avoid audio spam in late game
+    // Web Audio API micro-sounds - throttle to avoid audio spam in late game
     try {
       const now = Date.now();
       this._soundBudget = this._soundBudget || { count: 0, windowStart: now };
@@ -4384,7 +4384,7 @@ class GameEngine {
   }
 
   calculateOfflineProgress(offlineSeconds) {
-    const OFFLINE_CAP_SECONDS = 12 * 3600; // 12h cap — prevents week-long AFK windfalls
+    const OFFLINE_CAP_SECONDS = 12 * 3600; // 12h cap - prevents week-long AFK windfalls
     const cappedSeconds = Math.min(offlineSeconds, OFFLINE_CAP_SECONDS);
     const wasCapped = offlineSeconds > OFFLINE_CAP_SECONDS;
 

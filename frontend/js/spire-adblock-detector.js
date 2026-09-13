@@ -62,7 +62,7 @@
             })
           );
         } catch (e) {
-          // localStorage unavailable — just close the banner
+          // localStorage unavailable - just close the banner
         }
         closeNotice();
       }
@@ -138,7 +138,7 @@
   function confirmBlockedThen(onConfirmedBlocked) {
     var started = Date.now();
     (function check() {
-      if (findRenderedAd()) return; // Ads genuinely render — stay quiet
+      if (findRenderedAd()) return; // Ads genuinely render - stay quiet
       if (Date.now() - started >= GROUND_TRUTH_OBSERVE_MS) {
         onConfirmedBlocked();
         return;
@@ -197,7 +197,7 @@
             'Still detecting an ad blocker. Please disable it for quizthespire.com and refresh the page, then click again.';
           whitelistButton.textContent = verificationAttempts > 1 ? 'Check again' : 'Try again';
           whitelistButton.disabled = false;
-          // Do NOT set localStorage — user needs to actually disable it
+          // Do NOT set localStorage - user needs to actually disable it
         }
       })
       .catch(function (err) {
@@ -232,7 +232,7 @@
   function probeAdSenseNetwork(attempt) {
     return fetch(ADSENSE_URL, { mode: 'no-cors', cache: 'no-store' })
       .then(function () {
-        return false; // Script reachable — not blocked
+        return false; // Script reachable - not blocked
       })
       .catch(function () {
         if (attempt < 2) {
@@ -242,14 +242,14 @@
             return probeAdSenseNetwork(attempt + 1);
           });
         }
-        return true; // Still failing after retry — treat as blocked
+        return true; // Still failing after retry - treat as blocked
       });
   }
 
   // Replaces the old "is window.adsbygoogle defined within 500ms" heuristic,
   // which flagged every visitor whose AdSense script simply took a moment to
   // load (slow connection, cold cache, mobile). Ad blockers do not reliably
-  // remove the global, but they do reliably kill the network request — so we
+  // remove the global, but they do reliably kill the network request - so we
   // probe the network instead of watching a timer.
   function detectNetworkBlocking() {
     // Old browsers without fetch: skip this check entirely (fail open).
@@ -258,7 +258,7 @@
     if (window.navigator && navigator.onLine === false) return Promise.resolve(false);
     // Pages that never load ads should never see the banner.
     if (!pageUsesAdSense()) return Promise.resolve(false);
-    // Ads already loaded and working — nothing is blocked.
+    // Ads already loaded and working - nothing is blocked.
     if (isAdSenseLoaded()) return Promise.resolve(false);
 
     return probeAdSenseNetwork(1);
@@ -277,7 +277,7 @@
             .then(function (results) {
               var blocked = results[0] || results[1];
               if (blocked) {
-                // User re-enabled adblocker, show banner again — but only if
+                // User re-enabled adblocker, show banner again - but only if
                 // no real ad is actually rendering (ground truth wins).
                 localStorage.removeItem('adblock-dismissed');
                 confirmBlockedThen(showAdblockNotice);
@@ -301,7 +301,7 @@
         var blocked = results[0] || results[1];
         if (blocked) {
           // Heuristics say blocked, but a rendered ad is proof they are
-          // wrong — observe briefly and only then show the banner.
+          // wrong - observe briefly and only then show the banner.
           confirmBlockedThen(showAdblockNotice);
         }
       })

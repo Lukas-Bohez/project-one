@@ -1,16 +1,16 @@
 /**
  * container-query-retrofit.css
  * -----------------------------------------------------------------------
- * Retrofits container queries onto the REAL markup — .panel-grid >
+ * Retrofits container queries onto the REAL markup - .panel-grid >
  * .panel containing .action-btn buttons (each with .btn-title /
- * .btn-cost / .btn-description inside) — rather than a hypothetical new
+ * .btn-cost / .btn-description inside) - rather than a hypothetical new
  * card component. There's no existing container-query usage anywhere in
  * style.css today (checked both the source and the minified build), so
  * this is a genuine addition, not an extension of something already
  * there.
  *
  * Add this as a new section in style.css, right after the existing
- * "Panel Grid Layout" and "Action Buttons" sections — don't replace
+ * "Panel Grid Layout" and "Action Buttons" sections - don't replace
  * those rules, layer on top of them. The five existing @media
  * breakpoints (768px, 480px, and the landscape one for the arcade) can
  * stay exactly as they are; they're handling page-level layout, which
@@ -25,7 +25,7 @@
 }
 
 /* Below ~240px per button (a narrow mobile column, or a future dense
-   sidebar layout): tighten the title, drop the description — the cost
+   sidebar layout): tighten the title, drop the description - the cost
    is the one line that actually matters at this width. */
 @container action-panel (max-width: 240px) {
   .action-btn .btn-title {

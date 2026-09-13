@@ -74,7 +74,7 @@ function renderScoreboard(rows) {
       <td>${esc(r.model)}</td>
       <td>${esc(r.ticker)}</td>
       <td>${esc(r.call)}</td>
-      <td>${esc(r.actual || '—')}</td>
+      <td>${esc(r.actual || '-')}</td>
       <td class="${resultClass}">${resultText}</td>
     </tr>
   `;
@@ -100,7 +100,7 @@ async function init() {
     scoreboard = Array.isArray(scores) ? scores : [];
 
     const latestDate = predictions.reduce((a, b) => (a.date > b.date ? a : b), {}).date;
-    if (els.lastUpdated) els.lastUpdated.textContent = latestDate || '—';
+    if (els.lastUpdated) els.lastUpdated.textContent = latestDate || '-';
     if (els.modelCount) els.modelCount.textContent = new Set(predictions.map((p) => p.model)).size || 0;
     if (els.tickerCount) els.tickerCount.textContent = new Set(predictions.map((p) => p.ticker)).size || 0;
 

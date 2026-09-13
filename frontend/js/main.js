@@ -583,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ============================================================
    SECTION NAV + PORTFOLIO SUB-TABS
-   (consolidated — replaces any previous split implementation)
+   (consolidated - replaces any previous split implementation)
    ============================================================ */
 (function () {
   'use strict';

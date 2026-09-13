@@ -2,8 +2,8 @@
  * main.wiring-example.js
  * -----------------------------------------------------------------------
  * Illustrates how the other reference/ modules compose. This is NOT meant
- * to be dropped in verbatim — your actual state shape and render()
- * functions are project-specific — but the wiring order and the
+ * to be dropped in verbatim - your actual state shape and render()
+ * functions are project-specific - but the wiring order and the
  * responsibility each piece owns should carry over directly.
  */
 
@@ -35,7 +35,7 @@ if (saved) {
   });
   if (offline.earned > 0) {
     state.coins += offline.earned;
-    showWelcomeBackModal(offline); // project-specific UI function — not defined here
+    showWelcomeBackModal(offline); // project-specific UI function - not defined here
   }
 }
 
@@ -45,8 +45,8 @@ const loop = createGameLoop({
     state.coins += state.incomePerSecond * dtSeconds;
   },
   render() {
-    renderHud(state); // project-specific UI function — not defined here
-    renderUpgradeList(state); // project-specific UI function — not defined here
+    renderHud(state); // project-specific UI function - not defined here
+    renderUpgradeList(state); // project-specific UI function - not defined here
   },
   tickRateHz: 20,
 });
@@ -77,4 +77,4 @@ function buyUpgrade(upgradeDef, quantityRequested) {
 
 // Elsewhere in the UI layer, format a button label with big-number.js, e.g.:
 //   import { format } from './big-number.js';
-//   buyButton.textContent = `Buy — ${format(costForRange(baseCost, growth, owned, qty))}`;
+//   buyButton.textContent = `Buy - ${format(costForRange(baseCost, growth, owned, qty))}`;

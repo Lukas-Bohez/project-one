@@ -5,7 +5,7 @@
  *   - requestAnimationFrame drives ONLY the visible-tab render loop.
  *   - Date.now() timestamp diffing (on visibilitychange, focus, and page
  *     load) computes and awards offline progress. This is what actually
- *     survives a backgrounded tab, a closed tab, or a sleeping device —
+ *     survives a backgrounded tab, a closed tab, or a sleeping device -
  *     rAF runs in none of those cases, so it's the timestamp diff that
  *     does the real work here, not the render loop.
  *
@@ -20,11 +20,11 @@ const GameEngine = (() => {
   const SAVE_KEY = "idleGame.lastTimestamp";
   // Ignore gaps shorter than this. It filters out ordinary tab-switches,
   // and it also stops visibilitychange + focus from both firing an
-  // "offline progress" award for the same moment — the second check sees
+  // "offline progress" award for the same moment - the second check sees
   // a near-zero gap and is skipped.
   const MIN_OFFLINE_MS = 3000;
 
-  let lastTick = 0; // performance.now() timestamp — foreground loop only
+  let lastTick = 0; // performance.now() timestamp - foreground loop only
   let rafHandle = null;
   let onRenderFrame = () => {};
   let onOfflineProgress = () => {};
@@ -33,7 +33,7 @@ const GameEngine = (() => {
     try {
       localStorage.setItem(SAVE_KEY, String(Date.now()));
     } catch (e) {
-      // Private browsing / storage quota / disabled storage — offline
+      // Private browsing / storage quota / disabled storage - offline
       // progress just won't persist across reloads in that case.
       console.warn("GameEngine: could not persist timestamp", e);
     }

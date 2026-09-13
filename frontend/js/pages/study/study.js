@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   const fetchThemes = async () => {
-    // Versioned key (see fetchQuestions for rationale) — orphans stale
+    // Versioned key (see fetchQuestions for rationale) - orphans stale
     // broken-era theme cache.
     const CACHE_KEY = 'study_themes_v5';
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes

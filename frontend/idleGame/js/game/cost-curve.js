@@ -1,7 +1,7 @@
 /**
  * cost-curve.js
  * -----------------------------------------------------------------------
- * Pure math for exponential upgrade-cost scaling. No DOM, no state —
+ * Pure math for exponential upgrade-cost scaling. No DOM, no state -
  * safe to unit test and reuse for any purchasable (buildings, upgrades,
  * managers...).
  *
@@ -17,7 +17,7 @@ export function costForNext(baseCost, growthRate, owned) {
 
 /**
  * Total cost to go from `owned` to `owned + quantity`, using the
- * closed-form geometric series sum instead of looping — matters once
+ * closed-form geometric series sum instead of looping - matters once
  * "buy 100" or "buy max" is on the table.
  *
  *   sum_{i=0}^{quantity-1} baseCost * growthRate^(owned+i)
@@ -33,7 +33,7 @@ export function costForRange(baseCost, growthRate, owned, quantity) {
 /**
  * Max quantity affordable with `balance`, given `owned` already
  * purchased. Inverts the geometric series in O(1) via logarithms instead
- * of looping balance/cost times — matters once balances hit the
+ * of looping balance/cost times - matters once balances hit the
  * trillions.
  *
  * Derivation:
@@ -48,7 +48,7 @@ export function maxAffordable(baseCost, growthRate, owned, balance) {
   const raw = Math.log(1 + (balance * (growthRate - 1)) / c) / Math.log(growthRate);
   let k = Math.max(0, Math.floor(raw));
 
-  // log()/pow() float error can land k off-by-one at the boundary —
+  // log()/pow() float error can land k off-by-one at the boundary -
   // nudge it back onto the true affordability line either direction.
   while (k > 0 && costForRange(baseCost, growthRate, owned, k) > balance) k--;
   while (costForRange(baseCost, growthRate, owned, k + 1) <= balance) k++;

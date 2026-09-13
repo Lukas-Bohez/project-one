@@ -1,7 +1,7 @@
 /**
- * Sentle — sequential sentence-guessing game client.
+ * Sentle - sequential sentence-guessing game client.
  *
- * SENTLE REDESIGN — see masterprompt.md for
+ * SENTLE REDESIGN - see masterprompt.md for
  * the full design rationale, research findings, and the API contract
  * this file talks to. Keep this file and that document in lockstep.
  *

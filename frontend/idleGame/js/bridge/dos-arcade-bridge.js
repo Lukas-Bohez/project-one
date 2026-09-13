@@ -6,7 +6,7 @@
  *
  * A DOS game never touches Industrial Empire directly. It only knows about
  * `window.dosGameBridge.emit(eventName, payload)`. This file is the only
- * place that knows how the two sides actually connect — see
+ * place that knows how the two sides actually connect - see
  * masterprompt_idle_dos_arcade_bridge.md and idle_dos_arcade_technical_reference.md
  * for the full plan this implements.
  *
@@ -19,7 +19,7 @@ class DosGameBridge {
     this._lastFiredAt = {};
 
     // Minimum ms between two COUNTED firings of the same event type.
-    // Conservative starting points — tune by feel, or replace with the
+    // Conservative starting points - tune by feel, or replace with the
     // hourly-value-cap approach described in the masterprompt §6 once you
     // have real playtesting data across all four games.
     this.cooldownsMs = {
@@ -40,9 +40,9 @@ class DosGameBridge {
     };
 
     // TODO(balance): combined hourly cap on total DOS-sourced economic value
-    // ACROSS all four games, not just per-game — four separate per-game caps
+    // ACROSS all four games, not just per-game - four separate per-game caps
     // can still add up to too much in aggregate. Needs real playtesting
-    // numbers from you — see masterprompt §6.
+    // numbers from you - see masterprompt §6.
 
     this._sessionLog = []; // for the "connected" UI indicator (Phase 3/5/7/9)
   }
@@ -60,7 +60,7 @@ class DosGameBridge {
 
   /**
    * Called by the WASM game hooks. Returns true if the event was actually
-   * counted, false if it was dropped by the rate limiter — useful in the
+   * counted, false if it was dropped by the rate limiter - useful in the
    * test harness to make the limiter's behavior visible.
    */
   emit(eventType, payload = {}) {
@@ -84,7 +84,7 @@ class DosGameBridge {
     return true;
   }
 
-  /** For the "connected" indicator — events fired this session. */
+  /** For the "connected" indicator - events fired this session. */
   getSessionSummary() {
     const counts = {};
     for (const { eventType } of this._sessionLog) {
@@ -107,16 +107,16 @@ function addRandomResource(resourceList, amount = 1) {
 }
 
 // ---------------------------------------------------------------------------
-// DOOM — monster-tier lookup.
+// DOOM - monster-tier lookup.
 //
-// DO NOT trust this table until you've built it yourself — see masterprompt
+// DO NOT trust this table until you've built it yourself - see masterprompt
 // Phase 1 step 3. Kill a handful of different monster types in your patched
 // build, log the `monsterTypeId` each emits, and fill this in from what you
 // actually observe. The keys below are illustrative placeholders, not real
 // mobjtype_t values.
 // ---------------------------------------------------------------------------
 const DOOM_KILL_TIER_MAP = {
-  // 3: 'tier1',   // example shape — replace with real observed ids
+  // 3: 'tier1',   // example shape - replace with real observed ids
   // 9: 'tier2',
   // 16: 'tier3',
   // 20: 'tier4',
@@ -129,7 +129,7 @@ function doomTierFor(monsterTypeId) {
 // ---------------------------------------------------------------------------
 // Event → Industrial Empire effect wiring, one block per game.
 //
-// Every `window.IndustrialEmpire?.___?.()` call is a placeholder — that
+// Every `window.IndustrialEmpire?.___?.()` call is a placeholder - that
 // object almost certainly doesn't exist yet. Replace each with the real
 // function found in idlegame.html during masterprompt Step 0. The optional
 // chaining just means this file won't throw before that wiring is done.
@@ -168,7 +168,7 @@ window.dosGameBridge.on('digger:collect:gold', () => {
 
 window.dosGameBridge.on('digger:kill', () => {
   // Digger's monsters (nobbins/hobbins) are fodder-tier by nature of the
-  // game — one tier only, unlike Doom's four.
+  // game - one tier only, unlike Doom's four.
   window.IndustrialEmpire?.hireWorker?.('juniorDev', 1);
 });
 

@@ -56,7 +56,7 @@
 }
 
 /* ============================================================
-   PAGE HEADER — Warframe Squad Finder
+   PAGE HEADER - Warframe Squad Finder
    ============================================================ */
 .squad-header {
   position: relative;
@@ -146,7 +146,7 @@
 }
 
 /* ============================================================
-   FOOTER — solid, sits in normal page flow below the app.
+   FOOTER - solid, sits in normal page flow below the app.
    Stops the translucent global footer from overlapping the
    dark squad-finder content behind it.
    ============================================================ */

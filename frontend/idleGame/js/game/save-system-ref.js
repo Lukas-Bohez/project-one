@@ -52,14 +52,14 @@ export function loadGame() {
     const parsed = JSON.parse(raw);
     return runMigrations(parsed);
   } catch (err) {
-    // Don't lose the player's data silently — keep the corrupt string
+    // Don't lose the player's data silently - keep the corrupt string
     // around under a timestamped key so it can be inspected/recovered,
     // then let the caller fall back to a fresh game.
     const backupKey = `${SAVE_KEY}.corrupt.${Date.now()}`;
     try {
       localStorage.setItem(backupKey, raw);
     } catch {
-      /* best effort — don't let the backup attempt itself throw further */
+      /* best effort - don't let the backup attempt itself throw further */
     }
     console.error(`[save-system] corrupt save, backed up as "${backupKey}":`, err);
     return null;
@@ -67,11 +67,11 @@ export function loadGame() {
 }
 
 /**
- * Portable string for copy/paste or a downloaded .json — base64-wraps
+ * Portable string for copy/paste or a downloaded .json - base64-wraps
  * the JSON so it survives being pasted into a plain text box. Uses the
  * encodeURIComponent/unescape dance because raw btoa() throws on any
  * character outside Latin-1 (accented characters, emoji in a
- * player-set name, etc.) — easy to miss until someone with a non-ASCII
+ * player-set name, etc.) - easy to miss until someone with a non-ASCII
  * name hits it.
  */
 export function exportSave(state) {
@@ -121,7 +121,7 @@ export function createAutosave(getState, { intervalMs = 10000 } = {}) {
   return { start, stop, flush };
 }
 
-/** Manual smoke test for the pure (non-localStorage) parts — call from the console. */
+/** Manual smoke test for the pure (non-localStorage) parts - call from the console. */
 export function runSelfTest() {
   const results = [];
   const sample = { coins: 42, name: 'Lukas ✓ äöü' };

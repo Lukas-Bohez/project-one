@@ -2,7 +2,7 @@
  * offline-progress.js
  * -----------------------------------------------------------------------
  * Calculates earnings for time elapsed while the game wasn't running
- * (tab closed / app not open) — NOT the same problem as game-loop.js's
+ * (tab closed / app not open) - NOT the same problem as game-loop.js's
  * frame-clamp, which handles a *backgrounded-but-still-open* tab. This
  * file handles the cold "player reopened the game after N hours" case.
  *
@@ -10,7 +10,7 @@
  * purchases itself automatically offline). If a later feature lets
  * income change while away (e.g. an "auto-buy while offline" prestige
  * perk), this needs to move from a flat multiply to an integral of the
- * rate function over the elapsed time — flagged here so it isn't missed.
+ * rate function over the elapsed time - flagged here so it isn't missed.
  */
 
 export function calculateOfflineProgress({
@@ -22,7 +22,7 @@ export function calculateOfflineProgress({
   const rawElapsedMs = now - lastSeenTimestamp;
 
   // Clock rolled backward (system clock changed) or this is the very
-  // first session — award nothing rather than a negative/nonsense value.
+  // first session - award nothing rather than a negative/nonsense value.
   if (!Number.isFinite(rawElapsedMs) || rawElapsedMs <= 0) {
     return { earned: 0, elapsedMs: 0, wasCapped: false, awayLabel: null };
   }
@@ -40,7 +40,7 @@ export function calculateOfflineProgress({
   };
 }
 
-/** "3h 42m" style label for the away duration, uncapped — for UI copy. */
+/** "3h 42m" style label for the away duration, uncapped - for UI copy. */
 export function humanizeDuration(ms) {
   const totalMinutes = Math.floor(ms / 60000);
   const days = Math.floor(totalMinutes / (60 * 24));
