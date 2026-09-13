@@ -1,10 +1,18 @@
 /* Squad Finder Panel Styles - Part 2 */
 
 /* Main Layout */
+.squad-app {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .squad-main {
   display: grid;
   grid-template-columns: 320px 1fr;
-  height: calc(100vh - 120px);
+  min-height: calc(100vh - 120px);
+  height: auto;
 }
 
 .squad-panel {

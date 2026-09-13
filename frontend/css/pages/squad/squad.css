@@ -145,6 +145,21 @@
   white-space: nowrap;
 }
 
+/* ============================================================
+   FOOTER — solid, sits in normal page flow below the app.
+   Stops the translucent global footer from overlapping the
+   dark squad-finder content behind it.
+   ============================================================ */
+.c-footer--squad {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, #f5f6f8 0%, #ffffff 100%);
+}
+
+[data-theme='dark'] .c-footer--squad {
+  background: linear-gradient(180deg, #131c2b 0%, #0a0e17 100%);
+}
+
 /* Action buttons */
 .squad-header-actions {
   display: flex;
