@@ -213,7 +213,6 @@
         clanTag: profile.clanTag || '',
         verificationLevel: 'none',
         trustScore: 50,
-        reputation: 0,
         totalMissions: 0,
         onlineStatus: 'online',
         lastActive: new Date().toISOString(),
@@ -361,7 +360,6 @@
         '</div>' +
         '<div class="squad-card-leader">' +
           '<i class="fa-solid fa-user-check"></i> Led by ' + this.escapeHtml(leaderName) +
-          (leader && leader.verificationLevel === 'verified' ? ' <i class="fa-solid fa-check-circle squad-verified--verified"></i>' : '') +
         '</div>' +
       '</div>';
     }
@@ -650,10 +648,8 @@
       if (leader) {
         this.leaderName.textContent = leader.username;
         this.leaderMeta.textContent = 'MR' + leader.masteryRank + ' | ' + leader.platform + ' | ' + leader.region;
-        const verBadge = leader.verificationLevel === 'verified' ?
-          '<span class="squad-verified squad-verified--verified"><i class="fa-solid fa-check-circle"></i> Verified</span>' : '';
         const trustClass = this.getTrustClass(leader.trustScore || 50);
-        this.leaderBadges.innerHTML = verBadge + '<span class="squad-trust ' + trustClass + '"><i class="fa-solid fa-shield"></i> ' + Math.round(leader.trustScore || 50) + '</span>';
+        this.leaderBadges.innerHTML = '<span class="squad-trust ' + trustClass + '"><i class="fa-solid fa-shield"></i> ' + Math.round(leader.trustScore || 50) + '</span>';
       }
 
       const players = squad.players || [];
@@ -689,8 +685,6 @@
       const initials = player.username.substring(0, 2).toUpperCase();
       const trustScore = player.trustScore || 50;
       const trustClass = this.getTrustClass(trustScore);
-      const verBadge = player.verificationLevel === 'verified' ?
-        '<span class="squad-verified squad-verified--verified" title="Verified"><i class="fa-solid fa-check-circle"></i></span>' : '';
       return '<div class="squad-player">' +
         '<div class="squad-player-avatar">' + initials + '</div>' +
         '<div class="squad-player-info">' +

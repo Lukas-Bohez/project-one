@@ -381,14 +381,11 @@ SubmittedAt:   time.Now(),
 
 squad.SessionReport = report
 
-// Update player reputation based on ratings received
-for playerID, rating := range req.PlayerRatings {
+// Update player mission count — each completed squad mission is +0.5 trust.
+// Star ratings are kept as feedback but don't directly affect the score.
+for playerID := range req.PlayerRatings {
 if cl, ok := h.clients[playerID]; ok {
-// Average the new rating with existing reputation
 player := cl.player
-oldRep := player.Reputation
-newRep := float64(oldRep)*0.7 + float64(rating)*0.3
-player.Reputation = int(newRep)
 player.TotalMissions++
 player.LastActive = time.Now()
 }
@@ -453,18 +450,12 @@ if len(c.player.RecentActivity) > 20 {
 c.player.RecentActivity = c.player.RecentActivity[:20]
 }
 
-// Update total missions and reputation
+// Update total missions — each completed mission is +0.5 trust
 c.player.TotalMissions++
+c.player.LastActive = time.Now()
 
-// Adjust reputation based on success
-if req.Success {
-c.player.Reputation += 1
-} else {
-c.player.Reputation -= 1
-}
-if c.player.Reputation < 0 { c.player.Reputation = 0 }
-
-c.player.TrustScore = c.player.CalculateTrustScore()
+// Recalculate trust score
+c.player.TrustScore = c.player.TrustScoreValue()
 
 // Broadcast to squad members who played together
 for _, playerID := range req.PlayedWith {

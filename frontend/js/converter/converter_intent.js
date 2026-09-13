@@ -7,7 +7,7 @@
  *     Play Store app isn't available.
  *   - On desktop/non-Android, the plain https link is used unchanged.
  *
- * Confirmed against the live AndroidManifest.xml (v13.0.7+):
+ * Confirmed against the live AndroidManifest.xml (v13.2.1+):
  *   - applicationId = com.torrentspire.ai
  *   - BitPlayer has NO custom URL scheme (no bitplayer://). It only
  *     handles .torrent files via file:// and content://, so a YouTube

@@ -337,35 +337,15 @@ type ReputationEntry struct {
 	MissionType  string    `json:"missionType"`
 }
 
-// TrustFactors calculates trust score based on various metrics
-func (p *Player) CalculateTrustScore() float64 {
-	score := 50.0 // Base score
-
-	// Verification bonus
-	switch p.VerificationLevel {
-	case VerificationVerified:
-		score += 20
-	case VerificationPremium:
-		score += 30
-	}
-
-	// Reputation bonus (max 20 points)
-	if p.Reputation > 0 {
-		score += min(20, float64(p.Reputation)*0.5)
-	}
-
-	// Mission experience bonus (max 10 points)
-	score += min(10, float64(p.TotalMissions)*0.1)
-
-	// Penalty for reports
-	score -= float64(p.Reports) * 10
-
-	// Clan membership bonus
-	if p.ClanTag != "" {
-		score += 5
-	}
-
-	return max(0, min(100, score))
+// TrustScore calculates the player's trust score.
+// Simple system: everyone starts at 50, +0.5 per completed squad mission,
+// -10 per report. No caps, no floors — good play always climbs, bad play
+// always hurts, and you can always earn your way back.
+func (p *Player) TrustScoreValue() float64 {
+	score := 50.0
+	score += float64(p.TotalMissions) * 0.5
+	score -= float64(p.Reports) * 10.0
+	return score
 }
 
 func min(a, b float64) float64 {
@@ -393,103 +373,103 @@ type ChatMessage struct {
 	Type      string    `json:"type"` // "message", "system", "join", "leave"
 }
 
-// Available missions in Warframe
+// Available missions in Warframe (alphabetical)
 var AvailableMissions = []string{
-	"Exterminate",
-	"Survival",
+	"Any",
+	"Archon Hunt",
+	"Arbitration",
+	"Assassination",
+	"Capture",
+	"Circuit",
 	"Defense",
+	"Disruption",
+	"Dragon Key Vaults",
+	"Duviri",
+	"Eidolon Hunt",
+	"Excavation",
+	"Exterminate",
+	"Exploiter Orb",
+	"Infested Salvage",
+	"Interception",
+	"Junction",
+	"Mobile Defense",
+	"Netracell",
+	"Nightmare",
+	"Open World",
+	"Profit-Taker",
+	"Quest",
 	"Rescue",
 	"Sabotage",
-	"Spy",
-	"Capture",
-	"Mobile Defense",
-	"Interception",
-	"Disruption",
-	"Excavation",
-	"Void Fissure",
-	"Arbitration",
-	"Nightmare",
-	"Steel Path",
-	"Archon Hunt",
-	"Duviri",
 	"Sanctuary Onslaught",
-	"Profit-Taker",
-	"Exploiter Orb",
-	"Eidolon Hunt",
-	"Junction",
-	"Quest",
-	"Open World",
-	"Circuit",
-	"Netracell",
-	"Assassination",
-	"Infested Salvage",
-	"Disruption",
-	"Any",
+	"Spy",
+	"Steel Path",
+	"Survival",
+	"Void Fissure",
 }
 
-// Available planets in Warframe
+// Available planets in Warframe (alphabetical)
 var AvailablePlanets = []string{
+	"Any",
+	"Cambion Drift",
+	"Deimos",
+	"Duviri",
 	"Earth",
-	"Venus",
-	"Mars",
+	"Eris",
+	"Höllvania",
 	"Jupiter",
-	"Saturn",
-	"Uranus",
+	"Mars",
+	"Mercury",
 	"Neptune",
 	"Pluto",
-	"Eris",
+	"Saturn",
 	"Sedna",
+	"Uranus",
+	"Venus",
 	"Void",
-	"Deimos",
 	"Zariman",
-	"Duviri",
-	"Höllvania",
-	"Mercury",
-	"Cambion Drift",
-	"Any",
 }
 
-// Available difficulties
+// Available difficulties (alphabetical)
 var AvailableDifficulties = []string{
+	"Any",
+	"Duviri",
+	"Endless",
 	"Normal",
 	"Steel Path",
-	"Endless",
 	"The Circuit",
-	"Duviri",
-	"Any",
 }
 
-// Available regions
+// Available regions (alphabetical)
 var AvailableRegions = []string{
+	"Any",
+	"Asia",
+	"EU",
 	"NA-East",
 	"NA-West",
-	"EU",
 	"OC",
-	"Asia",
 	"SA",
-	"Any",
 }
 
-// Available platforms
+// Available platforms (alphabetical)
 var AvailablePlatforms = []string{
 	"PC",
 	"PlayStation",
-	"Xbox",
 	"Switch",
+	"Xbox",
 }
 
-// Available languages
+// Available languages (alphabetical)
 var AvailableLanguages = []string{
+	"Any",
+	"Chinese",
 	"English",
 	"French",
 	"German",
-	"Spanish",
-	"Portuguese",
-	"Russian",
-	"Chinese",
 	"Japanese",
 	"Korean",
-	"Any",
+	"Portuguese",
+	"Russian",
+	"Spanish",
 }
 
 // Available experience levels

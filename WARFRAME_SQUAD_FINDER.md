@@ -100,13 +100,10 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
   "region": "string (EU | NA | OC | ASIA)",
   "language": "string (e.g. English)",
   "clanTag": "string (optional, max 10)",
-  "verificationLevel": "string (none | pending | verified | premium)",
-  "trustScore": "int (0-100)",
-  "reputation": "int",
+  "trustScore": "float — 50 start, +0.5 per mission, -10 per report, no caps",
   "totalMissions": "int",
   "onlineStatus": "string (online | in_game | away | offline)",
   "lastActive": "string (ISO date)",
-  "isPremium": "bool",
   "reports": "int",
   "banned": "bool",
   "matchPref": "object (preferredMission, preferredPlanet, preferredDifficulty)",
@@ -196,12 +193,79 @@ registered outside the `if mysqlDB != nil` gate in `cmd/server/main.go`.
   `create_squad` was ignored. The unregister case now calls
   `removePlayerFromSquadLocked` (lock already held). Rebuilt the server and
   verified end-to-end: registration → squad_list/player_count →
-  filter_options (30 missions, 18 planets, 6 difficulties, 7 regions,
+  filter_options (31 missions, 18 planets, 6 difficulties, 7 regions,
   4 platforms, 10 languages) → squad_created, and the hub keeps serving
   clients after disconnects.
 
+## CHANGELOG (2026-09-13) — simplified trust system
+
+- **Unified reputation and trust into one simple system.** Removed the confusing dual reputation/trust system. Now there's just one trust score:
+  - Everyone starts at **50**
+  - Complete a mission with your squad: **+0.5**
+  - Report from another player: **-10**
+  - No caps, no floors — simple and transparent
+- **Removed clan tag bonus** — clan membership no longer affects trust score
+- **Removed mission count cap** — trust grows indefinitely with each mission
+- **Simplified info modal** — the "Trust & reputation" section is now just "Trust score" with a clear 2-row table
+
+## CHANGELOG (2026-09-13) — Dragon Key Vaults mission type + alphabetical sorting
+
+- **Added "Dragon Key Vaults" to mission types** in the squad finder. This was a missing Warframe mission type — players can now create and filter squads specifically for Dragon Key Vault runs. The mission list grows from 30 to 31 entries; all dropdowns (filter, create squad, quick match) update automatically since they are populated dynamically from the backend's `filter_options` event.
+- **All dropdown lists are now sorted alphabetically** — missions, planets, difficulties, regions, platforms, and languages are all in A→Z order (with "Any" always at the top) so players can quickly find what they're looking for.
+
+## CHANGELOG (2026-09-12) — removed phantom premium/verified tiers
+
+- **Removed "Verified account" (+20) and "Premium supporter" (+30) rows**
+  from the info modal's trust score table and badge legend — the app has
+  no account linking, no Warframe verification, and no premium tier, so
+  these were fantasy features that misled users.
+- **Removed dead verification-badge rendering** from squad cards, squad
+  detail, and player list in `squad-client.js` (the backend always sets
+  `VerificationLevel = VerificationNone`, so the `=== 'verified'` check
+  was unreachable).
+- **Removed the unreachable verification switch** in `CalculateTrustScore`.
+- **Updated docs** (`WARFRAME_SQUAD_FINDER.md`, `squad/README.md`) to drop
+  `verificationLevel` and `isPremium` from the player API contract and
+  note that reputation can be negative.
+
+## CHANGELOG (2026-09-12) — reputation: forgiving & uncapped
+
+- **Reputation can now go negative** — the old floor at 0 is gone. Bad
+  behavior is tracked, but there's no permanent punishment.
+- **Reputation contributes to trust with no ceiling** — removed the old
+  `min(20, reputation * 0.5)` cap. Each point now adds a flat 0.5 to
+  trust, forever. A player with 100 reputation gets +50 trust from it.
+- **Result:** redemption is always possible. Five failures followed by
+  five clean missions puts you right back where you started, and from
+  there every good run keeps climbing. The info modal text was updated
+  to reflect this.
+
+## CHANGELOG (2026-09-12) — header redesign
+
+- **Replaced the generic `c-header` with a purpose-built `.squad-header`.**
+  The page now shows a horizontal branded bar (logo + "Warframe Squad Finder"
+  title with "Quiz The Spire" as a small subtitle that links home) and a
+  clean row of icon buttons (info + theme toggle). The header uses the
+  squad theme variables so it looks distinct from the main site, has a
+  glowing accent line, and collapses gracefully on mobile.
+
+## CHANGELOG (2026-09-12) — filter_options on connect + WebSocket origin fix
+
+- **Dropdowns now populate on first connect.** The hub's register handler
+  only sent `squad_list` and `player_count`, never `filter_options`, so the
+  mission / planet / difficulty / region selects stayed blank. The register
+  case now calls `sendFilterOptions(c)` before `sendSquadList(c)`, so a fresh
+  client receives the full filter set immediately on connect.
+- **WebSocket no longer 403s on direct / same-origin connections.**
+  `isAllowedOrigin()` rejected empty Origin headers, which browsers don't send
+  on document loads from links (Reddit, direct navigation). Empty origin now
+  passes through; only explicitly disallowed origins are rejected.
+
 ## VERIFIED
 
-Full scripted flow passes over `wss://quizthespire.com/api/v1/squad/ws`:
-join_finder → player_count, get_filter_options, create_squad (missionType),
-join_squad by a 2nd player, chat_message round-trip, toggle_ready, leave_squad.
+18/18 end-to-end assertions pass over `ws://localhost:8081/api/v1/squad/ws`:
+filter_options (31 missions, 18 planets, 6 difficulties, 7 regions,
+4 platforms, 10 languages) → squad_list → player_count → create_squad
+(missionType / planet / difficulty / squadSize) → chat_message round-trip
+→ find_match → leave_squad. Node syntax check on `squad-client.js` clean.
+All static assets served with HTTP 200.

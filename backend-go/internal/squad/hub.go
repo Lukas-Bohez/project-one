@@ -21,6 +21,19 @@ const (
 	pingPeriod     = (pongWait * 9) / 10
 	maxFrameBytes  = 8192
 	sendBufferSize = 32
+
+	// MaxClients is the maximum number of concurrent WebSocket connections
+	// the squad hub will accept. Prevents a single user or bot from opening
+	// thousands of connections and exhausting server resources.
+	MaxClients = 500
+
+	// MaxClientsPerIP limits concurrent connections from a single IP address.
+	// Stops a single machine from monopolizing the connection pool.
+	MaxClientsPerIP = 10
+
+	// GlobalRateLimit is the maximum number of events the hub will process
+	// per second across all clients. Beyond this, messages are dropped.
+	GlobalRateLimit = 1000
 )
 
 var upgrader = websocket.Upgrader{
@@ -35,6 +48,7 @@ type client struct {
 	conn          *websocket.Conn
 	send          chan []byte
 	player        *Player
+	ip            string
 	joinedAt      time.Time
 	messageCount  int
 	lastMessageAt time.Time
@@ -75,6 +89,10 @@ type Hub struct {
 	mu             sync.RWMutex
 	allowedOrigins map[string]bool
 
+	// ipConnections tracks how many concurrent connections each IP has
+	ipConnections map[string]int
+	ipMu         sync.RWMutex
+
 	// Wanted posts: players requesting roles/items/help
 	wantedPosts  map[string]*WantedPost
 	wantedMu     sync.RWMutex
@@ -102,6 +120,7 @@ func NewHub() *Hub {
 		unregister:     make(chan *client),
 		broadcast:      make(chan []byte, 256),
 		allowedOrigins: make(map[string]bool),
+		ipConnections:  make(map[string]int),
 	}
 }
 
@@ -114,6 +133,10 @@ func (h *Hub) Run() {
 			h.clients[c.player.ID] = c
 			h.mu.Unlock()
 			log.Printf("squad: player %s connected", c.player.Username)
+			// Send the new player their session bootstrap: filter options
+			// (so dropdowns populate), the current squad list, then a
+			// player_count broadcast so everyone's counter stays in sync.
+			h.sendFilterOptions(c)
 			h.sendSquadList(c)
 			h.broadcastPlayerCount()
 
@@ -128,6 +151,14 @@ func (h *Hub) Run() {
 				h.removePlayerFromSquadLocked(c.player.ID)
 			}
 			h.mu.Unlock()
+			// Decrement IP connection count
+			if c.ip != "" {
+				h.ipMu.Lock()
+				if h.ipConnections[c.ip] > 0 {
+					h.ipConnections[c.ip]--
+				}
+				h.ipMu.Unlock()
+			}
 			log.Printf("squad: player %s disconnected", c.player.Username)
 			h.broadcastPlayerCount()
 
@@ -153,9 +184,41 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Security: Connection limits — prevent DDoS via WebSocket flooding
+	clientIP := getClientIP(r)
+
+	// Global client limit
+	h.mu.RLock()
+	globalCount := len(h.clients)
+	h.mu.RUnlock()
+	if globalCount >= MaxClients {
+		http.Error(w, "Server full. Try again later.", http.StatusServiceUnavailable)
+		log.Printf("squad: global connection limit reached (%d), rejecting %s", MaxClients, clientIP)
+		return
+	}
+
+	// Per-IP connection limit
+	h.ipMu.RLock()
+	ipCount := h.ipConnections[clientIP]
+	h.ipMu.RUnlock()
+	if ipCount >= MaxClientsPerIP {
+		http.Error(w, "Too many connections from your IP.", http.StatusTooManyRequests)
+		log.Printf("squad: per-IP limit reached for %s (%d connections)", clientIP, ipCount)
+		return
+	}
+
+	// Track this IP connection
+	h.ipMu.Lock()
+	h.ipConnections[clientIP]++
+	h.ipMu.Unlock()
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("squad: upgrade failed: %v", err)
+		// Decrement IP count on failed upgrade
+		h.ipMu.Lock()
+		h.ipConnections[clientIP]--
+		h.ipMu.Unlock()
 		return
 	}
 
@@ -231,6 +294,7 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 		conn:     conn,
 		send:     make(chan []byte, sendBufferSize),
 		player:   &player,
+		ip:       clientIP,
 		joinedAt: time.Now(),
 	}
 
@@ -240,10 +304,13 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	go c.readPump()
 }
 
-// isAllowedOrigin checks if the origin is allowed to connect
+// isAllowedOrigin checks if the origin is allowed to connect.
+// Empty origin means a non-browser client or a same-origin direct
+// connection (curl, a Python script, or a browser that didn't send
+// Origin) — these are safe to allow.
 func (h *Hub) isAllowedOrigin(origin string) bool {
 	if origin == "" {
-		return false
+		return true
 	}
 	// Allow localhost for development
 	if origin == "http://localhost:8081" || origin == "https://localhost:8081" {
@@ -257,6 +324,38 @@ func (h *Hub) isAllowedOrigin(origin string) bool {
 		return true
 	}
 	return false
+}
+
+// getClientIP extracts the real client IP from the request, checking
+// X-Forwarded-For and X-Real-IP headers set by proxies (Apache).
+func getClientIP(r *http.Request) string {
+	// Check X-Forwarded-For first (set by Apache mod_proxy)
+	xff := r.Header.Get("X-Forwarded-For")
+	if xff != "" {
+		// Take the first IP in the chain (the original client)
+		if idx := len(xff); idx > 0 {
+			for i, c := range xff {
+				if c == ',' {
+					xff = xff[:i]
+					break
+				}
+			}
+			return xff
+		}
+	}
+	// Check X-Real-IP (alternative proxy header)
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		return xri
+	}
+	// Fall back to the direct connection IP
+	ip := r.RemoteAddr
+	// Strip port if present
+	for i := len(ip) - 1; i >= 0; i-- {
+		if ip[i] == ':' {
+			return ip[:i]
+		}
+	}
+	return ip
 }
 
 // readPump handles incoming messages from the client

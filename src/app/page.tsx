@@ -102,9 +102,13 @@ export default function Home() {
               <h3 className="text-lg font-semibold">ConvertTheSpireFlutter</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 Open-source Flutter desktop and mobile app for downloading and converting media from
-                1,800+ sites. Features 4K/8K downloads, 27+ format conversions, built-in media
-                player, torrent management, DLNA casting, and a built-in browser. 1,000+ downloads
-                across 95+ countries. GPLv3 licensed.
+                1,800+ sites, now at v13.2.1. Self-healing downloads auto-update yt-dlp, retry
+                through a bundled Deno JS runtime, and rotate across fallback API clients. v13.2.1
+                finally fully fixes downloads on low-end hardware (verified 800 downloads, 10
+                consecutive active) — fixes the yt-dlp SABR/player_client issue, browser
+                tab-switcher thumbnail stretching, hero card &amp; mini-player thumbnail stretching,
+                the live Missing tab, and a misleading self-update error. Available for Windows,
+                Linux, macOS, and Android. GPLv3 licensed.
               </p>
               <a
                 className="mt-4 inline-flex items-center text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"

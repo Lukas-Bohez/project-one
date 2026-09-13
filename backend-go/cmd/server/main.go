@@ -245,13 +245,26 @@ func withCORS(next http.Handler) http.Handler {
 			}
 		}
 
+		// Same-origin navigation (browsers don't send Origin on document
+		// loads), health checks and curl: this is not a CORS request, so
+		// serve it normally. Blocking these made every page 403 in
+		// production — including links from other sites (Reddit sends
+		// its own origin with the document request).
+		if origin == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		if allowOrigin == "" {
-			// No matching origin; for preflight respond 204 without CORS headers, for other requests return 403.
+			// Disallowed cross-origin request: deny *API access* by not
+			// sending CORS headers (browsers enforce it client-side), but
+			// never 403 documents — that would break normal link traffic.
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}
-			http.Error(w, "origin not allowed", http.StatusForbidden)
+			w.Header().Set("Vary", "Origin")
+			next.ServeHTTP(w, r)
 			return
 		}
 

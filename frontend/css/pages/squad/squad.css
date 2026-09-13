@@ -55,6 +55,155 @@
   --squad-trust-low: #c62828;
 }
 
+/* ============================================================
+   PAGE HEADER — Warframe Squad Finder
+   ============================================================ */
+.squad-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, var(--squad-bg-elevated) 0%, var(--squad-bg-card) 100%);
+  border-bottom: 1px solid var(--squad-border);
+  box-shadow: 0 2px 16px var(--squad-shadow);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+/* Glowing accent line along the bottom */
+.squad-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--squad-primary) 20%,
+    var(--squad-accent) 50%,
+    var(--squad-primary) 80%,
+    transparent 100%);
+  opacity: 0.7;
+}
+
+.squad-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* Brand */
+.squad-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.squad-header-brand:hover {
+  opacity: 0.85;
+}
+
+.squad-header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--squad-primary), #0d47a1);
+  color: #fff;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px var(--squad-glow);
+  flex-shrink: 0;
+}
+
+.squad-header-titles {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.squad-header-subtitle {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--squad-text-muted);
+}
+
+.squad-header-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--squad-text);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Action buttons */
+.squad-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.squad-header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--squad-border);
+  border-radius: 10px;
+  background: var(--squad-input-bg);
+  color: var(--squad-text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.squad-header-btn:hover {
+  color: var(--squad-primary);
+  border-color: var(--squad-primary);
+  background: var(--squad-bg-elevated);
+  box-shadow: 0 0 8px var(--squad-glow);
+  transform: translateY(-1px);
+}
+
+.squad-header-btn:active {
+  transform: translateY(0);
+}
+
+/* Mobile: stack titles tighter, shrink logo */
+@media (max-width: 520px) {
+  .squad-header {
+    padding: 0 12px;
+    min-height: 56px;
+  }
+  .squad-header-logo {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+  .squad-header-title {
+    font-size: 1.1rem;
+  }
+  .squad-header-subtitle {
+    font-size: 0.62rem;
+  }
+  .squad-header-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+}
+
 /* Status Bar */
 .squad-status-bar {
   display: flex;
@@ -404,6 +553,156 @@
 .squad-quick-note i {
   color: var(--squad-primary);
   margin-top: 2px;
+}
+
+/* Info modal content */
+.squad-info-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--squad-text);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.squad-info-intro i {
+  color: var(--squad-primary);
+  margin-top: 3px;
+}
+
+.squad-info-section {
+  margin: 0 0 18px 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--squad-border);
+}
+
+.squad-info-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 12px;
+}
+
+.squad-info-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px 0;
+  font-size: 0.95rem;
+  color: var(--squad-text);
+}
+
+.squad-info-section h4 i {
+  color: var(--squad-primary);
+}
+
+.squad-info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.squad-info-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--squad-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.squad-info-list li i {
+  color: var(--squad-success);
+  margin-top: 3px;
+}
+
+.squad-info-list li strong {
+  color: var(--squad-text);
+}
+
+.squad-info-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--squad-input-bg);
+  border: 1px solid var(--squad-border);
+}
+
+.squad-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--squad-text-muted);
+  font-size: 0.82rem;
+}
+
+.squad-info-row i {
+  color: var(--squad-primary);
+  margin-right: 4px;
+}
+
+.squad-info-val {
+  font-weight: 700;
+  color: var(--squad-text);
+  white-space: nowrap;
+}
+
+.squad-info-val.pos { color: var(--squad-success); }
+.squad-info-val.neg { color: var(--squad-danger); }
+
+.squad-info-note {
+  color: var(--squad-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin: 6px 0 0 0;
+}
+
+.squad-info-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.squad-info-badges > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--squad-text-muted);
+  font-size: 0.82rem;
+}
+
+.squad-info-badges > div > span:first-child {
+  min-width: 110px;
+  white-space: nowrap;
+}
+
+.squad-info-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  color: var(--squad-text);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.squad-info-tip i {
+  color: var(--squad-success);
+  margin-top: 2px;
+}
+
+#infoModal .squad-modal-body {
+  max-height: 72vh;
+  overflow-y: auto;
 }
 
 .squad-btn--danger {
