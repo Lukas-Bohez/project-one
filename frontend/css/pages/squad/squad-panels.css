@@ -209,6 +209,27 @@
   min-width: 200px;
 }
 
+/* Empty-state CTA icon: keep the plus small, white, and vertically centered
+   with the button text (Font Awesome can otherwise render oversized / dark). */
+.squad-board-main .squad-empty--cta .squad-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.squad-board-main .squad-empty--cta .squad-empty-btn i {
+  font-size: 0.85em;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  color: #fff;
+  opacity: 1;
+}
+
 /* Detail view: keep inside the same centered column, readable width */
 .squad-board-main .squad-detail-panel {
   max-width: 760px;
