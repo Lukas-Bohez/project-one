@@ -214,7 +214,8 @@
   flex: none;
 }
 
-.c-footer--squad {
+.c-footer--squad,
+footer.c-footer--squad {
   position: relative;
   z-index: 1;
   width: 100%;
