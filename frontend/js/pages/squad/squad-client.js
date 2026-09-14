@@ -5,6 +5,29 @@
 (function() {
   'use strict';
 
+  const SQUAD_PRESETS = {
+    glacial_defiance: {
+      name: 'Glacial Defiance', mission: 'Glacial Defiance', planet: 'Any', difficulty: 'Any',
+      size: 6, mode: 'casual', objective: 'clear', steelPath: false, nightmare: false, voidFissure: false,
+      squadName: 'Glacial Defiance run', description: 'Glacial Defiance - 6-player mode from the Narin update'
+    },
+    dragon_key_vaults: {
+      name: 'Dragon Key Vaults', mission: 'Dragon Key Vaults', planet: 'Deimos', difficulty: 'Any',
+      size: 4, mode: 'casual', objective: 'farm', steelPath: false, nightmare: false, voidFissure: false,
+      squadName: 'Dragon Key Vaults', description: 'Orokin Vault hunt - bring a dragon key'
+    },
+    steel_path: {
+      name: 'Steel Path', mission: 'Survival', planet: 'Any', difficulty: 'Steel Path',
+      size: 4, mode: 'serious', objective: 'farm', steelPath: true, nightmare: false, voidFissure: false,
+      squadName: 'Steel Path farm', description: 'Steel Path - serious run, stay for the long haul'
+    },
+    casual_exterminate: {
+      name: 'Casual Exterminate', mission: 'Exterminate', planet: 'Any', difficulty: 'Normal',
+      size: 4, mode: 'casual', objective: 'clear', steelPath: false, nightmare: false, voidFissure: false,
+      squadName: 'Chill Exterminate', description: 'Relaxed clear, all welcome'
+    }
+  };
+
   class SquadFinderClient {
     constructor() {
       this.ws = null;
@@ -113,10 +136,21 @@
       this.playerForm.addEventListener('submit', (e) => { e.preventDefault(); this.connect(); });
       if (this.switchPlayerBtn) this.switchPlayerBtn.addEventListener('click', () => this.switchProfile());
       this.createSquadBtn.addEventListener('click', () => this.openCreateModal());
+      // Empty-state CTA is re-rendered with the list; delegate so it survives re-renders.
+      if (this.squadList) this.squadList.addEventListener('click', (e) => {
+        if (e.target && e.target.closest && e.target.closest('[data-action="open-create-squad"]')) this.openCreateModal();
+      });
       if (this.quickMatchBtn) this.quickMatchBtn.addEventListener('click', () => this.openQuickMatchModal());
       if (this.closeQuickMatchBtn) this.closeQuickMatchBtn.addEventListener('click', () => this.closeQuickMatchModal());
       if (this.cancelQuickMatchBtn) this.cancelQuickMatchBtn.addEventListener('click', () => this.closeQuickMatchModal());
       if (this.confirmQuickMatchBtn) this.confirmQuickMatchBtn.addEventListener('click', () => this.confirmQuickMatch());
+      // One-click preset buttons in both modals
+      document.querySelectorAll('.squad-preset').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const scope = btn.closest('#quickMatchModal') ? 'quick' : 'create';
+          this.applySquadPreset(btn.dataset.preset, scope);
+        });
+      });
       if (this.quickSizeSelect) this.quickSizeSelect.addEventListener('change', () => this.updateQuickSizeFields());
       this.closeModalBtn.addEventListener('click', () => this.closeCreateModal());
       this.cancelCreateBtn.addEventListener('click', () => this.closeCreateModal());
@@ -343,7 +377,7 @@
     renderSquadList(squads) {
       const filtered = this.filterSquads(squads);
       if (filtered.length === 0) {
-        this.squadList.innerHTML = '<div class="squad-empty"><i class="fa-solid fa-search"></i><p>No squads found. Create one to get started!</p></div>';
+        this.squadList.innerHTML = '<div class="squad-empty squad-empty--cta"><i class="fa-solid fa-users-slash"></i><p>No squads found.</p><p class="squad-empty-sub">Try different filters, or start one yourself.</p><button type="button" class="squad-btn squad-btn--primary squad-empty-btn" data-action="open-create-squad"><i class="fa-solid fa-plus"></i> Create a Squad</button></div>';
         this.squadCount.textContent = '0';
         return;
       }
@@ -420,6 +454,7 @@
 
     openCreateModal() {
       this.squadNameInput.value = '';
+      document.querySelectorAll('.squad-preset--active').forEach((b) => b.classList.remove('squad-preset--active'));
       this.populateSelect(this.squadMissionSelect, this.filterOptions.missions || []);
       this.populateSelect(this.squadPlanetSelect, this.filterOptions.planets || []);
       this.populateSelect(this.squadDifficultySelect, this.filterOptions.difficulties || []);
@@ -447,6 +482,7 @@
     openQuickMatchModal() {
       if (this.currentSquad) { this.showNotification('You are already in a squad', 'warning'); return; }
       if (!this.quickMatchModal) return;
+      document.querySelectorAll('.squad-preset--active').forEach((b) => b.classList.remove('squad-preset--active'));
       this.populateQuickSelect(this.quickMissionSelect, this.filterOptions.missions || []);
       this.populateQuickSelect(this.quickPlanetSelect, this.filterOptions.planets || []);
       this.populateQuickSelect(this.quickDifficultySelect, this.filterOptions.difficulties || []);
@@ -459,18 +495,60 @@
       if (this.quickMatchModal) this.quickMatchModal.style.display = 'none';
     }
 
+    // Set a select's value, adding the option if the list doesn't have it yet
+    // (e.g. a preset mission before filter options arrive) and mapping
+    // display labels like "Any" to their underlying option value.
+    setSelectValue(select, value) {
+      if (!select || value === undefined || value === null) return;
+      const str = String(value);
+      let opt = Array.from(select.options).find((o) => o.value === str || o.text === str);
+      if (!opt) {
+        opt = document.createElement('option');
+        opt.value = str; opt.textContent = str;
+        select.appendChild(opt);
+      }
+      select.value = opt.value;
+    }
+
+    // Fill the create or quick-match form from a one-click preset.
+    applySquadPreset(presetId, scope) {
+      const preset = SQUAD_PRESETS[presetId];
+      if (!preset) return;
+      const quick = scope === 'quick';
+      this.setSelectValue(quick ? this.quickMissionSelect : this.squadMissionSelect, preset.mission);
+      this.setSelectValue(quick ? this.quickPlanetSelect : this.squadPlanetSelect, preset.planet);
+      this.setSelectValue(quick ? this.quickDifficultySelect : this.squadDifficultySelect, preset.difficulty);
+      const sizeSel = quick ? this.quickSizeSelect : this.squadSizeSelect;
+      const modeSel = quick ? this.quickModeSelect : this.squadModeSelect;
+      if (sizeSel) sizeSel.value = String(preset.size);
+      if (modeSel) modeSel.value = preset.mode;
+      if (quick) {
+        this.updateQuickSizeFields();
+      } else {
+        if (preset.squadName && !this.squadNameInput.value.trim()) this.squadNameInput.value = preset.squadName;
+        if (this.squadObjectiveSelect && preset.objective) this.squadObjectiveSelect.value = preset.objective;
+        if (this.squadSteelPathChk) this.squadSteelPathChk.checked = !!preset.steelPath;
+        if (this.squadNightmareChk) this.squadNightmareChk.checked = !!preset.nightmare;
+        if (this.squadVoidFissureChk) this.squadVoidFissureChk.checked = !!preset.voidFissure;
+        if (this.squadDescInput && preset.description && !this.squadDescInput.value.trim()) this.squadDescInput.value = preset.description;
+      }
+      document.querySelectorAll('.squad-preset[data-preset="' + presetId + '"]').forEach((b) => b.classList.add('squad-preset--active'));
+      document.querySelectorAll('.squad-preset:not([data-preset="' + presetId + '"])').forEach((b) => b.classList.remove('squad-preset--active'));
+      this.showNotification(preset.name + ' preset applied', 'success');
+    }
+
     populateQuickSelect(select, options) {
       if (!select) return;
       select.innerHTML = '<option value="">Any</option>' + options.map((o) => '<option>' + this.escapeHtml(o) + '</option>').join('');
     }
 
-    // 6-player squads always run the same fixed mission/planet/difficulty,
-    // so those filters are hidden and replaced with a "not relevant" note.
+    // 6-player squads run a fixed planet/difficulty, but the mission still
+    // matters (e.g. Glacial Defiance presets) - so only those stay hidden.
     updateQuickSizeFields() {
       const standard = this.quickSizeSelect && parseInt(this.quickSizeSelect.value, 10) === 6;
-      document.querySelectorAll('.squad-quick-optional').forEach((el) => { el.style.display = standard ? 'none' : ''; });
+      if (this.quickPlanetSelect) this.quickPlanetSelect.closest('.squad-form-group').style.display = standard ? 'none' : '';
+      if (this.quickDifficultySelect) this.quickDifficultySelect.closest('.squad-form-group').style.display = standard ? 'none' : '';
       if (this.quickSizeNote) this.quickSizeNote.style.display = standard ? 'flex' : 'none';
-      if (this.quickRegionRow) this.quickRegionRow.classList.toggle('squad-form-row--single', !!standard);
     }
 
     confirmQuickMatch() {
@@ -479,13 +557,12 @@
       this.findingMatch = true;
       if (this.confirmQuickMatchBtn) { this.confirmQuickMatchBtn.disabled = true; }
       const size = this.quickSizeSelect ? parseInt(this.quickSizeSelect.value, 10) || 6 : 6;
-      const standard = size === 6; // mission/planet/difficulty are fixed for 6-player squads
       this.send('find_match', {
         mode: this.quickModeSelect ? this.quickModeSelect.value : 'casual',
         squadSize: size,
-        mission: standard ? '' : (this.quickMissionSelect ? this.quickMissionSelect.value : ''),
-        planet: standard ? '' : (this.quickPlanetSelect ? this.quickPlanetSelect.value : ''),
-        difficulty: standard ? '' : (this.quickDifficultySelect ? this.quickDifficultySelect.value : ''),
+        mission: this.quickMissionSelect ? this.quickMissionSelect.value : '',
+        planet: this.quickPlanetSelect ? this.quickPlanetSelect.value : '',
+        difficulty: this.quickDifficultySelect ? this.quickDifficultySelect.value : '',
         region: this.quickRegionSelect ? this.quickRegionSelect.value : ''
       });
       this.closeQuickMatchModal();

@@ -144,6 +144,9 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  max-width: 1020px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Brand */
@@ -183,8 +186,12 @@
 .squad-header-subtitle {
   font-size: 0.7rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: var(--squad-text-muted);
+}
+
+.squad-header-sub {
+  font-size: 0.72rem;
+  font-weight: 400;
   color: var(--squad-text-muted);
 }
 
@@ -620,6 +627,78 @@
 .squad-quick-note i {
   color: var(--squad-primary);
   margin-top: 2px;
+}
+
+/* Squad presets - one-click setups */
+.squad-presets {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--squad-bg-elevated);
+  border: 1px solid var(--squad-border);
+}
+
+.squad-presets-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--squad-text-muted);
+  margin-bottom: 10px;
+}
+
+.squad-presets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.squad-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--squad-bg-card);
+  border: 1px solid var(--squad-border);
+  color: var(--squad-text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.squad-preset:hover {
+  border-color: var(--squad-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--squad-glow);
+}
+
+.squad-preset--active {
+  border-color: var(--squad-primary);
+  box-shadow: 0 0 0 2px var(--squad-glow);
+}
+
+.squad-preset-icon {
+  color: var(--squad-primary);
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.squad-preset-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.squad-preset-meta {
+  font-size: 0.72rem;
+  color: var(--squad-text-muted);
+}
+
+@media (max-width: 480px) {
+  .squad-presets-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Info modal content */

@@ -351,7 +351,14 @@ func (h *Hub) HandleEndSession(c *client, data json.RawMessage) {
 	}, "")
 }
 
-// HandleSubmitReport handles submitting a post-mission report
+// HandleSubmitReport records a post-mission report.
+//
+// DELIBERATE TRUST DECISION (abuse-resistant): a report NEVER changes
+// anyone's trust score automatically. It is stored on the squad record and
+// the reportee's Reports counter is incremented for moderator review, so a
+// coordinated/retaliatory burst of reports cannot tank an innocent player's
+// public badge. Trust only moves via completed missions (+0.5, clamped
+// 0-100 in TrustScoreValue). Moderators act on Reports out of band.
 func (h *Hub) HandleSubmitReport(c *client, data json.RawMessage) {
 	req := struct {
 		SquadID       string         `json:"squadId"`
@@ -386,11 +393,17 @@ func (h *Hub) HandleSubmitReport(c *client, data json.RawMessage) {
 
 	// Update player mission count — each completed squad mission is +0.5 trust.
 	// Star ratings are kept as feedback but don't directly affect the score.
-	for playerID := range req.PlayerRatings {
+	// NOTE: low (1-star) ratings are treated as report signals for moderator
+	// review only: counted on the player record, never applied to trust.
+	for playerID, rating := range req.PlayerRatings {
 		if cl, ok := h.clients[playerID]; ok {
 			player := cl.player
 			player.TotalMissions++
 			player.LastActive = time.Now()
+			if rating <= 1 {
+				player.Reports++
+			}
+			player.TrustScore = player.TrustScoreValue()
 		}
 	}
 

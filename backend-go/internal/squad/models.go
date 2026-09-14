@@ -389,13 +389,21 @@ type ReputationEntry struct {
 }
 
 // TrustScore calculates the player's trust score.
-// Simple system: everyone starts at 50, +0.5 per completed squad mission,
-// -10 per report. No caps, no floors — good play always climbs, bad play
-// always hurts, and you can always earn your way back.
+//
+// Decision (deliberate, abuse-resistant): everyone starts at 50, +0.5 per
+// completed squad mission. Reports do NOT move the score automatically —
+// they are recorded on the player record for moderator review (see
+// ReportReasons + HandleSubmitReport notes). Score is clamped to 0-100 so
+// a display badge can never spiral to absurd values.
 func (p *Player) TrustScoreValue() float64 {
 	score := 50.0
 	score += float64(p.TotalMissions) * 0.5
-	score -= float64(p.Reports) * 10.0
+	if score > 100.0 {
+		score = 100.0
+	}
+	if score < 0.0 {
+		score = 0.0
+	}
 	return score
 }
 
@@ -446,6 +454,7 @@ var AvailableMissions = []string{
 	"Excavation",
 	"Exterminate",
 	"Exploiter Orb",
+	"Glacial Defiance",
 	"Infested Salvage",
 	"Interception",
 	"Junction",

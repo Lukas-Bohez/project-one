@@ -1,18 +1,233 @@
 /* Squad Finder Panel Styles - Part 2 */
 
-/* Main Layout */
+/* Main Layout — centered column shared by status bar + board.
+   NOTE: squad.css also defines .squad-status-bar earlier in the cascade;
+   keep the pill styling here authoritative by re-asserting it below. */
 .squad-app {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  width: 100%;
+  padding: 0 16px 32px;
+  box-sizing: border-box;
+}
+
+.squad-status-bar,
+.squad-main {
+  width: 100%;
+  max-width: 1020px;
+  box-sizing: border-box;
+}
+
+.squad-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--squad-bg-elevated);
+  border: 1px solid var(--squad-border);
+  border-radius: 12px;
+  margin: 12px auto 18px auto;
+  font-size: 0.85rem;
 }
 
 .squad-main {
+  margin: 0 auto;
+  padding: 0 0 12px 0;
+}
+
+/* Board: narrow filter sidebar + main content column.
+   Keeps the page centered and readable instead of full-bleed. */
+.squad-board {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  min-height: calc(100vh - 120px);
-  height: auto;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.squad-board-sidebar {
+  min-width: 0;
+}
+
+.squad-board-sidebar .squad-list-panel {
+  background: var(--squad-bg-card);
+  border: 1px solid var(--squad-border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 16px;
+}
+
+.squad-board-sidebar .squad-list-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--squad-text);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.squad-list-sub {
+  color: var(--squad-text-muted);
+  font-size: 0.78rem;
+  margin: 6px 0 0 0;
+  line-height: 1.4;
+}
+
+/* Undo the old nested filter card inside the sidebar card.
+   NOTE: .squad-filters rules live further down in this file (the "Filters"
+   section) - the resets here win by higher specificity. */
+.squad-board-sidebar .squad-filters {
+  background: none;
+  border: none;
+  border-bottom: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.squad-board-sidebar .squad-filter-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.squad-board-sidebar .squad-filter-row label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--squad-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.squad-board-sidebar .squad-filter-row select {
+  min-width: 0;
+  width: 100%;
+}
+
+.squad-filter-divider {
+  border: none;
+  border-top: 1px solid var(--squad-border);
+  margin: 2px 0;
+}
+
+.squad-filter-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.squad-list-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.squad-list-actions .squad-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Main column: squad cards in a real grid, detail panel at content width */
+.squad-board-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.squad-board-main #squadListContainer {
+  min-width: 0;
+}
+
+.squad-board-main .squad-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  overflow: visible;
+  padding: 0;
+  flex: none;
+}
+
+.squad-board-main .squad-card {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.squad-board-main .squad-empty,
+.squad-board-main .squad-empty-state {
+  grid-column: 1 / -1;
+}
+
+/* Intentional empty state: centered invitation, not leftover grid space. */
+.squad-board-main .squad-empty--cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+  min-height: 320px;
+  padding: 48px 24px;
+  background: var(--squad-bg-card);
+  border: 1px dashed var(--squad-border);
+  border-radius: 14px;
+}
+
+.squad-empty--cta i {
+  font-size: 2.4rem;
+  margin-bottom: 8px;
+}
+
+.squad-empty--cta p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--squad-text);
+  font-weight: 600;
+}
+
+.squad-empty--cta .squad-empty-sub {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--squad-text-muted);
+  margin-bottom: 16px;
+}
+
+.squad-empty--cta .squad-empty-btn {
+  width: auto;
+  min-width: 200px;
+}
+
+/* Detail view: keep inside the same centered column, readable width */
+.squad-board-main .squad-detail-panel {
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .squad-main {
+    padding: 16px 12px 24px;
+  }
+
+  .squad-board {
+    grid-template-columns: 1fr;
+  }
+
+  .squad-board-sidebar .squad-list-panel {
+    position: static;
+  }
 }
 
 .squad-panel {

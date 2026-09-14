@@ -37,8 +37,8 @@
         <a href="/" class="squad-header-brand" title="Back to Quiz The Spire">
           <span class="squad-header-logo"><i class="fa-solid fa-gamepad"></i></span>
           <span class="squad-header-titles">
-            <span class="squad-header-subtitle">Quiz The Spire</span>
             <span class="squad-header-title">Warframe Squad Finder</span>
+            <span class="squad-header-sub">by Quiz The Spire</span>
           </span>
         </a>
         <div class="squad-header-actions">
@@ -133,15 +133,19 @@
 
       <!-- Main Panel (shown after connection) -->
       <section class="squad-main" id="mainPanel" style="display: none">
-        <div class="squad-layout">
-          <!-- Squad List -->
-          <div class="squad-list-panel">
-            <div class="squad-list-header">
-              <h3><i class="fa-solid fa-list"></i> Available Squads
-                <span class="squad-count-badge" id="squadCount">0</span>
-              </h3>
-              <div class="squad-filter-row">
-                <label for="filterMission">Mission</label>
+        <div class="squad-board">
+          <!-- Sidebar: title, filters, actions -->
+          <aside class="squad-board-sidebar">
+            <div class="squad-list-panel">
+              <div class="squad-list-header">
+                <h3><i class="fa-solid fa-list"></i> Available Squads
+                  <span class="squad-count-badge" id="squadCount">0</span>
+                </h3>
+                <p class="squad-list-sub">Filter the board, then join a squad or start your own.</p>
+              </div>
+              <div class="squad-filters">
+                  <div class="squad-filter-row">
+                    <label for="filterMission">Mission</label>
                 <select id="filterMission">
                   <option value="">All</option>
                 </select>
@@ -196,37 +200,43 @@
                 </label>
               </div>
             </div>
-            <div class="squad-list-scroll" id="squadListContainer">
+              <div class="squad-list-actions">
+                <button class="squad-btn squad-btn--quick" id="quickMatchBtn">
+                  <i class="fa-solid fa-shuffle"></i> Quick Match
+                </button>
+                <button class="squad-btn squad-btn--primary" id="createSquadBtn">
+                  <i class="fa-solid fa-plus"></i> Create Squad
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Main column: squad cards, or active squad detail -->
+          <div class="squad-board-main">
+            <div id="squadListContainer">
               <div class="squad-list" id="squadList">
-                <div class="squad-empty-state" id="squadEmptyState">
+                <div class="squad-empty squad-empty--cta" id="squadEmptyState">
                   <i class="fa-solid fa-users-slash"></i>
-                  <p>No squads available. Create one!</p>
+                  <p>No squads available right now.</p>
+                  <p class="squad-empty-sub">Start one and other Tenno can join you.</p>
+                  <button type="button" class="squad-btn squad-btn--primary squad-empty-btn" data-action="open-create-squad">
+                    <i class="fa-solid fa-plus"></i> Create a Squad
+                  </button>
                 </div>
               </div>
             </div>
-          <div class="squad-list-header" style="text-align: right; margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
-            <button class="squad-btn squad-btn--quick" id="quickMatchBtn">
-              <i class="fa-solid fa-shuffle"></i> Quick Match
-            </button>
-            <button class="squad-btn squad-btn--primary" id="createSquadBtn">
-              <i class="fa-solid fa-plus"></i> Create Squad
-            </button>
-          </div>
-        </div>
+            <div class="squad-detail-panel" id="squadDetails" style="display: none">
+              <div class="squad-detail-header">
+                <div class="squad-detail-title" id="squadDetailTitle">
+                  <h2 class="squad-detail-name" id="squadName"></h2>
+                  <div class="squad-detail-meta" id="squadMeta"></div>
+                </div>
+                <button class="squad-btn squad-btn--secondary squad-close-btn" id="closeSquadBtn" title="Back to list">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+              </div>
 
-        <!-- Squad Detail / Current Squad -->
-        <div class="squad-detail-panel" id="squadDetails" style="display: none">
-          <div class="squad-detail-header">
-            <div class="squad-detail-title" id="squadDetailTitle">
-              <h2 class="squad-detail-name" id="squadName"></h2>
-              <div class="squad-detail-meta" id="squadMeta"></div>
-            </div>
-            <button class="squad-btn squad-btn--secondary squad-close-btn" id="closeSquadBtn" title="Back to list">
-              <i class="fa-solid fa-arrow-left"></i>
-            </button>
-          </div>
-
-          <div class="squad-detail-content">
+              <div class="squad-detail-content">
             <!-- Squad Info -->
             <div class="squad-info-block">
               <div class="squad-info-row">
@@ -313,28 +323,29 @@
                 <i class="fa-solid fa-right-from-bracket"></i> Leave Squad
               </button>
             </div>
-          </div>
+              </div><!-- /.squad-detail-content -->
 
-          <!-- Chat -->
-          <div class="squad-chat" id="chatPanel">
-            <div class="squad-chat-header">
-              <h4><i class="fa-solid fa-comments"></i> Squad Chat</h4>
-            </div>
-            <div class="squad-chat-messages" id="chatMessages">
-              <div class="squad-chat-system">
-                <p>Welcome to the Squad Finder! Join or create a squad to start chatting.</p>
-              </div>
-            </div>
-            <div class="squad-chat-input">
-              <input type="text" id="chatInput" placeholder="Type a message..." maxlength="500" disabled />
-              <button class="squad-btn squad-btn--primary" id="sendChatBtn" disabled>
-                <i class="fa-solid fa-paper-plane"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+              <!-- Chat -->
+              <div class="squad-chat" id="chatPanel">
+                <div class="squad-chat-header">
+                  <h4><i class="fa-solid fa-comments"></i> Squad Chat</h4>
+                </div>
+                <div class="squad-chat-messages" id="chatMessages">
+                  <div class="squad-chat-system">
+                    <p>Welcome to the Squad Finder! Join or create a squad to start chatting.</p>
+                  </div>
+                </div>
+                <div class="squad-chat-input">
+                  <input type="text" id="chatInput" placeholder="Type a message..." maxlength="500" disabled />
+                  <button class="squad-btn squad-btn--primary" id="sendChatBtn" disabled>
+                    <i class="fa-solid fa-paper-plane"></i>
+                  </button>
+                </div>
+              </div><!-- /.squad-chat -->
+            </div><!-- /.squad-detail-panel -->
+          </div><!-- /.squad-board-main -->
+        </div><!-- /.squad-board -->
+      </section>
 
     <!-- Create Squad Modal -->
     <div class="squad-modal" id="createSquadModal" style="display: none">
@@ -344,6 +355,31 @@
           <button class="squad-modal-close" id="closeModalBtn">&times;</button>
         </div>
         <div class="squad-modal-body">
+          <div class="squad-presets">
+            <div class="squad-presets-label">Quick presets</div>
+            <div class="squad-presets-row">
+              <button type="button" class="squad-preset" data-preset="glacial_defiance">
+                <span class="squad-preset-icon"><i class="fa-solid fa-snowflake"></i></span>
+                <span class="squad-preset-name">Glacial Defiance</span>
+                <span class="squad-preset-meta">6 player &middot; Any planet</span>
+              </button>
+              <button type="button" class="squad-preset" data-preset="dragon_key_vaults">
+                <span class="squad-preset-icon"><i class="fa-solid fa-dragon"></i></span>
+                <span class="squad-preset-name">Dragon Key Vaults</span>
+                <span class="squad-preset-meta">4 player &middot; Deimos</span>
+              </button>
+              <button type="button" class="squad-preset" data-preset="steel_path">
+                <span class="squad-preset-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                <span class="squad-preset-name">Steel Path</span>
+                <span class="squad-preset-meta">4 player &middot; Serious</span>
+              </button>
+              <button type="button" class="squad-preset" data-preset="casual_exterminate">
+                <span class="squad-preset-icon"><i class="fa-solid fa-skull"></i></span>
+                <span class="squad-preset-name">Casual Exterminate</span>
+                <span class="squad-preset-meta">4 player &middot; Normal</span>
+              </button>
+            </div>
+          </div>
           <div class="squad-form-group">
             <label for="squadNameInput">Squad Name</label>
             <input type="text" id="squadNameInput" placeholder="Enter squad name" maxlength="40" />
@@ -402,11 +438,11 @@
               <label>Mission Modifiers</label>
               <div class="squad-modifier-toggle">
                 <input type="checkbox" id="squadSteelPathChk" />
-                <label for="squadSteelPathChk" class="squad-modifier-pill"><i class="fa-solid fa-chevron-up"></i>Steel Path</label>
+                <label for="squadSteelPathChk" class="squad-modifier-pill"><i class="fa-solid fa-gauge-high"></i>Steel Path</label>
                 <input type="checkbox" id="squadNightmareChk" />
                 <label for="squadNightmareChk" class="squad-modifier-pill"><i class="fa-solid fa-skull"></i>Nightmare</label>
                 <input type="checkbox" id="squadVoidFissureChk" />
-                <label for="squadVoidFissureChk" class="squad-modifier-pill"><i class="fa-solid fa-wifi"></i>Void Fissure</label>
+                <label for="squadVoidFissureChk" class="squad-modifier-pill"><i class="fa-solid fa-route"></i>Void Fissure</label>
               </div>
             </div>
           </div>
@@ -432,6 +468,31 @@
           <button class="squad-modal-close" id="closeQuickMatchBtn">&times;</button>
         </div>
         <div class="squad-modal-body">
+          <div class="squad-presets">
+            <div class="squad-presets-label">Quick presets</div>
+            <div class="squad-presets-row">
+              <button type="button" class="squad-preset" data-preset="glacial_defiance">
+                <span class="squad-preset-icon"><i class="fa-solid fa-snowflake"></i></span>
+                <span class="squad-preset-name">Glacial Defiance</span>
+                <span class="squad-preset-meta">6 player &middot; Auto-match</span>
+              </button>
+              <button type="button" class="squad-preset" data-preset="dragon_key_vaults">
+                <span class="squad-preset-icon"><i class="fa-solid fa-dragon"></i></span>
+                <span class="squad-preset-name">Dragon Key Vaults</span>
+                <span class="squad-preset-meta">4 player &middot; Auto-match</span>
+              </button>
+              <button type="button" class="squad-preset" data-preset="steel_path">
+                <span class="squad-preset-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                <span class="squad-preset-name">Steel Path</span>
+                <span class="squad-preset-meta">4 player &middot; Serious</span>
+              </button>
+              <button type="button" class="squad-preset" data-preset="casual_exterminate">
+                <span class="squad-preset-icon"><i class="fa-solid fa-skull"></i></span>
+                <span class="squad-preset-name">Casual Exterminate</span>
+                <span class="squad-preset-meta">4 player &middot; Auto-match</span>
+              </button>
+            </div>
+          </div>
           <p class="squad-modal-desc">We will drop you into a random open squad that fits your settings - or start a new one for you if nothing fits.</p>
           <div class="squad-form-row">
             <div class="squad-form-group">
@@ -471,7 +532,7 @@
           </div>
           <p class="squad-quick-note" id="quickSizeNote" style="display: none">
             <i class="fa-solid fa-circle-info"></i>
-            <span>Mission Type, Planet and Difficulty are not relevant for 6-player squads.</span>
+            <span>Planet and Difficulty are fixed for 6-player squads - Mission and Region still apply.</span>
           </p>
         </div>
         <div class="squad-modal-footer">
@@ -548,10 +609,10 @@
             <div class="squad-info-table">
               <div class="squad-info-row"><span>Starting score</span><span class="squad-info-val">50</span></div>
               <div class="squad-info-row"><span><i class="fa-solid fa-flag"></i> Complete a mission with your squad</span><span class="squad-info-val pos">+0.5</span></div>
-              <div class="squad-info-row"><span><i class="fa-solid fa-flag"></i> Report from another player</span><span class="squad-info-val neg">−10 each</span></div>
+              <div class="squad-info-row"><span><i class="fa-solid fa-flag"></i> Report from another player</span><span class="squad-info-val">review, no auto penalty</span></div>
             </div>
             <p class="squad-info-note">The shield colour tells you at a glance: <span class="squad-trust squad-trust--high">70+ green</span> · <span class="squad-trust squad-trust--medium">40-69 orange</span> · <span class="squad-trust squad-trust--low">below 40 red</span>.</p>
-            <p style="margin-top:14px">No caps, no floors - every clean mission moves you up by <strong>+0.5</strong>, and reports from other players pull you down. Run missions with your squad, help your teammates, and your score climbs. Be disruptive, and it drops. Simple as that.</p>
+            <p style="margin-top:14px">Scores stay between <strong>0-100</strong> - every clean mission moves you up by <strong>+0.5</strong>, and reports from other players are saved for moderator review instead of moving the score automatically. Run missions with your squad, help your teammates, and your score climbs. Be disruptive, and moderators can step in. Simple as that.</p>
           </div>
 
           <div class="squad-info-section">

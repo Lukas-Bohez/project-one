@@ -318,7 +318,7 @@
 
 <div style="margin-top:0.5rem;font-size:.75rem;color:var(--text-muted)">
   Each game above has its own squad list. The community section shows games and categories created by players.<br/>
-  Tip: you can link directly to a game via <code class="kbd">/pages/games/?game=&lt;slug&gt;</code> once the page is live — the query param will auto-select the game and scroll to its squad list.
+  Tip: you can link directly to a game via <code class="kbd">/pages/games/?game=&lt;slug&gt;</code> — the query param auto-selects the game and scrolls to its squad list. Share it anywhere.
 </div>
 <footer class="squad-footer">
   <div class="squad-footer-inner">
@@ -330,7 +330,7 @@
 <script>
 (function(){
   'use strict';
-  var SU_WS_URL = window.SU_WS_URL || 'wss://' + window.location.host + '/ws/squad';
+  var SU_WS_URL = window.SU_WS_URL || ((window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + window.location.host + '/api/v1/squad/ws');
   var selectedGameId = null;
   var selectedCatId = null;
   var gamesList = [];
@@ -384,6 +384,38 @@
     el.className = 'form-status' + (isError ? ' error' : ' success');
   }
   function qs(sel, scope) { scope = scope || document; return scope.querySelector(sel); }
+  // Deep-link support: /pages/games/?game=<slug|id> auto-selects the game
+  // and scrolls to its squad list once data arrives over the WebSocket.
+  function gameFromQuery() {
+    try {
+      var q = new URLSearchParams(window.location.search).get('game');
+      return (q || '').trim().toLowerCase();
+    } catch (e) { return ''; }
+  }
+  function applyGameFromQuery() {
+    var q = gameFromQuery();
+    if (!q || gamesList.length === 0) return;
+    var match = null;
+    gamesList.forEach(function(g) {
+      if (!g) return;
+      var slug = (g.slug || '').toLowerCase();
+      var id = (g.id || '').toLowerCase();
+      var name = (g.name || '').toLowerCase();
+      if (slug === q || id === q || name === q) match = g;
+    });
+    if (!match) return;
+    selectedGameId = match.id;
+    selectedCatId = null;
+    renderGameCards();
+    renderCatList();
+    renderSquadGrid();
+    renderCreateForm();
+    renderCommunity();
+    try {
+      var el = document.getElementById('squadGrid');
+      if (el && el.scrollIntoView) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+    } catch (e) {}
+  }
   function esc(s) {
     if (typeof s !== 'string') return '';
     return s.replace(/[&<>"']/g, function(c) {
@@ -703,6 +735,7 @@
     renderSquadGrid();
     renderCreateForm();
     renderCommunity();
+    applyGameFromQuery();
   }
   function onSquadList(data) {
     squads = Array.isArray(data) ? data : [];

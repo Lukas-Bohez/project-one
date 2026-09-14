@@ -102,7 +102,7 @@ PORT=8081 CORS_ALLOWED_ORIGINS='https://quizthespire.com,http://localhost:8081' 
   "region": "string (EU | NA | OC | ASIA)",
   "language": "string (e.g. English)",
   "clanTag": "string (optional, max 10)",
-  "trustScore": "float — 50 start, +0.5 per mission, -10 per report, no caps",
+  "trustScore": "float — 50 start, +0.5 per completed mission, clamped 0-100; reports never move the score (moderator review only)",
   "totalMissions": "int",
   "onlineStatus": "string (online | in_game | away | offline)",
   "lastActive": "string (ISO date)",
