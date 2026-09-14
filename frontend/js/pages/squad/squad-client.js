@@ -328,6 +328,7 @@
       this.setupPanel.style.display = 'block';
       this.mainPanel.style.display = 'none';
       if (this.switchPlayerBtn) this.switchPlayerBtn.style.display = 'none';
+      window.scrollTo(0, 0);
     }
 
     switchProfile() {
@@ -646,6 +647,7 @@
       this.squadDetails.style.display = 'block';
       this.squadListContainer.style.display = 'none';
       this.renderSquadDetails(data);
+      window.scrollTo(0, 0);
       this.addSystemMessage('Squad "' + data.name + '" created!')
     }
 
@@ -657,6 +659,7 @@
       this.squadDetails.style.display = 'block';
       this.squadListContainer.style.display = 'none';
       this.renderSquadDetails(squad);
+      window.scrollTo(0, 0);
       this.enableChat();
       if (data && data.created) { this.addSystemMessage('No open squad matched, started a new one for you!'); }
       else { this.addSystemMessage('Quick match found! Welcome!'); }
@@ -667,6 +670,7 @@
       this.squadDetails.style.display = 'block';
       this.squadListContainer.style.display = 'none';
       this.renderSquadDetails(data);
+      window.scrollTo(0, 0);
       this.addSystemMessage('Joined ' + data.name + '! Welcome!');
     }
 
@@ -1029,6 +1033,7 @@
       this.squadListContainer.style.display = 'block';
       this.disableChat();
       this.send('get_squad_list', { filters: this.getFilterState() });
+      window.scrollTo(0, 0);
     }
   }
 
