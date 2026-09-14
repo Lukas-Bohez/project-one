@@ -209,9 +209,10 @@
   min-width: 200px;
 }
 
-/* Empty-state CTA icon: plain text plus, always white and centered with the
+/* Empty-state CTA icon: inline SVG plus, always white and centered with the
    label. (Font Awesome's fa-plus rendered as a dark, oversized, offset
-   glyph on the primary button, so the CTA no longer uses an <i> icon.) */
+   glyph on the primary button, so the CTA now uses an inline SVG with
+   fill="currentColor" inheriting color: #fff.) */
 .squad-board-main .squad-empty--cta .squad-empty-btn {
   display: inline-flex;
   align-items: center;
@@ -220,11 +221,12 @@
   line-height: 1;
 }
 
-.squad-board-main .squad-empty--cta .squad-empty-btn .squad-empty-plus {
+.squad-board-main .squad-empty--cta .squad-empty-plus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1em;
+  width: 18px;
+  height: 18px;
   font-weight: 700;
   line-height: 1;
   color: #fff;

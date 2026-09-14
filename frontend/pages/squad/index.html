@@ -220,7 +220,7 @@
                   <p>No squads available right now.</p>
                   <p class="squad-empty-sub">Start one and other Tenno can join you.</p>
                   <button type="button" class="squad-btn squad-btn--primary squad-empty-btn" data-action="open-create-squad">
-                    <span class="squad-empty-plus" aria-hidden="true">+</span><span>Create a Squad</span>
+                    <svg class="squad-empty-plus" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"/></svg><span>Create a Squad</span>
                   </button>
                 </div>
               </div>
@@ -346,6 +346,7 @@
           </div><!-- /.squad-board-main -->
         </div><!-- /.squad-board -->
       </section>
+    </main>
 
     <!-- Create Squad Modal -->
     <div class="squad-modal" id="createSquadModal" style="display: none">
@@ -424,7 +425,7 @@
               </select>
             </div>
           </div>
-          <div class="squad-form-row">
+                    <div class="squad-form-row squad-form-row--single">
             <div class="squad-form-group">
               <label for="squadObjectiveSelect">Objective</label>
               <select id="squadObjectiveSelect">
