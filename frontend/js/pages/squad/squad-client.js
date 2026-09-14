@@ -287,7 +287,15 @@
           this.updateStatus('connected', 'Connected');
           this.reconnectAttempts = 0;
           this.send('join_finder', { player: this.player });
-          this.send('get_filter_options', {});
+          // join_finder is the auth message: wait a beat so the server can
+          // flip the socket to authed before follow-up events arrive.
+          // (Pre-auth sockets reject everything except join_finder.)
+          setTimeout(() => {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+              this.send('get_filter_options', {});
+              this.send('get_squad_list', {});
+            }
+          }, 250);
           if (this.switchPlayerBtn) this.switchPlayerBtn.style.display = 'inline-flex';
           this.saveProfile(profile); // remember me. Auto-login on the next visit.
         };

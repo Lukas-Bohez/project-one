@@ -13,6 +13,8 @@ import (
 // handleEvent routes incoming WebSocket events to their handlers.
 // The recover() guard means a panicking handler only drops the offending
 // client's message instead of crashing the whole backend.
+// Pre-auth sockets may only send join_finder; anything else is rejected so
+// unauthenticated connections cannot touch squad state or fan out broadcasts.
 func (h *Hub) handleEvent(c *client, msg *message) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -20,6 +22,14 @@ func (h *Hub) handleEvent(c *client, msg *message) {
 			c.sendEvent("error", map[string]string{"message": "Could not process that request"})
 		}
 	}()
+	if !c.authed && msg.Event != "join_finder" {
+		c.sendEvent("error", map[string]string{"message": "Join the finder first"})
+		return
+	}
+	if msg.Event == "join_finder" {
+		h.handleJoinFinder(c, msg.Data)
+		return
+	}
 	switch msg.Event {
 	case "create_squad":
 		h.handleCreateSquad(c, msg.Data)

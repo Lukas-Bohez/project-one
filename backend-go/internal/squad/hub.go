@@ -51,6 +51,7 @@ type client struct {
 	player        *Player
 	ip            string
 	joinedAt      time.Time
+	authed        bool
 	messageCount  int
 	lastMessageAt time.Time
 	mu            sync.Mutex
@@ -149,6 +150,12 @@ func (h *Hub) Run() {
 			h.mu.Lock()
 			h.clients[c.player.ID] = c
 			h.mu.Unlock()
+			if !c.authed {
+				// Bootstrap (filter_options / squad_list) is sent by
+				// handleJoinFinder after auth, not here.
+				log.Printf("squad: socket connected, awaiting join_finder")
+				continue
+			}
 			log.Printf("squad: player %s connected", c.player.Username)
 			// Send the new player their session bootstrap: filter options
 			// (so dropdowns populate), the current squad list, then a
@@ -192,7 +199,15 @@ func (h *Hub) Run() {
 	}
 }
 
-// ServeWS handles WebSocket upgrade for the squad finder
+// ServeWS handles WebSocket upgrade for the squad finder.
+//
+// Handshake contract (must stay in sync with squad-client.js connect()):
+//  1. Upgrade immediately — never block on the first data frame. Apache
+//     (mod_proxy_wstunnel) 504s ("error reading status line") if the handler
+//     does not return 101 Switching Protocols quickly.
+//  2. Register + spawn pumps, then expect {"event":"join_finder"} as the
+//     first post-upgrade message inside readPump with the normal pongWait
+//     deadline.
 func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	// Security: Validate origin
 	origin := r.Header.Get("Origin")
@@ -240,28 +255,29 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set read deadline for initial message
-	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	_, raw, err := conn.ReadMessage()
-	if err != nil {
-		log.Printf("squad: failed to read initial message: %v", err)
-		conn.Close()
-		return
+	// Upgrade first, authenticate after: the client sends join_finder as its
+	// first frame inside readPump. Blocking here on ReadMessage would delay
+	// the 101 and trip Apache's proxy status-line timeout.
+	client := &client{
+		hub:      h,
+		conn:     conn,
+		send:     make(chan []byte, sendBufferSize),
+		player:   &Player{ID: newID(), Username: "pending", TrustScore: 50},
+		ip:       clientIP,
+		joinedAt: time.Now(),
+		authed:   false,
 	}
 
-	var msg message
-	if err := json.Unmarshal(raw, &msg); err != nil {
-		log.Printf("squad: invalid initial message: %v", err)
-		conn.Close()
-		return
-	}
+	h.register <- client
 
-	if msg.Event != "join_finder" {
-		log.Printf("squad: expected join_finder event, got %s", msg.Event)
-		conn.Close()
-		return
-	}
+	go client.writePump()
+	go client.readPump()
+}
 
+// handleJoinFinder completes the post-upgrade handshake: it validates the
+// join_finder payload, assigns the real player identity, and sends the
+// session bootstrap. Called from handleEvent as the first gated message.
+func (h *Hub) handleJoinFinder(c *client, data json.RawMessage) {
 	var player Player
 
 	// The frontend sends the player wrapped as data = { "player": {...} }.
@@ -269,27 +285,25 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	var wrap struct {
 		Player *Player `json:"player"`
 	}
-	if werr := json.Unmarshal(msg.Data, &wrap); werr == nil && wrap.Player != nil {
+	if werr := json.Unmarshal(data, &wrap); werr == nil && wrap.Player != nil {
 		player = *wrap.Player
-	} else {
-		if err := json.Unmarshal(msg.Data, &player); err != nil {
-			log.Printf("squad: invalid player data: %v", err)
-			conn.Close()
-			return
-		}
+	} else if err := json.Unmarshal(data, &player); err != nil {
+		log.Printf("squad: invalid player data: %v", err)
+		c.sendEvent("error", map[string]string{"message": "Invalid player data"})
+		return
 	}
 
 	// Security: Validate username
 	if !ValidateUsername(player.Username) {
 		log.Printf("squad: invalid username: %s", player.Username)
-		conn.Close()
+		c.sendEvent("error", map[string]string{"message": "Invalid username"})
 		return
 	}
 
 	// Security: Check for banned player
 	if player.Banned {
 		log.Printf("squad: banned player attempted connection: %s", player.Username)
-		conn.Close()
+		c.sendEvent("error", map[string]string{"message": "Account banned"})
 		return
 	}
 
@@ -307,19 +321,25 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 		player.ID = uuid.New().String()
 	}
 
-	c := &client{
-		hub:      h,
-		conn:     conn,
-		send:     make(chan []byte, sendBufferSize),
-		player:   &player,
-		ip:       clientIP,
-		joinedAt: time.Now(),
+	oldID := c.player.ID
+	c.player = &player
+	c.authed = true
+
+	// Re-key the registration under the real player ID.
+	h.mu.Lock()
+	if _, ok := h.clients[oldID]; ok {
+		delete(h.clients, oldID)
 	}
+	h.clients[player.ID] = c
+	h.mu.Unlock()
 
-	h.register <- c
-
-	go c.writePump()
-	go c.readPump()
+	log.Printf("squad: player %s joined finder", player.Username)
+	// Send the new player their session bootstrap: filter options
+	// (so dropdowns populate), the current squad list, then a
+	// player_count broadcast so everyone's counter stays in sync.
+	h.sendFilterOptions(c)
+	h.sendSquadList(c)
+	h.broadcastPlayerCount()
 }
 
 // isAllowedOrigin checks if the origin is allowed to connect.
@@ -376,7 +396,10 @@ func getClientIP(r *http.Request) string {
 	return ip
 }
 
-// readPump handles incoming messages from the client
+// readPump handles incoming messages from the client.
+// join_finder doubles as the post-upgrade auth message, so it bypasses the
+// rate limiter: a fresh socket has no lastMessageAt yet and must always be
+// able to complete the handshake.
 func (c *client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
@@ -396,12 +419,6 @@ func (c *client) readPump() {
 			break
 		}
 
-		// Rate limiting
-		if !c.rateLimit() {
-			c.sendEvent("error", map[string]string{"message": "Rate limit exceeded. Please slow down."})
-			continue
-		}
-
 		var msg message
 		if err := json.Unmarshal(raw, &msg); err != nil {
 			continue
@@ -410,6 +427,15 @@ func (c *client) readPump() {
 		// Validate event name length
 		if len(msg.Event) > 50 {
 			continue
+		}
+
+		// join_finder is the auth message: never rate-limit it.
+		if msg.Event != "join_finder" {
+			// Rate limiting
+			if !c.rateLimit() {
+				c.sendEvent("error", map[string]string{"message": "Rate limit exceeded. Please slow down."})
+				continue
+			}
 		}
 
 		c.hub.handleEvent(c, &msg)
@@ -545,7 +571,11 @@ func (h *Hub) sendSquadList(c *client) {
 	})
 }
 
-// broadcastEvent sends a JSON event to all connected clients
+// broadcastEvent sends a JSON event to all connected clients.
+// NOTE: never hold h.mu while calling this — it pushes onto h.broadcast,
+// which Run() drains while taking h.mu itself. Holding the lock here
+// stalls the handshake path (readPump -> handleEvent) and surfaces in
+// Apache as "error reading status line from remote server 127.0.0.1:8081".
 func (h *Hub) broadcastEvent(event string, data interface{}) {
 	payload := map[string]interface{}{"event": event, "data": data}
 	raw, err := json.Marshal(payload)

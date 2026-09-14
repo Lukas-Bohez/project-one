@@ -210,25 +210,24 @@ func (h *Hub) HandleSetRole(c *client, data json.RawMessage) {
 		return
 	}
 
-	h.mu.RLock()
+	h.mu.Lock()
 	squad, ok := h.squads[req.SquadID]
-	h.mu.RUnlock()
 	if !ok {
+		h.mu.Unlock()
 		return
 	}
-
-	h.mu.Lock()
-	defer h.mu.Unlock()
 
 	if squad.Roles == nil {
 		squad.Roles = make(map[string]PlayerRole)
 	}
 	squad.Roles[c.player.ID] = req.Role
+	playerID := c.player.ID
+	h.mu.Unlock()
 
 	h.broadcastToSquad(req.SquadID, "role_updated", map[string]interface{}{
-		"playerId": c.player.ID,
+		"playerId": playerID,
 		"role":     req.Role,
-	}, c.player.ID)
+	}, playerID)
 }
 
 // HandleSetDropTarget handles a player marking a drop target
@@ -242,15 +241,12 @@ func (h *Hub) HandleSetDropTarget(c *client, data json.RawMessage) {
 		return
 	}
 
-	h.mu.RLock()
+	h.mu.Lock()
 	squad, ok := h.squads[req.SquadID]
-	h.mu.RUnlock()
 	if !ok {
+		h.mu.Unlock()
 		return
 	}
-
-	h.mu.Lock()
-	defer h.mu.Unlock()
 
 	if squad.DropTargets == nil {
 		squad.DropTargets = make(map[string][]string)
@@ -282,7 +278,10 @@ func (h *Hub) HandleSetDropTarget(c *client, data json.RawMessage) {
 		}
 	}
 
-	h.broadcastToSquad(req.SquadID, "drop_targets_updated", squad.DropTargets, "")
+	dropTargets := squad.DropTargets
+	h.mu.Unlock()
+
+	h.broadcastToSquad(req.SquadID, "drop_targets_updated", dropTargets, "")
 }
 
 // HandleStartSession handles starting a mission session
@@ -295,23 +294,25 @@ func (h *Hub) HandleStartSession(c *client, data json.RawMessage) {
 	}
 
 	h.mu.Lock()
-	defer h.mu.Unlock()
-
 	squad, ok := h.squads[req.SquadID]
 	if !ok {
+		h.mu.Unlock()
 		return
 	}
 
 	if squad.LeaderID != c.player.ID {
+		h.mu.Unlock()
 		return // Only leader can start session
 	}
 
 	squad.SessionStarted = true
 	squad.SessionStartedAt = time.Now()
 	squad.Status = SquadStatusInGame
+	startedAt := squad.SessionStartedAt.Unix()
+	h.mu.Unlock()
 
 	h.broadcastToSquad(req.SquadID, "session_started", map[string]interface{}{
-		"startedAt": squad.SessionStartedAt.Unix(),
+		"startedAt": startedAt,
 	}, "")
 }
 
@@ -327,14 +328,14 @@ func (h *Hub) HandleEndSession(c *client, data json.RawMessage) {
 	}
 
 	h.mu.Lock()
-	defer h.mu.Unlock()
-
 	squad, ok := h.squads[req.SquadID]
 	if !ok {
+		h.mu.Unlock()
 		return
 	}
 
 	if squad.LeaderID != c.player.ID {
+		h.mu.Unlock()
 		return
 	}
 
@@ -343,11 +344,13 @@ func (h *Hub) HandleEndSession(c *client, data json.RawMessage) {
 	squad.SessionDuration = req.Duration
 	squad.SessionSuccess = req.Success
 	squad.Status = SquadStatusOpen
+	endedAt := squad.SessionEndedAt.Unix()
+	h.mu.Unlock()
 
 	h.broadcastToSquad(req.SquadID, "session_ended", map[string]interface{}{
 		"success":  req.Success,
 		"duration": req.Duration,
-		"endedAt":  squad.SessionEndedAt.Unix(),
+		"endedAt":  endedAt,
 	}, "")
 }
 
@@ -373,10 +376,9 @@ func (h *Hub) HandleSubmitReport(c *client, data json.RawMessage) {
 	}
 
 	h.mu.Lock()
-	defer h.mu.Unlock()
-
 	squad, ok := h.squads[req.SquadID]
 	if !ok {
+		h.mu.Unlock()
 		return
 	}
 
@@ -406,6 +408,7 @@ func (h *Hub) HandleSubmitReport(c *client, data json.RawMessage) {
 			player.TrustScore = player.TrustScoreValue()
 		}
 	}
+	h.mu.Unlock()
 
 	h.broadcastToSquad(req.SquadID, "report_submitted", report, "")
 }
