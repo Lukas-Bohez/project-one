@@ -1644,13 +1644,14 @@ footer.c-footer--squad {
   transition: all 0.2s ease;
   user-select: none;
   white-space: nowrap;
-  flex: 1 1 auto;
-  min-width: fit-content;
+  flex: 0 0 auto;
+  width: fit-content;
   background: var(--squad-mod-pill-bg);
   border: 1px solid var(--squad-mod-pill-border);
 }
 
 .squad-modifier-pill i {
+  flex-shrink: 0;
   font-size: 0.7rem;
   opacity: 0.55;
   transition: opacity 0.2s ease;
