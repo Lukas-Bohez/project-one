@@ -26,6 +26,12 @@
   --squad-trust-high: #4caf50;
   --squad-trust-medium: #ff9800;
   --squad-trust-low: #f44336;
+  /* Modifier pill colors (dark mode) */
+  --squad-mod-sp: #d19a4e;
+  --squad-mod-nm: #c249e8;
+  --squad-mod-rf: #22c4dc;
+  --squad-mod-pill-bg: #2a3852;
+  --squad-mod-pill-border: #40546f;
 }
 
 /* Light mode */
@@ -104,6 +110,8 @@
   --squad-mod-sp: #6d4c41;
   --squad-mod-nm: #4a148c;
   --squad-mod-rf: #006064;
+  --squad-mod-pill-bg: #ffffff;
+  --squad-mod-pill-border: #cfcfcf;
 }
 
 /* ============================================================
@@ -1638,19 +1646,21 @@ footer.c-footer--squad {
   white-space: nowrap;
   flex: 1 1 auto;
   min-width: fit-content;
-  background: var(--squad-input-bg);
-  border: 1px solid var(--squad-border);
+  background: var(--squad-mod-pill-bg);
+  border: 1px solid var(--squad-mod-pill-border);
 }
 
 .squad-modifier-pill i {
   font-size: 0.7rem;
-  opacity: 0.6;
+  opacity: 0.55;
   transition: opacity 0.2s ease;
 }
 
 .squad-modifier-toggle input:checked + .squad-modifier-pill {
-  color: var(--squad-toggle-text-active);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 3px 10px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
 }
 
 .squad-modifier-toggle input:checked + .squad-modifier-pill i {

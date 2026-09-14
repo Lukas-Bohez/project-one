@@ -10,15 +10,16 @@
       })();
     </script>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Find your Warframe squad! Create or join 6-player groups for missions, with real-time chat to coordinate your team." />
     <title>Warframe Squad Finder | Quiz The Spire</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <link rel="stylesheet" href="/css/styles.css" />
-    <link rel="stylesheet" href="/css/pages/squad/squad.css" />
-    <link rel="stylesheet" href="/css/pages/squad/squad-panels.css" />
-    <link rel="stylesheet" href="/css/pages/squad/squad-chat.css" />
-    <link rel="stylesheet" href="/css/footer.css" />
+    <link rel="stylesheet" href="/css/styles.css?v=3" />
+    <link rel="stylesheet" href="/css/pages/squad/squad.css?v=3" />
+    <link rel="stylesheet" href="/css/pages/squad/squad-panels.css?v=3" />
+    <link rel="stylesheet" href="/css/pages/squad/squad-chat.css?v=3" />
+    <link rel="stylesheet" href="/css/footer.css?v=3" />
+    <link rel="stylesheet" href="/css/pages/squad/squad-responsive.css?v=3" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
     <meta property="og:title" content="Warframe Squad Finder | Quiz The Spire" />
@@ -143,7 +144,9 @@
                 </h3>
                 <p class="squad-list-sub">Filter the board, then join a squad or start your own.</p>
               </div>
-              <div class="squad-filters">
+              <details class="squad-filters" id="squadFilters" open>
+                <summary class="squad-filters-summary"><i class="fa-solid fa-sliders"></i> Filters <span class="squad-filters-caret"><i class="fa-solid fa-chevron-down"></i></span></summary>
+                <div class="squad-filters-body">
                   <div class="squad-filter-row">
                     <label for="filterMission">Mission</label>
                 <select id="filterMission">
@@ -199,7 +202,8 @@
                   <span class="squad-pill-toggle-label">Open Only</span>
                 </label>
               </div>
-            </div>
+                </div>
+              </details>
               <div class="squad-list-actions">
                 <button class="squad-btn squad-btn--quick" id="quickMatchBtn">
                   <i class="fa-solid fa-shuffle"></i> Quick Match
@@ -661,7 +665,7 @@
       </div>
     </div>
 
-    <script src="/js/pages/squad/squad-client.js"></script>
+    <script src="/js/pages/squad/squad-client.js?v=3"></script>
     <script>
       // Dark/light theme toggle - shares the site-wide `spire-theme` state.
       (function () {
@@ -706,6 +710,26 @@
         else if (mq.addListener) { mq.addListener(onSystem); }
       })();
         </script>
+
+    <!-- Show the filter disclosure open on desktop, collapsed on phones -->
+    <script>
+      (function () {
+        var filters = document.getElementById('squadFilters');
+        if (!filters) return;
+        var lastDesktop = window.innerWidth >= 901;
+        filters.open = lastDesktop; /* expand on desktop, collapse on phones */
+        function syncFilterState() {
+          var isDesktop = window.innerWidth >= 901;
+          if (isDesktop !== lastDesktop) {
+            filters.open = isDesktop;
+            lastDesktop = isDesktop;
+          }
+        }
+        syncFilterState();
+        window.addEventListener('resize', syncFilterState);
+        window.addEventListener('orientationchange', syncFilterState);
+      })();
+    </script>
 
     <!-- Support Footer -->
     <div class="squad-footer-spacer" aria-hidden="true"></div>

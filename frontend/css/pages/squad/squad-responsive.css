@@ -1,0 +1,272 @@
+/* ============================================================
+   Squad Finder - Responsive & Device Polish
+   Loaded last in the page head so it wins equal-specificity ties.
+   Goal: look and feel right on every screen, 320px phones to
+   ultrawide desktops, touch and mouse.
+   ============================================================ */
+
+/* Native form controls follow the page theme (fixes invisible/odd
+   selects & inputs on iOS/Android phones). */
+html {
+  color-scheme: dark;
+}
+html[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* ------------------------------------------------------------------
+   Filter disclosure (the sidebar filter card is now a <details>)
+   ------------------------------------------------------------------ */
+.squad-filters-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--squad-text);
+  padding: 6px 0;
+  user-select: none;
+}
+.squad-filters-summary::-webkit-details-marker {
+  display: none;
+}
+.squad-filters-caret {
+  margin-left: auto;
+  color: var(--squad-text-muted);
+  transition: transform 0.2s ease;
+}
+.squad-filters[open] .squad-filters-caret {
+  transform: rotate(180deg);
+}
+.squad-filters-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Desktop: filters are always visible, no summary row. */
+@media (min-width: 901px) {
+  .squad-filters-summary {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Modifier card badges - theme-adaptive backgrounds (fixes the
+   hardcoded light-theme rgba tints that were muddy in dark mode)
+   ------------------------------------------------------------------ */
+.squad-mod-badge {
+  border: 1px solid currentColor;
+}
+.squad-mod-badge--sp {
+  color: var(--squad-mod-sp);
+  background: color-mix(in srgb, var(--squad-mod-sp) 16%, transparent);
+}
+.squad-mod-badge--nm {
+  color: var(--squad-mod-nm);
+  background: color-mix(in srgb, var(--squad-mod-nm) 16%, transparent);
+}
+.squad-mod-badge--rf {
+  color: var(--squad-mod-rf);
+  background: color-mix(in srgb, var(--squad-mod-rf) 16%, transparent);
+}
+
+/* ------------------------------------------------------------------
+   Tablet & phone
+   ------------------------------------------------------------------ */
+@media (max-width: 900px) {
+  .squad-app {
+    padding: 0 12px 28px;
+  }
+
+  /* Compact the filter card so it doesn't dominate the screen */
+  .squad-board-sidebar .squad-list-panel {
+    padding: 12px;
+    gap: 10px;
+  }
+  .squad-list-sub {
+    display: none;
+  }
+  /* Two filter fields per row saves vertical space on phones */
+  .squad-board-sidebar .squad-filter-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 8px;
+  }
+  .squad-board-sidebar .squad-filter-row label {
+    font-size: 0.66rem;
+    letter-spacing: 0.3px;
+  }
+  .squad-board-sidebar .squad-filters {
+    gap: 6px;
+  }
+  .squad-filters-body {
+    gap: 6px;
+  }
+
+  /* Quick Match + Create Squad side by side */
+  .squad-list-actions {
+    flex-direction: row;
+  }
+  .squad-list-actions .squad-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Status bar wraps instead of overflowing on narrow screens */
+  .squad-status-bar {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  /* Empty state a bit shorter on screens with less room */
+  .squad-board-main .squad-empty--cta {
+    min-height: 240px;
+    padding: 32px 16px;
+  }
+
+  /* Squad cards: full width but comfortable on tablets */
+  .squad-board-main .squad-list {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 10px;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Phones (small screens)
+   ------------------------------------------------------------------ */
+@media (max-width: 600px) {
+  /* Modals fill the screen nicely */
+  .squad-modal-content {
+    width: 96%;
+    max-height: 92vh;
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .squad-modal-header {
+    padding: 0 0 10px 0;
+  }
+  .squad-modal-body {
+    padding: 6px 0 10px 0;
+  }
+  .squad-modal-footer {
+    padding: 10px 0 0 0;
+  }
+
+  /* Bigger, friendlier touch targets */
+  .squad-btn {
+    min-height: 46px;
+  }
+  .squad-form-group select,
+  .squad-form-group input[type='text'],
+  .squad-form-group input[type='number'],
+  .squad-form-group textarea,
+  .squad-board-sidebar select,
+  .squad-role-row select,
+  .squad-chat-input input {
+    min-height: 44px;
+  }
+
+  .squad-setup-card {
+    padding: 18px;
+  }
+  .squad-setup-title {
+    font-size: 1.2rem;
+  }
+
+  /* Presets stack vertically so each tap target is large */
+  .squad-presets-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Very narrow phones (<=360px): keep the header on one line */
+@media (max-width: 380px) {
+  .squad-header-title {
+    font-size: 0.95rem;
+  }
+  .squad-header-logo {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  .squad-header-brand {
+    gap: 8px;
+  }
+  .squad-header-actions {
+    gap: 4px;
+  }
+  .squad-online-count {
+    display: none; /* status bar stays on one tidy line */
+  }
+}
+
+/* Keep the footer off the main screen but don't waste a whole
+   blank page of scroll on phones the way a 110vh spacer does. */
+@media (max-width: 700px) {
+  .squad-footer-spacer {
+    height: 60vh;
+  }
+}
+
+/* Notched phones: keep content clear of the home indicator / sensor cutout */
+@supports (padding: env(safe-area-inset-bottom)) {
+  @media (max-width: 900px) {
+    .squad-app {
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+      padding-bottom: calc(28px + env(safe-area-inset-bottom));
+    }
+    .squad-header {
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+    .c-footer--squad {
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* ------------------------------------------------------------------
+   Touch + keyboard polish
+   ------------------------------------------------------------------ */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.squad-btn,
+.squad-header-btn,
+.squad-status-switch,
+.squad-preset,
+.squad-card,
+.squad-empty-btn {
+  touch-action: manipulation;
+}
+
+/* Visible keyboard focus (a11y) */
+.squad-form-group select:focus-visible,
+.squad-form-group input:focus-visible,
+.squad-form-group textarea:focus-visible,
+.squad-board-sidebar select:focus-visible,
+.squad-role-row select:focus-visible,
+.squad-btn:focus-visible,
+.squad-header-btn:focus-visible,
+.squad-status-switch:focus-visible,
+.squad-preset:focus-visible {
+  outline: 2px solid var(--squad-primary);
+  outline-offset: 2px;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .squad-modal-content,
+  .squad-chat-message,
+  .squad-notification,
+  .squad-card,
+  .squad-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}
