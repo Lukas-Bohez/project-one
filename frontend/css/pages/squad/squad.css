@@ -206,37 +206,42 @@
 /* ============================================================
    FOOTER - solid, full width, sits well below the app content.
    Only the footer spans full width; page content stays centered
-   at 1020px. Large top margin keeps it off the main screen so
-   visitors scroll to reach it.
+   at 1020px. A full-viewport spacer row keeps it below the fold
+   on the main screen so visitors scroll to reach it.
    ============================================================ */
+.squad-footer-spacer {
+  height: 100vh;
+  flex: none;
+}
+
 .c-footer--squad {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: none;
-  margin: 96px 0 0 0;
-  padding: 1.25rem 1.5rem 1.5rem;
-  font-size: 0.8rem;
+  margin: 0;
+  padding: 1rem 1.5rem 1.25rem;
+  font-size: 0.75rem;
   background: linear-gradient(180deg, #f5f6f8 0%, #ffffff 100%);
 }
 
 .c-footer--squad .c-footer__about {
-  font-size: 0.8rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.4rem;
 }
 
 .c-footer--squad .c-footer__text {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .c-footer--squad .c-footer__links {
-  font-size: 0.8rem;
-  margin-top: 8px;
+  font-size: 0.75rem;
+  margin-top: 6px;
 }
 
 .c-footer--squad .c-footer__bmc {
-  padding-bottom: 12px;
-  margin-bottom: 4px;
+  padding-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 [data-theme='dark'] .c-footer--squad {

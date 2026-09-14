@@ -216,11 +216,11 @@
             <div id="squadListContainer">
               <div class="squad-list" id="squadList">
                 <div class="squad-empty squad-empty--cta" id="squadEmptyState">
-                  <i class="fa-solid fa-users-slash"></i>
+                  <i class="fa-solid fa-users-slash" aria-hidden="true"></i>
                   <p>No squads available right now.</p>
                   <p class="squad-empty-sub">Start one and other Tenno can join you.</p>
                   <button type="button" class="squad-btn squad-btn--primary squad-empty-btn" data-action="open-create-squad">
-                    <i class="fa-solid fa-plus"></i> Create a Squad
+                    <span class="squad-empty-plus" aria-hidden="true">+</span><span>Create a Squad</span>
                   </button>
                 </div>
               </div>
@@ -707,6 +707,7 @@
         </script>
 
     <!-- Support Footer -->
+    <div class="squad-footer-spacer" aria-hidden="true"></div>
     <footer class="c-footer c-footer--squad">
       <p class="c-footer__about">
         Built and maintained by one indie developer, <strong>Lukas Bohez</strong>. Warframe Squad Finder is free forever, no ads, no paywalls.

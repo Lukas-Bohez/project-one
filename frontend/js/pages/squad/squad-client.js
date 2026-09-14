@@ -377,7 +377,7 @@
     renderSquadList(squads) {
       const filtered = this.filterSquads(squads);
       if (filtered.length === 0) {
-        this.squadList.innerHTML = '<div class="squad-empty squad-empty--cta"><i class="fa-solid fa-users-slash"></i><p>No squads found.</p><p class="squad-empty-sub">Try different filters, or start one yourself.</p><button type="button" class="squad-btn squad-btn--primary squad-empty-btn" data-action="open-create-squad"><i class="fa-solid fa-plus"></i> Create a Squad</button></div>';
+        this.squadList.innerHTML = '<div class="squad-empty squad-empty--cta"><i class="fa-solid fa-users-slash" aria-hidden="true"></i><p>No squads found.</p><p class="squad-empty-sub">Try different filters, or start one yourself.</p><button type="button" class="squad-btn squad-btn--primary squad-empty-btn" data-action="open-create-squad"><span class="squad-empty-plus" aria-hidden="true">+</span><span>Create a Squad</span></button></div>';
         this.squadCount.textContent = '0';
         return;
       }

@@ -209,8 +209,9 @@
   min-width: 200px;
 }
 
-/* Empty-state CTA icon: keep the plus small, white, and vertically centered
-   with the button text (Font Awesome can otherwise render oversized / dark). */
+/* Empty-state CTA icon: plain text plus, always white and centered with the
+   label. (Font Awesome's fa-plus rendered as a dark, oversized, offset
+   glyph on the primary button, so the CTA no longer uses an <i> icon.) */
 .squad-board-main .squad-empty--cta .squad-empty-btn {
   display: inline-flex;
   align-items: center;
@@ -219,15 +220,14 @@
   line-height: 1;
 }
 
-.squad-board-main .squad-empty--cta .squad-empty-btn i {
-  font-size: 0.85em;
-  line-height: 1;
-  margin: 0;
-  padding: 0;
+.squad-board-main .squad-empty--cta .squad-empty-btn .squad-empty-plus {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  font-weight: 700;
+  line-height: 1;
   color: #fff;
-  opacity: 1;
 }
 
 /* Detail view: keep inside the same centered column, readable width */
