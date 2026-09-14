@@ -1587,25 +1587,45 @@ footer.c-footer--squad {
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 5px 14px;
   border-radius: 8px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--squad-toggle-text);
+  color: var(--squad-text);
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
   white-space: nowrap;
+  background: var(--squad-mod-pill-bg);
+  border: 1px solid var(--squad-mod-pill-border);
+}
+
+.squad-pill-toggle-label::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--squad-text-muted);
+  transition: background 0.2s ease;
+  flex-shrink: 0;
 }
 
 .squad-pill-toggle input:checked + .squad-pill-toggle-label {
   background: var(--squad-toggle-active);
-  color: var(--squad-toggle-text-active);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 3px 10px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.squad-pill-toggle input:checked + .squad-pill-toggle-label::before {
+  background: #ffffff;
 }
 
 .squad-pill-toggle-label:hover {
   color: var(--squad-text);
+  border-color: var(--squad-primary);
 }
 
 .squad-pill-toggle input:checked + .squad-pill-toggle-label:hover {
