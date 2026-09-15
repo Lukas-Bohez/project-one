@@ -11,11 +11,10 @@ Allow: /favicon.ico
 Allow: /google*.html
 
 # Block admin and sensitive pages from crawlers
-Disallow: /pages/admin/
 Disallow: /pages/sentle-admin/
-Disallow: /pages/login/
 Disallow: /pages/manage/
 Disallow: /pages/support/private/
+Disallow: /pages/vault/
 
 # Block backend and temporary files
 Disallow: /backend/
