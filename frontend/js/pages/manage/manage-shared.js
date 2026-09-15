@@ -1,5 +1,5 @@
 /**
- * Manage the Spire - Shared Module
+ * Employee Management - shared module
  * Common data structures, utilities, and business logic used by both demo and production
  */
 

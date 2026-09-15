@@ -1,5 +1,5 @@
 /**
- * Manage the Spire - Frontend JavaScript
+ * Employee Management - Frontend JavaScript
  * Handles authentication, business setup, and dashboard interactions
  */
 
@@ -177,7 +177,7 @@ async function handleLogin(e) {
   errorDiv.style.display = 'none';
 
   try {
-    // Call the main Quiz The Spire login endpoint
+    // Call the main login endpoint
     const response = await fetch('/api/v1/quiz/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -233,7 +233,7 @@ async function handleLogin(e) {
     showNotification('Login successful!', 'success');
   } catch (error) {
     console.error('Login error:', error);
-    errorDiv.textContent = `Login failed: ${error.message}. Make sure you have a Quiz The Spire account.`;
+    errorDiv.textContent = `Login failed: ${error.message}. Make sure you have an account.`;
     errorDiv.style.display = 'block';
   }
 }
@@ -257,7 +257,7 @@ async function handleBusinessSetup(e) {
   successDiv.style.display = 'none';
 
   try {
-    // First, check if user needs to be created in Quiz The Spire
+    // First, check whether the user needs to be created
     let userId = null;
 
     // Check if user exists

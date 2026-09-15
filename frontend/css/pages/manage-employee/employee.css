@@ -19,7 +19,7 @@
 
 /* Welcome Card */
 .welcome-card {
-  background: linear-gradient(135deg, #1d4ed8, #0e7490);
+  background: #1d4ed8;
   color: #fff;
   padding: 2rem;
   border-radius: 12px;
@@ -441,7 +441,7 @@
 
 /* Dark Mode */
 [data-theme='dark'] .welcome-card {
-  background: linear-gradient(135deg, #0056b3, #003d82);
+  background: #0056b3;
 }
 
 [data-theme='dark'] .stat-card,

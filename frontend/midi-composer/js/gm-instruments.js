@@ -2,7 +2,7 @@
 
 /* ═══════════════════════════════════════════
    GM_INSTRUMENTS - Full General MIDI Map
-   All 128 programs (0–127), 16 families.
+   All 128 programs (0-127), 16 families.
    FL Studio, Ableton, Logic & all DAW compatible.
    Also includes GM Drum Kit note mapping.
    by Lukas Bohez (Oroka Conner)

@@ -1,4 +1,4 @@
-// Dark Mode Toggle System for Quiz The Spire
+// Dark Mode Toggle System for Lukas Bohez
 // This script handles theme switching functionality across all pages
 
 (function () {
@@ -102,18 +102,8 @@
       if (body) body.setAttribute('data-theme', effectiveTheme);
 
       if (effectiveTheme === THEMES.DARK) {
-        html.style.setProperty('--sentle-bg', '#121213');
-        html.style.setProperty('--sentle-text', '#ffffff');
-        html.style.setProperty('--sentle-border', '#3a3a3c');
-        html.style.setProperty('--sentle-key-bg', '#818384');
-        html.style.setProperty('--sentle-key-text', '#ffffff');
         html.style.setProperty('--color-input-bg', '#1e1e1e');
       } else {
-        html.style.setProperty('--sentle-bg', '#ffffff');
-        html.style.setProperty('--sentle-text', '#1a1a1b');
-        html.style.setProperty('--sentle-border', '#d3d6da');
-        html.style.setProperty('--sentle-key-bg', '#d3d6da');
-        html.style.setProperty('--sentle-key-text', '#1a1a1b');
         html.style.setProperty('--color-input-bg', '#ffffff');
       }
 
@@ -180,11 +170,10 @@
 
       // Find all theme toggle buttons
       const toggleBtns = [
-        document.getElementById('servoTestBtn'),
-        document.getElementById('servoTestBtn-mobile'),
         document.getElementById('theme-toggle'),
         document.getElementById('theme-toggle-mobile'), // mobile support chat toggle
         document.getElementById('themeToggleBtn'),
+        document.getElementById('themeToggleBtn-mobile'),
       ].filter((btn) => btn !== null);
 
       if (toggleBtns.length === 0) {
@@ -209,8 +198,8 @@
     updateToggleButton(specificBtn = null) {
       const toggleBtn =
         specificBtn ||
-        document.getElementById('servoTestBtn') ||
-        document.getElementById('servoTestBtn-mobile') ||
+        document.getElementById('themeToggleBtn') ||
+        document.getElementById('themeToggleBtn-mobile') ||
         document.getElementById('theme-toggle') ||
         document.getElementById('theme-toggle-mobile');
       if (!toggleBtn) return;
@@ -271,8 +260,8 @@
   window.getCurrentTheme = () => window.themeManager.getCurrentTheme();
 })();
 
-// Legacy support for existing radar.js functionality
-// This ensures the theme system works with existing pulse/sonar effects
+// Legacy support for the existing pulse and sonar theme effects
+// This ensures the theme system keeps working with them
 document.addEventListener('DOMContentLoaded', function () {
   // Listen for theme changes to update pulse colors
   window.addEventListener('themeChanged', function (event) {

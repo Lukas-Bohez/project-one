@@ -1,7 +1,7 @@
 {
-  "name": "Quiz The Spire",
-  "short_name": "Spire",
-  "description": "Quiz The Spire - interactive quiz game",
+  "name": "Lukas Bohez",
+  "short_name": "Lukas",
+  "description": "Projects and tools by Lukas Bohez",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0c4061",

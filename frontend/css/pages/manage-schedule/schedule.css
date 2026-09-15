@@ -39,7 +39,7 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(226, 232, 240, 0.7));
+  background: rgba(248, 250, 252, 0.95);
   border-radius: 8px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
@@ -183,7 +183,7 @@
 
 /* Shift Cards */
 .shift-card {
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  background: #007bff;
   color: #fff;
   padding: 0.5rem;
   border-radius: 6px;
@@ -224,15 +224,15 @@
 
 /* Shift Status Colors */
 .shift-card.status-scheduled {
-  background: linear-gradient(135deg, #28a745, #1e7e34);
+  background: #28a745;
 }
 
 .shift-card.status-completed {
-  background: linear-gradient(135deg, #6c757d, #545b62);
+  background: #6c757d;
 }
 
 .shift-card.status-missed {
-  background: linear-gradient(135deg, #dc3545, #bd2130);
+  background: #dc3545;
 }
 
 /* Add Shift Placeholder */

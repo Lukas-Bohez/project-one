@@ -1,5 +1,5 @@
 /**
- * Manage the Spire - Shared UI Components
+ * Employee Management - shared UI components
  * Reusable components that render identically in demo and production
  */
 
@@ -29,10 +29,10 @@ const ManageUI = {
       const subtasksId = `subtasks-${task.id}`;
 
       return `
-                <div class="ui-task-card ${isOverdue ? 'overdue' : ''} ${task.status}" 
+                <div class="ui-task-card ${isOverdue ? 'overdue' : ''} ${task.status}"
                      data-task-id="${task.id}"
                      ${onClick ? `onclick="${onClick}(${task.id})"` : ''}>
-                    
+
                     <div class="ui-task-header">
                         <div class="ui-task-icon-priority">
                             <i class="fa-solid ${categoryIcon}" style="color: ${priorityColor}"></i>
@@ -51,11 +51,11 @@ const ManageUI = {
                             : ''
                         }
                     </div>
-                    
+
                     <h6 class="ui-task-title">${task.title}</h6>
-                    
+
                     ${task.description ? `<p class="ui-task-description">${task.description}</p>` : ''}
-                    
+
                     ${
                       hasSubtasks
                         ? `
@@ -68,7 +68,7 @@ const ManageUI = {
                     `
                         : ''
                     }
-                    
+
                     <div class="ui-task-meta">
                         ${
                           showAssignee
@@ -92,9 +92,9 @@ const ManageUI = {
                             ${shared?.taskManager.statusLabels[task.status] || task.status}
                         </span>
                     </div>
-                    
+
                     ${isOverdue ? '<div class="ui-overdue-badge"><i class="fa-solid fa-exclamation-triangle"></i> Overdue</div>' : ''}
-                    
+
                     ${
                       hasSubtasks
                         ? `
@@ -120,30 +120,30 @@ const ManageUI = {
       const isInProgress = subtask.status === 'in_progress';
 
       return `
-                <div class="ui-subtask-card ${subtask.status}" 
+                <div class="ui-subtask-card ${subtask.status}"
                      data-subtask-id="${subtask.id}"
                      ${onClick ? `onclick="event.stopPropagation(); ${onClick}(${subtask.id})"` : ''}>
-                    
+
                     <div class="ui-subtask-checkbox ${isCompleted ? 'checked' : isInProgress ? 'in-progress' : ''}">
                         <i class="fa-solid ${isCompleted ? 'fa-check' : isInProgress ? 'fa-spinner fa-spin' : 'fa-circle'}"></i>
                     </div>
-                    
+
                     <div class="ui-subtask-content">
                         <span class="ui-subtask-title ${isCompleted ? 'completed' : ''}">${subtask.title}</span>
                     </div>
-                    
+
                     <div class="ui-subtask-actions">
                         ${
                           !isCompleted
                             ? `
-                            <button class="ui-subtask-action-btn" 
+                            <button class="ui-subtask-action-btn"
                                     onclick="event.stopPropagation(); ManageUI.tasks.updateSubtaskStatus(${subtask.id}, 'completed')"
                                     title="Mark complete">
                                 <i class="fa-solid fa-check"></i>
                             </button>
                         `
                             : `
-                            <button class="ui-subtask-action-btn undo" 
+                            <button class="ui-subtask-action-btn undo"
                                     onclick="event.stopPropagation(); ManageUI.tasks.updateSubtaskStatus(${subtask.id}, 'todo')"
                                     title="Mark incomplete">
                                 <i class="fa-solid fa-rotate-left"></i>
@@ -168,7 +168,7 @@ const ManageUI = {
                             <input type="text" name="title" class="ui-input" required placeholder="e.g., Clean espresso machine">
                         </div>
                     </div>
-                    
+
                     <div class="ui-form-row">
                         <div class="ui-form-group">
                             <label><i class="fa-solid fa-user"></i> Assign To</label>
@@ -177,13 +177,13 @@ const ManageUI = {
                                 ${employees.map((emp) => `<option value="${emp.id}">${emp.name} - ${emp.role}</option>`).join('')}
                             </select>
                         </div>
-                        
+
                         <div class="ui-form-group">
                             <label><i class="fa-solid fa-calendar"></i> Due Date</label>
                             <input type="date" name="due_date" class="ui-input" required>
                         </div>
                     </div>
-                    
+
                     <div class="ui-form-row">
                         <div class="ui-form-group">
                             <label><i class="fa-solid fa-flag"></i> Priority</label>
@@ -194,7 +194,7 @@ const ManageUI = {
                                 <option value="urgent">Urgent</option>
                             </select>
                         </div>
-                        
+
                         <div class="ui-form-group">
                             <label><i class="fa-solid fa-tag"></i> Category</label>
                             <select name="category" class="ui-input" required>
@@ -204,14 +204,14 @@ const ManageUI = {
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="ui-form-row">
                         <div class="ui-form-group full-width">
                             <label><i class="fa-solid fa-align-left"></i> Description (Optional)</label>
                             <textarea name="description" class="ui-input" rows="2" placeholder="Additional details..."></textarea>
                         </div>
                     </div>
-                    
+
                     <div class="ui-subtasks-builder">
                         <div class="ui-subtasks-header">
                             <label><i class="fa-solid fa-list-check"></i> Subtasks (Optional)</label>
@@ -223,7 +223,7 @@ const ManageUI = {
                             <!-- Subtask inputs will be added here -->
                         </div>
                     </div>
-                    
+
                     <div class="ui-form-actions">
                         <button type="button" class="ui-btn ui-btn-secondary" onclick="ManageUI.tasks.closeTaskForm()">
                             Cancel

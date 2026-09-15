@@ -71,14 +71,13 @@
     document.addEventListener(
       'DOMContentLoaded',
       () => {
-        // Counter animation is handled by stat-counter-animation.js
         initBackToTop();
         markCurrentNavLink();
       },
       { once: true }
     );
   } else {
-    // Counter animation is handled by stat-counter-animation.js
+    // Counter animation removed with the old homepage
     initBackToTop();
     markCurrentNavLink();
   }

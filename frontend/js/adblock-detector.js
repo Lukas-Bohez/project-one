@@ -16,14 +16,14 @@
     overlay.innerHTML =
       '' +
       '<div class="adblock-softwall__panel" role="dialog" aria-modal="true" aria-labelledby="adblock-title">' +
-      '  <button class="adblock-softwall__close" type="button" aria-label="Close notice">\u00d7</button>' +
-      '  <p class="adblock-softwall__kicker">Ads keep Quiz The Spire free</p>' +
-      '  <h2 id="adblock-title">Ad blocker detected</h2>' +
-      '  <p class="adblock-softwall__message">If you enjoy the platform, please disable your ad blocker for this site. We use lightweight ad placements to fund servers and updates.</p>' +
-      '  <div class="adblock-softwall__actions">' +
-      '    <button type="button" class="adblock-softwall__primary">I disabled my ad blocker</button>' +
-      '    <button type="button" class="adblock-softwall__secondary">Continue anyway</button>' +
-      '  </div>' +
+      ' <button class="adblock-softwall__close" type="button" aria-label="Close notice">\u00d7</button>' +
+      ' <p class="adblock-softwall__kicker">Ads keep this site free</p>' +
+      ' <h2 id="adblock-title">Ad blocker detected</h2>' +
+      ' <p class="adblock-softwall__message">If you enjoy the platform, please disable your ad blocker for this site. We use lightweight ad placements to fund servers and updates.</p>' +
+      ' <div class="adblock-softwall__actions">' +
+      ' <button type="button" class="adblock-softwall__primary">I disabled my ad blocker</button>' +
+      ' <button type="button" class="adblock-softwall__secondary">Continue anyway</button>' +
+      ' </div>' +
       '</div>';
 
     document.body.appendChild(overlay);
@@ -169,8 +169,8 @@
         if (whitelisted) {
           // Success: user genuinely disabled adblocker
           messageElement.textContent =
-            'Thanks for supporting a solo dev! ❤️ This site is now whitelisted.';
-          whitelistButton.textContent = '✓ Thanks!';
+            'Thanks for supporting a solo dev!  This site is now whitelisted.';
+          whitelistButton.textContent = 'Thanks!';
 
           // Set dismissed flag with 7-day TTL
           localStorage.setItem(
@@ -194,7 +194,7 @@
         } else {
           // Still blocked: show error message
           messageElement.textContent =
-            'Still detecting an ad blocker. Please disable it for quizthespire.com and refresh the page, then click again.';
+            'Still detecting an ad blocker. Please disable it for this site and refresh the page, then click again.';
           whitelistButton.textContent = verificationAttempts > 1 ? 'Check again' : 'Try again';
           whitelistButton.disabled = false;
           // Do NOT set localStorage - user needs to actually disable it

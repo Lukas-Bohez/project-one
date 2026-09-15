@@ -17,7 +17,7 @@ window.createCompatibleSocket = function (serverURL, options = {}) {
     normalizedURL = window.location.protocol + '//' + serverURL;
   }
 
-  console.log(`🔌 Creating socket connection to: ${normalizedURL}`);
+  console.log(`Creating socket connection to: ${normalizedURL}`);
 
   // Default configuration optimized for Apache compatibility
   const defaultConfig = {
@@ -81,7 +81,7 @@ window.createCompatibleSocket = function (serverURL, options = {}) {
   // Merge user options with defaults
   const config = Object.assign({}, defaultConfig, options);
 
-  console.log(`🔌 Creating Socket.IO connection for ${browser.name} browser`, config);
+  console.log(`Creating Socket.IO connection for ${browser.name} browser`, config);
 
   // Create socket with enhanced error handling
   let socket;
@@ -100,7 +100,7 @@ window.createCompatibleSocket = function (serverURL, options = {}) {
     // Add enhanced WebSocket event handlers
     setupEnhancedEventHandlers(socket);
   } catch (error) {
-    console.error('❌ Failed to create Socket.IO connection:', error);
+    console.error('Failed to create Socket.IO connection:', error);
 
     // Fallback: Create a mock socket for offline functionality
     socket = createMockSocket();
@@ -116,7 +116,7 @@ function setupEnhancedConnectionHandling(socket, serverURL, config, browser) {
 
   // Connection success
   socket.on('connect', () => {
-    console.log('✅ Socket.IO connected successfully');
+    console.log('Socket.IO connected successfully');
     reconnectAttempts = 0;
 
     // Update connection status in UI if element exists
@@ -125,7 +125,7 @@ function setupEnhancedConnectionHandling(socket, serverURL, config, browser) {
 
   // Connection error with Apache-aware handling
   socket.on('connect_error', (error) => {
-    console.error(`❌ Socket.IO connection error (${browser.name}):`, error);
+    console.error(`Socket.IO connection error (${browser.name}):`, error);
 
     // Check for Apache-specific errors
     if (
@@ -153,14 +153,14 @@ function setupEnhancedConnectionHandling(socket, serverURL, config, browser) {
         try {
           const newSocket = io(serverURL, apacheConfig);
           replaceSocketMethods(socket, newSocket);
-          console.log('🔄 Retrying with Apache-compatible configuration...');
+          console.log('Retrying with Apache-compatible configuration...');
         } catch (retryError) {
-          console.error('❌ Apache-compatible retry failed:', retryError);
+          console.error('Apache-compatible retry failed:', retryError);
           handleConnectionFailure(socket, error);
         }
       }, 3000);
     } else if (browser.isFirefox && error.message.includes('websocket')) {
-      console.log('🔄 Firefox WebSocket failed, retrying with polling only...');
+      console.log('Firefox WebSocket failed, retrying with polling only...');
 
       setTimeout(() => {
         const pollingConfig = Object.assign({}, config, {
@@ -173,12 +173,12 @@ function setupEnhancedConnectionHandling(socket, serverURL, config, browser) {
           const newSocket = io(serverURL, pollingConfig);
           replaceSocketMethods(socket, newSocket);
         } catch (retryError) {
-          console.error('❌ Polling retry failed:', retryError);
+          console.error('Polling retry failed:', retryError);
           handleConnectionFailure(socket, error);
         }
       }, 2000);
     } else if (browser.isSafari && error.type === 'TransportError') {
-      console.log('🔄 Safari transport error, adjusting configuration...');
+      console.log('Safari transport error, adjusting configuration...');
 
       setTimeout(() => {
         socket.io.opts.transports = ['polling'];
@@ -192,7 +192,7 @@ function setupEnhancedConnectionHandling(socket, serverURL, config, browser) {
 
   // Disconnect handling
   socket.on('disconnect', (reason) => {
-    console.warn(`⚠️ Socket.IO disconnected (${browser.name}):`, reason);
+    console.warn(`Socket.IO disconnected (${browser.name}):`, reason);
     updateConnectionStatus('disconnected', `Disconnected: ${reason}`);
 
     // Auto-reconnect logic with exponential backoff
@@ -200,7 +200,7 @@ function setupEnhancedConnectionHandling(socket, serverURL, config, browser) {
       const delay = Math.min(reconnectDelay * Math.pow(2, reconnectAttempts), 30000);
 
       console.log(
-        `🔄 Attempting reconnect ${reconnectAttempts + 1}/${maxReconnectAttempts} in ${delay}ms...`
+        `Attempting reconnect ${reconnectAttempts + 1}/${maxReconnectAttempts} in ${delay}ms...`
       );
 
       setTimeout(() => {
@@ -212,20 +212,20 @@ function setupEnhancedConnectionHandling(socket, serverURL, config, browser) {
 
   // Reconnection success
   socket.on('reconnect', (attemptNumber) => {
-    console.log(`✅ Socket.IO reconnected after ${attemptNumber} attempts`);
+    console.log(`Socket.IO reconnected after ${attemptNumber} attempts`);
     reconnectAttempts = 0;
     updateConnectionStatus('connected', 'Reconnected to server');
   });
 
   // Reconnection attempt
   socket.on('reconnect_attempt', (attemptNumber) => {
-    console.log(`🔄 Reconnection attempt ${attemptNumber}...`);
+    console.log(`Reconnection attempt ${attemptNumber}...`);
     updateConnectionStatus('connecting', `Reconnecting... (${attemptNumber})`);
   });
 
   // Reconnection failed
   socket.on('reconnect_failed', () => {
-    console.error('❌ Socket.IO reconnection failed');
+    console.error('Socket.IO reconnection failed');
     updateConnectionStatus('failed', 'Connection failed - check your internet connection');
 
     // Offer manual retry option
@@ -335,19 +335,19 @@ function createMockSocket() {
 function setupEnhancedEventHandlers(socket) {
   // Handle server pong responses
   socket.on('pong', (data) => {
-    console.log('🏓 Pong received from server:', data);
+    console.log('Pong received from server:', data);
     updateConnectionStatus('connected', 'Connection active');
   });
 
   // Handle connection test responses
   socket.on('connection_test_response', (data) => {
-    console.log('✅ Connection test successful:', data);
+    console.log('Connection test successful:', data);
     updateConnectionStatus('connected', 'Connection verified');
   });
 
   // Handle connection info
   socket.on('connection_info', (data) => {
-    console.log('ℹ️ Connection info:', data);
+    console.log('ℹ Connection info:', data);
 
     // Store connection info globally for diagnostic purposes
     window.connectionInfo = data;
@@ -355,7 +355,7 @@ function setupEnhancedEventHandlers(socket) {
 
   // Enhanced welcome handler
   socket.on('welcome', (data) => {
-    console.log('👋 Welcome message received:', data);
+    console.log('Welcome message received:', data);
 
     // Update UI with connection details
     updateConnectionStatus('connected', `Connected via ${data.transport || 'unknown'}`);
@@ -379,7 +379,7 @@ function setupEnhancedEventHandlers(socket) {
     pingInterval = setInterval(() => {
       if (socket.connected) {
         socket.emit('ping');
-        console.log('🏓 Ping sent to server');
+        console.log('Ping sent to server');
       }
     }, 30000); // Ping every 30 seconds
   });

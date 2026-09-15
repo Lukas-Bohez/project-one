@@ -81,19 +81,19 @@ class SupportAuthSystem {
     const modalHTML = `
             <div id="authModal" class="c-modal">
                 <div class="c-modal__content">
-                    <h2 id="authModalTitle">Join <a href="/" class="c-header__link gamepad">Quiz The Spire</a> Support Chat</h2>
+                    <h2 id="authModalTitle">Join the Support Chat for this site</h2>
                     <form id="authForm" class="c-login-form">
                         <div class="c-error-message" id="authError"></div>
-                        
-                        <input type="text" id="firstName" class="c-login-input" 
+
+                        <input type="text" id="firstName" class="c-login-input"
                                placeholder="First Name" required>
-                        
-                        <input type="text" id="lastName" class="c-login-input" 
+
+                        <input type="text" id="lastName" class="c-login-input"
                                placeholder="Last Name" required>
-                        
-                        <input type="password" id="password" class="c-login-input" 
+
+                        <input type="password" id="password" class="c-login-input"
                                placeholder="Password" required>
-                        
+
                         <div class="o-button-group">
                             <button type="button" id="loginBtn" class="c-btn c-btn--primary">
                                 <span class="button-text">Login</span>

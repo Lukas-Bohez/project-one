@@ -16,7 +16,7 @@
   text-align: center;
   margin-top: 40px;
   padding: 40px 20px;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: var(--primary-color);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

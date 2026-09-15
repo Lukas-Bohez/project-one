@@ -111,7 +111,7 @@ html, body {
   position: absolute;
   bottom: -1px; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--ind-glow) 30%, var(--ind) 50%, var(--ind-glow) 70%, transparent);
+  background: var(--ind-glow);
   opacity: .6;
 }
 #themeToggleBtn {
@@ -192,7 +192,7 @@ html, body {
   color: var(--green);
   border: 1px solid rgba(45,212,160,.3);
 }
-.nav-tab.done .tab-num::after { content: '✓'; font-family: sans-serif; font-size: 9px; }
+.nav-tab.done .tab-num::after { content: ''; font-family: sans-serif; font-size: 9px; }
 .nav-tab.done .tab-num-n { display: none; }
 
 .hsp { flex: 1; }

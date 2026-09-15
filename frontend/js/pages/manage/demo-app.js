@@ -405,7 +405,7 @@ function renderWeeklyCalendar() {
 
 function renderShiftBlock(shift) {
   return `
-        <div class="demo-shift-block" style="border-left: 4px solid ${shift.employee_color}" 
+        <div class="demo-shift-block" style="border-left: 4px solid ${shift.employee_color}"
              onclick="viewShiftDetails(${shift.id})" title="Click to view details">
             <div class="shift-employee">${shift.employee_name}</div>
             <div class="shift-time">${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</div>
@@ -699,7 +699,7 @@ function viewShiftDetails(shiftId) {
                     <input type="date" name="shift_date" class="ui-input" required value="${shift.date}">
                 </div>
             </div>
-            
+
             <div class="ui-form-row">
                 <div class="ui-form-group">
                     <label><i class="fa-solid fa-clock"></i> Start Time</label>
@@ -710,14 +710,14 @@ function viewShiftDetails(shiftId) {
                     <input type="time" name="end_time" class="ui-input" required value="${endTime}">
                 </div>
             </div>
-            
+
             <div class="ui-form-row">
                 <div class="ui-form-group full-width">
                     <label><i class="fa-solid fa-align-left"></i> Notes (Optional)</label>
                     <textarea name="notes" class="ui-input" rows="2" placeholder="e.g., Training shift...">${shift.notes || ''}</textarea>
                 </div>
             </div>
-            
+
             <div class="ui-form-actions" style="justify-content: space-between;">
                 <button type="button" class="ui-btn ui-btn-secondary" onclick="deleteShift(${shift.id})">
                     <i class="fa-solid fa-trash"></i> Delete
@@ -731,7 +731,7 @@ function viewShiftDetails(shiftId) {
                     </button>
                 </div>
             </div>
-            
+
             <div style="margin-top: 0.75rem; font-size: 0.8125rem; color: #64748b;">
                 ${formatDateWithDay(shift.date)} • ${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} • $${cost.toFixed(2)}
             </div>
@@ -761,7 +761,7 @@ function handleEditShift(event, shiftId) {
 
   if (window.ManageUI) {
     window.ManageUI.modal.close();
-    window.ManageUI.notification.show('✓ Shift updated', 'success');
+    window.ManageUI.notification.show(' Shift updated', 'success');
   }
 
   refreshDemo();
@@ -787,7 +787,7 @@ function approveRequest(requestId) {
   const request = demoData.business.timeOffRequests.find((r) => r.id === requestId);
   if (request) {
     request.status = 'approved';
-    showDemoNotification(`✓ Approved ${request.employee_name}'s time-off request`, 'success');
+    showDemoNotification(` Approved ${request.employee_name}'s time-off request`, 'success');
     refreshDemo();
   }
 }
@@ -828,7 +828,7 @@ function submitTimeOffRequest(event) {
   };
 
   demoData.business.timeOffRequests.push(newRequest);
-  showDemoNotification('✓ Time-off request submitted successfully!', 'success');
+  showDemoNotification(' Time-off request submitted successfully!', 'success');
 
   // Reset form
   event.target.reset();
@@ -849,32 +849,32 @@ function showAddShiftForm() {
                         ${employees.map((emp) => `<option value="${emp.id}">${emp.name} - ${emp.role}</option>`).join('')}
                     </select>
                 </div>
-                
+
                 <div class="ui-form-group">
                     <label><i class="fa-solid fa-calendar"></i> Shift Date</label>
                     <input type="date" name="shift_date" class="ui-input" required>
                 </div>
             </div>
-            
+
             <div class="ui-form-row">
                 <div class="ui-form-group">
                     <label><i class="fa-solid fa-clock"></i> Start Time</label>
                     <input type="time" name="start_time" class="ui-input" required>
                 </div>
-                
+
                 <div class="ui-form-group">
                     <label><i class="fa-solid fa-clock"></i> End Time</label>
                     <input type="time" name="end_time" class="ui-input" required>
                 </div>
             </div>
-            
+
             <div class="ui-form-row">
                 <div class="ui-form-group full-width">
                     <label><i class="fa-solid fa-align-left"></i> Notes (Optional)</label>
                     <textarea name="notes" class="ui-input" rows="2" placeholder="e.g., Morning shift, Training..."></textarea>
                 </div>
             </div>
-            
+
             <div class="ui-form-actions">
                 <button type="button" class="ui-btn ui-btn-secondary" onclick="ManageUI.modal.close()">
                     Cancel
@@ -968,10 +968,10 @@ function renderTaskCard(task, view = 'boss') {
   const subtasksId = `subtasks-${task.id}`;
 
   return `
-        <div class="ui-task-card ${isOverdue ? 'overdue' : ''} ${task.status}" 
+        <div class="ui-task-card ${isOverdue ? 'overdue' : ''} ${task.status}"
              data-task-id="${task.id}"
              data-current-status="${task.status}">
-            
+
             <div class="ui-task-header">
                 <div class="ui-task-icon-priority">
                     <i class="fa-solid ${categoryIcon}" style="color: ${priorityColor}"></i>
@@ -990,11 +990,11 @@ function renderTaskCard(task, view = 'boss') {
                     : ''
                 }
             </div>
-            
+
             <h6 class="ui-task-title">${task.title}</h6>
-            
+
             ${task.description ? `<p class="ui-task-description">${task.description}</p>` : ''}
-            
+
             ${
               hasSubtasks
                 ? `
@@ -1007,7 +1007,7 @@ function renderTaskCard(task, view = 'boss') {
             `
                 : ''
             }
-            
+
             <div class="ui-task-meta">
                 <span class="ui-task-assignee">
                     <i class="fa-solid fa-user"></i> ${task.assigned_name}
@@ -1025,9 +1025,9 @@ function renderTaskCard(task, view = 'boss') {
                     ${shared?.taskManager.statusLabels[task.status] || task.status}
                 </span>
             </div>
-            
+
             ${isOverdue && task.status !== 'completed' ? '<div class="ui-overdue-badge"><i class="fa-solid fa-exclamation-triangle"></i> Overdue</div>' : ''}
-            
+
             ${
               hasSubtasks
                 ? `
@@ -1040,7 +1040,7 @@ function renderTaskCard(task, view = 'boss') {
             `
                 : ''
             }
-            
+
             ${
               task.status !== 'completed'
                 ? `
@@ -1085,15 +1085,15 @@ function renderSubtaskCard(taskId, subtask) {
   const isInProgress = subtask.status === 'in_progress';
 
   return `
-        <div class="ui-subtask-card ${subtask.status}" 
+        <div class="ui-subtask-card ${subtask.status}"
              data-task-id="${taskId}"
              data-subtask-id="${subtask.id}"
              onclick="toggleSubtaskStatus(${taskId}, ${subtask.id}, event)">
-            
+
             <div class="ui-subtask-checkbox ${isCompleted ? 'checked' : isInProgress ? 'in-progress' : ''}">
                 <i class="fa-solid ${isCompleted ? 'fa-check' : isInProgress ? 'fa-spinner fa-spin' : 'fa-circle'}" style="font-size: 0.75rem;"></i>
             </div>
-            
+
             <div class="ui-subtask-content">
                 <span class="ui-subtask-title ${isCompleted ? 'completed' : ''}">${subtask.title}</span>
             </div>
@@ -1142,7 +1142,7 @@ function changeTaskStatus(taskId, newStatus) {
 
   if (newStatus === 'completed') {
     task.completed_at = new Date().toISOString();
-    showDemoNotification(`✓ Task "${task.title}" completed!`, 'success');
+    showDemoNotification(` Task "${task.title}" completed!`, 'success');
   } else if (newStatus === 'in_progress') {
     task.completed_at = null;
     showDemoNotification(`▶ Task "${task.title}" started`, 'info');
@@ -1228,7 +1228,7 @@ function toggleSubtaskStatus(taskId, subtaskId, event) {
     if (allCompleted) {
       task.status = 'completed';
       task.completed_at = new Date().toISOString();
-      showDemoNotification(`★ All subtasks done! Task "${task.title}" completed!`, 'success');
+      showDemoNotification(` All subtasks done! Task "${task.title}" completed!`, 'success');
     } else if (task.status === 'todo') {
       task.status = 'in_progress';
     }
@@ -1261,7 +1261,7 @@ function updateTaskStatus(taskId, newStatus = null) {
 
   if (task.status === 'completed') {
     task.completed_at = new Date().toISOString();
-    showDemoNotification(`✓ Task "${task.title}" completed!`, 'success');
+    showDemoNotification(` Task "${task.title}" completed!`, 'success');
   } else {
     task.completed_at = null;
     const shared = window.ManageShared;
@@ -1489,7 +1489,7 @@ function createNewTask(taskData) {
 
   if (window.ManageUI) {
     window.ManageUI.modal.close();
-    window.ManageUI.notification.show(`✓ Task "${newTask.title}" created successfully!`, 'success');
+    window.ManageUI.notification.show(` Task "${newTask.title}" created successfully!`, 'success');
   }
 
   refreshDemo();
@@ -1526,7 +1526,7 @@ function handleAddShift(event) {
   if (window.ManageUI) {
     window.ManageUI.modal.close();
     window.ManageUI.notification.show(
-      `✓ Shift added for ${employee?.name || 'employee'}!`,
+      ` Shift added for ${employee?.name || 'employee'}!`,
       'success'
     );
   }
@@ -1547,7 +1547,7 @@ function showAddTeamMemberModal() {
                     <input type="text" name="name" class="ui-input" required placeholder="e.g., John Smith">
                 </div>
             </div>
-            
+
             <div class="ui-form-row">
                 <div class="ui-form-group">
                     <label><i class="fa-solid fa-briefcase"></i> Role</label>
@@ -1565,7 +1565,7 @@ function showAddTeamMemberModal() {
                     <input type="number" name="hourlyRate" class="ui-input" required min="7.25" step="0.25" placeholder="15.00">
                 </div>
             </div>
-            
+
             <div class="ui-form-row">
                 <div class="ui-form-group">
                     <label><i class="fa-solid fa-user-circle"></i> Username</label>
@@ -1577,10 +1577,9 @@ function showAddTeamMemberModal() {
                 </div>
             </div>
 
-            <div style="font-size: 0.85rem; color: #64748b; margin-top: -0.25rem;">
-                Set the employee's initial password (can be changed later by an admin).
+            <div style="font-size: 0.85rem; color: #64748b; margin-top: -0.25rem;">Set the employee's initial password (can be changed later by an admin).
             </div>
-            
+
             <div class="ui-form-actions">
                 <button type="button" class="ui-btn-secondary" onclick="if(window.ManageUI) window.ManageUI.modal.close()">
                     Cancel
@@ -1639,8 +1638,7 @@ function showEditTeamMemberModal(employeeId) {
                 </div>
             </div>
 
-            <div style="font-size: 0.85rem; color: #64748b; margin-top: -0.25rem;">
-                Leave the password blank to keep the current one. Current: ${credentials ? 'Set' : 'Not set'}.
+            <div style="font-size: 0.85rem; color: #64748b; margin-top: -0.25rem;">Leave the password blank to keep the current one. Current: ${credentials ? 'Set' : 'Not set'}.
             </div>
 
             <div class="ui-form-actions">
@@ -1748,24 +1746,24 @@ function showEmployeeLoginModal() {
                 <h3 style="margin-top: 0.5rem;">Employee Login</h3>
                 <p style="color: #64748b;">Enter your credentials to view your tasks and schedule</p>
             </div>
-            
+
             <div class="ui-form-group full-width">
                 <label><i class="fa-solid fa-user-circle"></i> Username</label>
                 <input type="text" name="username" class="ui-input" required placeholder="Enter username" autofocus>
             </div>
-            
+
             <div class="ui-form-group full-width">
                 <label><i class="fa-solid fa-lock"></i> Password</label>
                 <input type="password" name="password" class="ui-input" required placeholder="Enter password">
             </div>
-            
+
             <div style="background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
                 <p style="margin: 0; font-size: 0.875rem; color: #1e40af;">
                     <i class="fa-solid fa-info-circle"></i> <strong>Demo Credentials:</strong><br>
                     Any employee username (alex, jamie, morgan, etc.) with password: <code>demo123</code>
                 </p>
             </div>
-            
+
             <div class="ui-form-actions">
                 <button type="button" class="ui-btn-secondary" onclick="if(window.ManageUI) window.ManageUI.modal.close()">
                     Cancel

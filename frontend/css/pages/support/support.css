@@ -13,7 +13,7 @@
   --border: #dee2e6;
   --danger: #dc3545;
   --success: #28a745;
-  --sidebar-bg: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  --sidebar-bg: #667eea;
   --sidebar-text: #fff;
   --sidebar-hover: rgba(255, 255, 255, 0.15);
   --sidebar-active: rgba(255, 255, 255, 0.25);
@@ -35,7 +35,7 @@
   --text: #e2e8f0;
   --text-secondary: #a0aec0;
   --border: #4a5568;
-  --sidebar-bg: linear-gradient(180deg, #2d1b69 0%, #1a365d 100%);
+  --sidebar-bg: #2d1b69;
   --sidebar-hover: rgba(255, 255, 255, 0.08);
   --sidebar-active: rgba(255, 255, 255, 0.16);
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.25);

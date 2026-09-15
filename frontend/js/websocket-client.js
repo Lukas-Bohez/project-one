@@ -1,5 +1,5 @@
 /**
- * WebSocket Client for Manage the Spire
+ * WebSocket client for the Employee Management app
  * Handles real-time updates from the server
  */
 
@@ -318,7 +318,7 @@ wsStyle.textContent = `
             opacity: 1;
         }
     }
-    
+
     @keyframes slideOut {
         from {
             transform: translateX(0);

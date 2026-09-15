@@ -1,1 +1,0 @@
-// Converter functionality removed
