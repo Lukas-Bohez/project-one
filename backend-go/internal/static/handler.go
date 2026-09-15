@@ -72,8 +72,7 @@ http.ServeContent(w, r, name, time.Time{}, file)
 func isDirectoryPath(path string) bool {
 // Known page paths that should serve index.html
 switch path {
-case "pages/squad", "pages/quiz", "pages/sentle", "pages", "css/pages/squad", "js/pages/squad":
-return true
+case "pages/quiz", "pages/sentle", "pages": return true
 }
 return false
 }

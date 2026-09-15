@@ -16,7 +16,6 @@ import (
 	sentlehandlers "github.com/Lukas-Bohez/project-one/backend-go/internal/handlers"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/quiz"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
-	"github.com/Lukas-Bohez/project-one/backend-go/internal/squad"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/ugc"
 
 	"gorm.io/driver/mysql"
@@ -161,21 +160,9 @@ func main() {
 
 		}
 
-	// Squad finder hub (no database required - in-memory only).
-	// Registered outside the MySQL gate so the finder is always
-	// available even when the database is down.
-	squadHub := squad.NewHub()
-	go squadHub.Run()
-	mux.Handle("/api/v1/squad/ws", http.HandlerFunc(squadHub.ServeWS))
-	log.Printf("squad finder hub enabled on /api/v1/squad/ws")
 	// Static file serving for frontend pages (HTML, JS, CSS)
 	frontendDir := "/home/student/Project/project-one/frontend"
 	staticHandler := static.New(frontendDir)
-	// Serve /pages/squad/ as the squad finder page
-	mux.Handle("/pages/squad/", staticHandler)
-	mux.Handle("/pages/squad", staticHandler)
-	mux.Handle("/js/pages/squad/", staticHandler)
-	mux.Handle("/css/pages/squad/", staticHandler)
 	// Static file serving for general frontend
 	mux.Handle("/css/", staticHandler)
 	mux.Handle("/js/", staticHandler)
