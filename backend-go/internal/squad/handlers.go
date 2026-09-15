@@ -207,13 +207,29 @@ func (h *Hub) handleJoinSquad(c *client, data json.RawMessage) {
 		return
 	}
 
+	// Membership guard: joining a DIFFERENT squad while already in one is
+	// still blocked. But re-requesting the squad you are already in is not
+	// a join: the client's "back to list" only hides the detail view
+	// (client-side currentSquad is nulled while server-side membership
+	// persists), so re-clicking your own squad card lands here. Resend the
+	// current squad state as squad_joined so the client re-opens it,
+	// instead of failing with "Already in a squad".
 	h.mu.RLock()
-	if squadID, ok := h.playerSquad[c.player.ID]; ok {
-		h.mu.RUnlock()
+	squadID, inSquad := h.playerSquad[c.player.ID]
+	var current *Squad
+	if inSquad {
+		current = h.squads[squadID]
+	}
+	h.mu.RUnlock()
+
+	if inSquad {
+		if current != nil && squadID == req.SquadID {
+			c.sendEvent("squad_joined", current)
+			return
+		}
 		c.sendEvent("error", map[string]string{"message": "Already in a squad", "squadId": squadID})
 		return
 	}
-	h.mu.RUnlock()
 
 	h.mu.Lock()
 	squad, ok := h.squads[req.SquadID]

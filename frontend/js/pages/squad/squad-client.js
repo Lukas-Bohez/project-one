@@ -33,6 +33,13 @@
       this.ws = null;
       this.player = null;
       this.currentSquad = null;
+      // Server-side membership is not the same as the client view: backToList()
+      // nulls currentSquad but the player stays in the squad server-side.
+      // mySquadId tracks real membership so re-clicking your own squad card
+      // re-opens it instead of sending a doomed join_squad.
+      this.mySquadId = null;
+      this.pendingJoinSquadId = null;
+      this.lastSquadList = [];
       this.filterOptions = {};
       this.reconnectAttempts = 0;
       this.maxReconnectAttempts = 5;
@@ -162,6 +169,23 @@
       this.readyBtn.addEventListener('click', () => this.toggleReady());
       this.leaveBtn.addEventListener('click', () => this.leaveSquad());
       this.closeSquadBtn.addEventListener('click', () => this.backToList());
+      // bfcache restore (browser back/forward cache): the page can come back
+      // with stale in-memory state and a dead socket. Reset the view and
+      // re-sync instead of trusting the restored state.
+      window.addEventListener('pageshow', (event) => {
+        if (!event.persisted) return;
+        this.currentSquad = null;
+        this.mySquadId = null;
+        this.squadDetails.style.display = 'none';
+        this.squadListContainer.style.display = 'block';
+        this.disableChat();
+        if (this.ws && this.ws.readyState === WebSocket.CONNECTING) return;
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+          if (this.activeProfile) this.connect(this.activeProfile);
+        } else {
+          this.send('get_squad_list', { filters: this.getFilterState() });
+        }
+      });
       this.filterMission.addEventListener('change', () => this.applyFilters());
       this.filterPlanet.addEventListener('change', () => this.applyFilters());
       this.filterDifficulty.addEventListener('change', () => this.applyFilters());
@@ -391,12 +415,16 @@
         case 'filter_options': this.onFilterOptions(data); break;
         case 'kicked': this.onKicked(); this.updateStatus('disconnected', 'Kicked'); break;
         case 'match_found': this.onMatchFound(data); break;
-        case 'error': this.showNotification(data && data.message ? data.message : 'An error occurred', 'error'); break;
+        case 'error':
+          this.pendingJoinSquadId = null;
+          this.showNotification(data && data.message ? data.message : 'An error occurred', 'error');
+          break;
         default: console.log('Unknown event:', event, data);
       }
     }
 
     renderSquadList(squads) {
+      this.lastSquadList = squads || [];
       const filtered = this.filterSquads(squads);
       if (filtered.length === 0) {
         this.squadList.innerHTML = '<div class="squad-empty squad-empty--cta"><i class="fa-solid fa-users-slash" aria-hidden="true"></i><p>No squads found.</p><p class="squad-empty-sub">Try different filters, or start one yourself.</p><button type="button" class="squad-btn squad-btn--primary squad-empty-btn" data-action="open-create-squad"><svg class="squad-empty-plus" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"/></svg> <span>Create a Squad</span></button></div>';
@@ -637,6 +665,27 @@
     }
 
     joinSquad(squadId) {
+      // Re-opening a squad we are already in must NOT send join_squad: the
+      // back button only hides the detail view, membership stays on the
+      // server. Re-render from the freshest known state, no round-trip.
+      if (squadId && squadId === this.mySquadId) {
+        const known = (this.currentSquad && this.currentSquad.id === squadId)
+          ? this.currentSquad
+          : (this.lastSquadList || []).find((s) => s.id === squadId);
+        if (known) {
+          this.currentSquad = known;
+          this.squadDetails.style.display = 'block';
+          this.squadListContainer.style.display = 'none';
+          this.renderSquadDetails(known);
+          this.enableChat();
+          window.scrollTo(0, 0);
+          return;
+        }
+        // No cached state available: fall through and ask the server.
+        // The server treats a join for the squad you are already in as an
+        // idempotent reopen (resends squad_joined), not an error.
+      }
+      this.pendingJoinSquadId = squadId;
       this.send('join_squad', { squadId: squadId });
     }
 
@@ -665,6 +714,8 @@
 
     onSquadCreated(data) {
       this.currentSquad = data;
+      this.mySquadId = data.id;
+      this.pendingJoinSquadId = null;
       this.squadDetails.style.display = 'block';
       this.squadListContainer.style.display = 'none';
       this.renderSquadDetails(data);
@@ -677,6 +728,8 @@
       const squad = (data && data.squad) ? data.squad : data;
       if (!squad || !squad.id) { this.showNotification('No match found, try again', 'warning'); return; }
       this.currentSquad = squad;
+      this.mySquadId = squad.id;
+      this.pendingJoinSquadId = null;
       this.squadDetails.style.display = 'block';
       this.squadListContainer.style.display = 'none';
       this.renderSquadDetails(squad);
@@ -688,6 +741,8 @@
 
         onSquadJoined(data) {
       this.currentSquad = data;
+      this.mySquadId = data.id;
+      this.pendingJoinSquadId = null;
       this.squadDetails.style.display = 'block';
       this.squadListContainer.style.display = 'none';
       this.renderSquadDetails(data);
@@ -697,6 +752,7 @@
 
     onSquadLeft() {
       this.currentSquad = null;
+      this.mySquadId = null;
       this.squadDetails.style.display = 'none';
       this.squadListContainer.style.display = 'block';
       this.disableChat();
@@ -764,6 +820,8 @@
 
     onKicked() {
       this.player = null;
+      this.mySquadId = null;
+      this.pendingJoinSquadId = null;
       this.setupPanel.style.display = 'block';
       this.mainPanel.style.display = 'none';
       this.updateStatus('disconnected', 'Disconnected');
