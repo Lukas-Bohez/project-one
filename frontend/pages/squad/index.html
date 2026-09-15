@@ -128,6 +128,13 @@
               </div>
 
               <div class="squad-form-group">
+                <label for="playerLR">Legendary Rank (0-6, optional)</label>
+                <input type="number" id="playerLR" placeholder="e.g. 1" min="0" max="6" />
+              </div>
+            </div>
+
+            <div class="squad-form-row">
+              <div class="squad-form-group">
                 <label for="playerClan">Clan Tag (optional)</label>
                 <input type="text" id="playerClan" placeholder="e.g. SPIRE" maxlength="10" />
               </div>
@@ -374,22 +381,22 @@
               <button type="button" class="squad-preset" data-preset="glacial_defiance">
                 <span class="squad-preset-icon"><i class="fa-solid fa-snowflake"></i></span>
                 <span class="squad-preset-name">Glacial Defiance</span>
-                <span class="squad-preset-meta">6 player &middot; Any planet</span>
+                <span class="squad-preset-meta">6 player, Any planet</span>
               </button>
               <button type="button" class="squad-preset" data-preset="dragon_key_vaults">
                 <span class="squad-preset-icon"><i class="fa-solid fa-dragon"></i></span>
                 <span class="squad-preset-name">Dragon Key Vaults</span>
-                <span class="squad-preset-meta">4 player &middot; Deimos</span>
+                <span class="squad-preset-meta">4 player, Deimos</span>
               </button>
               <button type="button" class="squad-preset" data-preset="steel_path">
                 <span class="squad-preset-icon"><i class="fa-solid fa-gauge-high"></i></span>
                 <span class="squad-preset-name">Steel Path</span>
-                <span class="squad-preset-meta">4 player &middot; Serious</span>
+                <span class="squad-preset-meta">4 player, Serious</span>
               </button>
               <button type="button" class="squad-preset" data-preset="casual_exterminate">
                 <span class="squad-preset-icon"><i class="fa-solid fa-skull"></i></span>
                 <span class="squad-preset-name">Casual Exterminate</span>
-                <span class="squad-preset-meta">4 player &middot; Normal</span>
+                <span class="squad-preset-meta">4 player, Normal</span>
               </button>
             </div>
           </div>
@@ -487,22 +494,22 @@
               <button type="button" class="squad-preset" data-preset="glacial_defiance">
                 <span class="squad-preset-icon"><i class="fa-solid fa-snowflake"></i></span>
                 <span class="squad-preset-name">Glacial Defiance</span>
-                <span class="squad-preset-meta">6 player &middot; Auto-match</span>
+                <span class="squad-preset-meta">6 player, Auto-match</span>
               </button>
               <button type="button" class="squad-preset" data-preset="dragon_key_vaults">
                 <span class="squad-preset-icon"><i class="fa-solid fa-dragon"></i></span>
                 <span class="squad-preset-name">Dragon Key Vaults</span>
-                <span class="squad-preset-meta">4 player &middot; Auto-match</span>
+                <span class="squad-preset-meta">4 player, Auto-match</span>
               </button>
               <button type="button" class="squad-preset" data-preset="steel_path">
                 <span class="squad-preset-icon"><i class="fa-solid fa-gauge-high"></i></span>
                 <span class="squad-preset-name">Steel Path</span>
-                <span class="squad-preset-meta">4 player &middot; Serious</span>
+                <span class="squad-preset-meta">4 player, Serious</span>
               </button>
               <button type="button" class="squad-preset" data-preset="casual_exterminate">
                 <span class="squad-preset-icon"><i class="fa-solid fa-skull"></i></span>
                 <span class="squad-preset-name">Casual Exterminate</span>
-                <span class="squad-preset-meta">4 player &middot; Auto-match</span>
+                <span class="squad-preset-meta">4 player, Auto-match</span>
               </button>
             </div>
           </div>
@@ -624,7 +631,7 @@
               <div class="squad-info-row"><span><i class="fa-solid fa-flag"></i> Complete a mission with your squad</span><span class="squad-info-val pos">+0.5</span></div>
               <div class="squad-info-row"><span><i class="fa-solid fa-flag"></i> Report from another player</span><span class="squad-info-val">review, no auto penalty</span></div>
             </div>
-            <p class="squad-info-note">The shield colour tells you at a glance: <span class="squad-trust squad-trust--high">70+ green</span> · <span class="squad-trust squad-trust--medium">40-69 orange</span> · <span class="squad-trust squad-trust--low">below 40 red</span>.</p>
+            <p class="squad-info-note">The shield colour tells you at a glance: <span class="squad-trust squad-trust--high">70+ green</span>, <span class="squad-trust squad-trust--medium">40-69 orange</span>, <span class="squad-trust squad-trust--low">below 40 red</span>.</p>
             <p style="margin-top:14px">Scores stay between <strong>0 to 100</strong>. Every clean mission moves you up by <strong>+0.5</strong>, and reports from other players are saved for moderator review instead of moving the score automatically. Run missions with your squad, help your teammates, and your score climbs. Be disruptive, and moderators can step in. Simple as that.</p>
           </div>
 
@@ -746,12 +753,12 @@
         Built and maintained by one indie developer, <strong>Lukas Bohez</strong>. Warframe Squad Finder is free forever, no ads, no paywalls.
       </p>
       <div class="c-footer__bmc">
-        <script defer src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="LukasBohez" data-color="#2c6fb8" data-emoji="" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+        <script defer src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="orokaconner" data-color="#2c6fb8" data-emoji="" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
       </div>
       <p class="c-footer__links">
         <a href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="c-footer__link">GitHub Sponsors</a>
         <span class="c-footer__sep" aria-hidden="true">&middot;</span>
-        <a href="https://buymeacoffee.com/LukasBohez" target="_blank" rel="noopener noreferrer" class="c-footer__link">Buy Me a Coffee</a>
+        <a href="https://buymeacoffee.com/orokaconner" target="_blank" rel="noopener noreferrer" class="c-footer__link">Buy Me a Coffee</a>
       </p>
       <p class="c-footer__text">
         <strong>&copy; 2026 Quiz The Spire</strong><br>

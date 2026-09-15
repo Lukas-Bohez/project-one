@@ -135,7 +135,7 @@ const (
 
 // Validation patterns
 var (
-	validUsernamePattern  = regexp.MustCompile(`^[a-zA-Z0-9_\-\[\]]+$`)
+	validUsernamePattern  = regexp.MustCompile(`^[a-zA-Z0-9_\-\.\[\]]+$`)
 	validSquadNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_\-\s\[\]\(\)]+$`)
 )
 
@@ -269,6 +269,7 @@ type Player struct {
 	ID                string                    `json:"id"`
 	Username          string                    `json:"username"`
 	MasteryRank       int                       `json:"masteryRank"`
+	LegendaryRank     int                       `json:"legendaryRank,omitempty"`
 	Platform          string                    `json:"platform"`
 	Region            string                    `json:"region"`
 	Language          string                    `json:"language"`

@@ -558,6 +558,7 @@ func (h *Hub) HandleGetPlayerStats(c *client, data json.RawMessage) {
 		"playerId":          p.ID,
 		"username":          p.Username,
 		"masteryRank":       p.MasteryRank,
+		"legendaryRank":     p.LegendaryRank,
 		"totalMissions":     p.TotalMissions,
 		"reputation":        p.Reputation,
 		"trustScore":        p.TrustScore,

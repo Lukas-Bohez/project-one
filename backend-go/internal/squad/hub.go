@@ -313,6 +313,18 @@ func (h *Hub) handleJoinFinder(c *client, data json.RawMessage) {
 	player.LastActive = time.Now()
 	player.VerificationLevel = VerificationNone
 	player.TrustScore = 50.0
+	// Mastery Rank is MR0-30; Legendary Rank is a separate LR0-6 progression.
+	// Clamp defensively so out-of-range client values cannot corrupt display.
+	if player.MasteryRank < 0 {
+		player.MasteryRank = 0
+	} else if player.MasteryRank > 30 {
+		player.MasteryRank = 30
+	}
+	if player.LegendaryRank < 0 {
+		player.LegendaryRank = 0
+	} else if player.LegendaryRank > 6 {
+		player.LegendaryRank = 6
+	}
 
 	// The client does not send an id; generate a unique one server-side so
 	// every connection gets a distinct player identity. Without this, all

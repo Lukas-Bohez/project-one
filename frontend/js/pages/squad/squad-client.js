@@ -50,6 +50,7 @@
       this.playerPlatformSelect = document.getElementById('playerPlatform');
       this.playerRegionSelect = document.getElementById('playerRegion');
       this.playerMRInput = document.getElementById('playerMR');
+      this.playerLRInput = document.getElementById('playerLR');
       this.playerClanInput = document.getElementById('playerClan');
       this.playerForm = document.getElementById('playerForm');
       this.statusIndicator = document.getElementById('statusIndicator');
@@ -194,6 +195,7 @@
         localStorage.setItem('squad_finder_profile', JSON.stringify({
           username: profile.username,
           masteryRank: profile.masteryRank,
+          legendaryRank: profile.legendaryRank || 0,
           platform: profile.platform,
           region: profile.region,
           clanTag: profile.clanTag,
@@ -208,7 +210,7 @@
 
     isValidTennoName(name) {
       return typeof name === 'string' && name.length >= 2 && name.length <= 20 &&
-        /^[a-zA-Z0-9_\-\[\]]+$/.test(name);
+        /^[a-zA-Z0-9_\-\.\[\]]+$/.test(name);
     }
 
     initSavedProfile() {
@@ -223,6 +225,7 @@
       if (!profile) return;
       this.playerNameInput.value = profile.username || '';
       this.playerMRInput.value = profile.masteryRank != null ? profile.masteryRank : '';
+      if (this.playerLRInput) this.playerLRInput.value = profile.legendaryRank != null ? profile.legendaryRank : '';
       this.playerPlatformSelect.value = profile.platform || 'PC';
       this.playerRegionSelect.value = profile.region || 'EU';
       if (this.playerClanInput) this.playerClanInput.value = profile.clanTag || '';
@@ -235,24 +238,34 @@
         this.showNotification('Name must be 2-20 characters', 'warning');
         return null;
       }
-      if (!/^[a-zA-Z0-9_\-\[\]]+$/.test(name)) {
-        this.showNotification('Name can only contain letters, numbers, underscores, hyphens, and brackets', 'warning');
+      if (!/^[a-zA-Z0-9_\-\.\[\]]+$/.test(name)) {
+        this.showNotification('Name can only contain letters, numbers, dots, underscores, hyphens, and brackets', 'warning');
         return null;
       }
       return {
         username: name,
-        masteryRank: parseInt(this.playerMRInput.value, 10) || 1,
+        masteryRank: this.clampInt(this.playerMRInput ? this.playerMRInput.value : '', 0, 30, 1),
+        legendaryRank: this.clampInt(this.playerLRInput ? this.playerLRInput.value : '', 0, 6, 0),
         platform: this.playerPlatformSelect.value,
         region: this.playerRegionSelect.value,
         clanTag: this.playerClanInput ? this.playerClanInput.value.trim() : ''
       };
     }
 
+    clampInt(raw, min, max, fallback) {
+      var n = parseInt(raw, 10);
+      if (isNaN(n)) return fallback;
+      if (n < min) return min;
+      if (n > max) return max;
+      return n;
+    }
+
     buildPlayer(profile) {
       return {
         id: 'player_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11),
         username: profile.username,
-        masteryRank: profile.masteryRank || 1,
+        masteryRank: (profile.masteryRank != null ? profile.masteryRank : 1),
+        legendaryRank: (profile.legendaryRank != null ? profile.legendaryRank : 0),
         platform: profile.platform || 'PC',
         region: profile.region || 'EU',
         language: 'English',
@@ -756,6 +769,13 @@
       this.updateStatus('disconnected', 'Disconnected');
     }
 
+    rankLabel(player) {
+      var mr = (player && player.masteryRank != null) ? player.masteryRank : 1;
+      var lr = (player && player.legendaryRank != null) ? player.legendaryRank : 0;
+      // MR0-30 and Legendary Rank are separate fields; only show LR when earned.
+      return lr > 0 ? ('MR' + mr + ' LR' + lr) : ('MR' + mr);
+    }
+
     renderSquadDetails(squad) {
       if (!squad) return;
       this.squadName.textContent = squad.name || 'Unnamed Squad';
@@ -786,7 +806,7 @@
       const leader = squad.players ? squad.players.find((p) => p.id === squad.leaderId) : null;
       if (leader) {
         this.leaderName.textContent = leader.username;
-        this.leaderMeta.textContent = 'MR' + leader.masteryRank + ' | ' + leader.platform + ' | ' + leader.region;
+        this.leaderMeta.textContent = this.rankLabel(leader) + ' | ' + leader.platform + ' | ' + leader.region;
         const trustClass = this.getTrustClass(leader.trustScore || 50);
         this.leaderBadges.innerHTML = '<span class="squad-trust ' + trustClass + '"><i class="fa-solid fa-shield"></i> ' + Math.round(leader.trustScore || 50) + '</span>';
       }
@@ -799,7 +819,7 @@
 
       if (isLeader && this.currentSquad) {
         this.kickPlayerSelect.innerHTML = players.filter((p) => p.id !== this.player.id).map((p) =>
-          '<option value="' + p.id + '">' + this.escapeHtml(p.username) + ' (MR' + p.masteryRank + ')</option>'
+          '<option value="' + p.id + '">' + this.escapeHtml(p.username) + ' (' + this.rankLabel(p) + ')</option>'
         ).join('');
       }
 
@@ -853,7 +873,7 @@
             (player.id === leaderId ? ' <span class="squad-leader-badge"><i class="fa-solid fa-crown"></i> Leader</span>' : '') +
             (isSelf ? ' <span class="squad-self-badge">You</span>' : '') +
             roleBadge + verBadge + '</div>' +
-          '<div class="squad-player-meta">MR' + player.masteryRank + ' | ' + player.platform + ' | ' + player.region + '</div>' +
+          '<div class="squad-player-meta">' + this.rankLabel(player) + ' | ' + player.platform + ' | ' + player.region + '</div>' +
           '<div class="squad-trust ' + trustClass + '"><i class="fa-solid fa-shield"></i> ' + Math.round(trustScore) + '</div>' +
         '</div>' +
         '<div class="squad-player-ready ' + (player.isReady ? 'ready' : '') + '" title="' + (player.isReady ? 'Ready' : 'Not ready') + '"></div>' +
