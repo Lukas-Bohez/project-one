@@ -772,8 +772,9 @@
     rankLabel(player) {
       var mr = (player && player.masteryRank != null) ? player.masteryRank : 1;
       var lr = (player && player.legendaryRank != null) ? player.legendaryRank : 0;
-      // MR0-30 and Legendary Rank are separate fields; only show LR when earned.
-      return lr > 0 ? ('MR' + mr + ' LR' + lr) : ('MR' + mr);
+      // MR0-30 and Legendary Rank are mutually exclusive in-game: once a
+      // Tenno earns a Legendary Rank it replaces the MR display entirely.
+      return lr > 0 ? ('LR' + lr) : ('MR' + mr);
     }
 
     renderSquadDetails(squad) {
