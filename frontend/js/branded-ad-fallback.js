@@ -1,7 +1,7 @@
 /**
  * Branded Ad Fallback System
  * Replaces empty ad units with branded content for self-promotion
- * Priority: Convert The Spire → SpireAI → GitHub Sponsors
+ * Priority: Convert The Spire → GitHub Sponsors
  */
 (function () {
   'use strict';
@@ -19,14 +19,6 @@
       cta: 'Try Convert',
       href: 'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter',
       color: '#2563eb',
-    },
-    spireai: {
-      title: 'SpireAI',
-      icon: 'fa-sparkles',
-      description: 'AI-powered quiz generation with instant themes',
-      cta: 'Generate Quizzes',
-      href: '/pages/spire-ai/',
-      color: '#8b5cf6',
     },
     sponsors: {
       title: 'Support My Work',
@@ -115,7 +107,7 @@
   function handleEmptyAds() {
     const wrappers = document.querySelectorAll('.ad-unit-wrapper');
     const slots = ['ad-slot-square', 'ad-slot-article', 'ad-slot-horizontal', 'ad-slot-multiplex'];
-    const contentRotation = ['convert', 'spireai', 'sponsors'];
+    const contentRotation = ['convert', 'sponsors'];
     let contentIndex = 0;
 
     wrappers.forEach(function (wrapper) {

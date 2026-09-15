@@ -2,10 +2,6 @@ User-agent: *
 Allow: /
 
 # Allow specific important pages
-Allow: /articles/
-Allow: /articles/posts/
-Allow: /articles/index.html
-Allow: /idleGame/
 Allow: /html/
 Allow: /ads.txt
 Allow: /sitemap.xml
@@ -27,11 +23,6 @@ Disallow: /temp_*/
 Disallow: /.git/
 Disallow: /.vscode/
 Disallow: /backup/
-
-# SEO priority pages
-Allow: /articles/posts/2025-budget-cuts-health-impact.html
-Allow: /articles/posts/stock-market-steals-from-workers.html
-Allow: /articles/posts/why-youre-poorer-despite-more-money.html
 
 # Sitemap location
 Sitemap: https://quizthespire.com/sitemap.xml

@@ -73,13 +73,6 @@ const showPortfolioTab = (tabName) => {
 };
 
 const listenToButtons = () => {
-  if (dom.startQuizBtn) {
-    dom.startQuizBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = '/pages/spire-ai/';
-    });
-  }
-
   if (dom.viewGraphsBtn) {
     dom.viewGraphsBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -186,8 +179,6 @@ const initApp = () => {
   const path = window.location.pathname;
   if (path.includes('index.html') || path === '/') {
     initIndexPage();
-  } else if (path.startsWith('/pages/quiz')) {
-    initQuizPage();
   } else if (path.startsWith('/pages/login')) {
     initLoginPage();
   }

@@ -31,7 +31,6 @@ Welcome to my personal portfolio codebase and the self-hosted lab behind Quiz Th
 
 - `frontend/` — Apache web root and static site assets
   - `frontend/portfolio/` — Next.js portfolio (Lukas Bohez) — Lighthouse 97/100
-  - `frontend/idleGame/` — Interactive idle game with rebirth mechanics
   - `frontend/js/` — Vanilla JS systems (SENTLE, adblock detection, etc.)
 - `backend/` — FastAPI services, WebSocket server, APIs
 - `docs/` — Consolidated documentation

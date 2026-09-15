@@ -14,18 +14,6 @@ echo "🗺️ Testing sitemap.xml..."
 curl -I "https://quizthespire.duckdns.org/sitemap.xml" 2>/dev/null | head -n 1
 
 echo ""
-echo "📰 Testing new article URL..."
-curl -I "https://quizthespire.duckdns.org/articles/posts/2025-budget-cuts-health-impact.html" 2>/dev/null | head -n 1
-
-echo ""
-echo "📊 Testing articles index..."
-curl -I "https://quizthespire.duckdns.org/articles/" 2>/dev/null | head -n 1
-
-echo ""
-echo "🎮 Testing Industrial Empire game..."
-curl -I "https://quizthespire.duckdns.org/idleGame/" 2>/dev/null | head -n 1
-
-echo ""
 echo "================================================"
 echo "✅ If all responses show '200 OK', your site is accessible to Google!"
 echo "❌ If any show '404' or '403', there may be server configuration issues."

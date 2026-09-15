@@ -161,8 +161,8 @@ const handleLogin = async (e) => {
       // Also store for articles.js compatibility (session-only)
       sessionStorage.setItem('currentUserId', result.user_id.toString());
 
-      // Redirect to admin page
-      window.location.href = '/pages/admin/';
+      // Redirect to homepage (admin panel removed)
+      window.location.href = '/';
     } else {
       showErrorMessage('Login failed: Invalid response from server');
     }
@@ -199,7 +199,7 @@ const checkExistingSession = () => {
   if (AdminSession.isValid()) {
     const session = AdminSession.get();
     console.log(`Auto-logging in admin: ${session.first_name} ${session.last_name}`);
-    window.location.href = '/pages/admin/';
+    window.location.href = '/';
     return true;
   }
   return false;
@@ -255,11 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize based on current page
   if (window.location.pathname.startsWith('/pages/login')) {
     init();
-  } else if (window.location.pathname.startsWith('/pages/admin')) {
-    // For admin pages, check if session is valid
-    if (!AdminSession.isValid()) {
-      window.location.href = '/pages/login/';
-    }
   }
 });
 // #endregion
